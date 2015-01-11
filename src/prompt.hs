@@ -1,7 +1,8 @@
-module Prompt(runRepl, evalAndPrint) where
+module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
 import Eval
+import Environment
 import System.IO
 import Control.Monad
 
@@ -17,12 +18,14 @@ flushStr str = putStr str >> hFlush stdout
 readPrompt :: String -> IO String
 readPrompt prompt = flushStr prompt >> getLine
 
-evalString :: String -> IO String
-evalString expr = return $ extractValue $ trapError (liftM show $ readExpr expr >>= eval)
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
 
-evalAndPrint :: String -> IO ()
-evalAndPrint expr = evalString expr >>= putStrLn
+evalAndPrint :: Env -> String -> IO ()
+evalAndPrint env expr = evalString env expr >>= putStrLn
+
+runSingleStatement :: String -> IO ()
+runSingleStatement expr = nullEnv >>= flip evalAndPrint expr
 
 runRepl :: IO ()
-runRepl = until_ (== "quit") (readPrompt "R5RS> ")
-          evalAndPrint
+runRepl = nullEnv >>= until_ (== "quit") (readPrompt "R5RS> ") . evalAndPrint

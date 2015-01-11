@@ -16,7 +16,7 @@ all:
 
 #Uses picky extensions and makes everything(Extensions may break compiling)
 dev:
-	make all HFLAGS+="-fwarn-safe -fpackage-trust"
+	make all HFLAGS+=""
 
 #Cleans directory(no uninstall!)
 clean: 

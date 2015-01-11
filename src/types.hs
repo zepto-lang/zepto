@@ -1,5 +1,11 @@
-module Types (LispVal(..), LispError(..), Unpacker(AnyUnpacker), ThrowsError, 
-              showVal, showError, trapError, extractValue) where
+module Types (LispVal(..), 
+              LispError(..), 
+              Unpacker(AnyUnpacker), 
+              ThrowsError, 
+              showVal, 
+              showError, 
+              trapError, 
+              extractValue) where
 import Control.Monad.Error
 import Text.ParserCombinators.Parsec.Error
 
@@ -53,3 +59,4 @@ trapError action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
+
