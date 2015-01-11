@@ -1,7 +1,8 @@
 module Primitives(primitives) where
 import Types
+import Control.Monad.Error
 
-primitives :: [(String, [LispVal] -> LispVal)]
+primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
@@ -13,15 +14,16 @@ primitives = [("+", numericBinop (+)),
               ("symbol?", typeTest (Atom "")),
               ("number?", typeTest (Number 0))]
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
-numericBinop op params = Number $ foldl1 op $ map unpackNum params
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
+numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 
-unpackNum :: LispVal -> Integer
-unpackNum (Number n) = n
-unpackNum _ = 0
+unpackNum :: LispVal -> ThrowsError Integer
+unpackNum (Number n) = return n
+unpackNum notNum = throwError $ TypeMismatch "number" notNum
 
-typeTest :: LispVal -> [LispVal] -> LispVal
-typeTest (String _) [(String _)] = (Bool True)
-typeTest (Number _) [(Number _)] = (Bool True)
-typeTest (Atom _) [(Atom _)] = (Bool True)
-typeTest _ _ = (Bool False)
+typeTest :: LispVal -> [LispVal] -> ThrowsError LispVal
+typeTest (String _) [(String _)] = return (Bool True)
+typeTest (Number _) [(Number _)] = return (Bool True)
+typeTest (Atom _) [(Atom _)] = return (Bool True)
+typeTest _ _ = return (Bool False)
