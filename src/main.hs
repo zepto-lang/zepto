@@ -1,12 +1,15 @@
 module Main where
-import Types
-import Parser
-import Eval
+import Prompt
 import System.Environment
-import Control.Monad
-import Control.Monad.Error
 
-main :: IO()
+
+main :: IO ()
 main = do args <- getArgs
-          evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
-          putStrLn $ extractValue $ trapError evaled
+          case length args of
+                0 -> runRepl
+                1 -> evalAndPrint $ args !! 0
+                otherwise -> 
+                    putStrLn("R5RS version 0.1" ++
+                    "\nUsage: " ++
+                    "\n\twithout arguments - runs REPL" ++
+                    "\n\t1 arguments - executes single statement")
