@@ -1,6 +1,9 @@
-module Types (LispVal(..), LispError(..), ThrowsError, showVal, showError, trapError, extractValue) where
+module Types (LispVal(..), LispError(..), Unpacker(AnyUnpacker), ThrowsError, 
+              showVal, showError, trapError, extractValue) where
 import Control.Monad.Error
 import Text.ParserCombinators.Parsec.Error
+
+data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 instance Show LispVal where show = showVal
 data LispVal = Atom String

@@ -24,8 +24,12 @@ primitives = [("+", numericBinop (+)),
               ("string?", strBoolBinop (>)),
               ("string<=?", strBoolBinop (<=)),
               ("string>=?", strBoolBinop (>=)),
-              ("symbol?", typeTest (Atom "")),
-              ("number?", typeTest (Number 0))]
+              ("car", car),
+              ("cdr", cdr),
+              ("cons", cons),
+              ("eq?", eqv),
+              ("eqv?", eqv),
+              ("equal?", equal)]
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
@@ -54,8 +58,53 @@ unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
-typeTest :: LispVal -> [LispVal] -> ThrowsError LispVal
-typeTest (String _) [(String _)] = return (Bool True)
-typeTest (Number _) [(Number _)] = return (Bool True)
-typeTest (Atom _) [(Atom _)] = return (Bool True)
-typeTest _ _ = return (Bool False)
+car :: [LispVal] -> ThrowsError LispVal
+car [List (x : xs)] = return x
+car [DottedList (x : xs) _] = return x
+car [badArg] = throwError $ TypeMismatch "pair" badArg
+car badArgList = throwError $ NumArgs 1 badArgList
+
+cdr :: [LispVal] -> ThrowsError LispVal
+cdr [List (x : xs)] = return $ List xs
+cdr [DottedList (_ : xs) x] = return $ DottedList xs x
+cdr [badArg] = throwError $ TypeMismatch "pair" badArg
+cdr badArgList = throwError $ NumArgs 1 badArgList
+
+cons :: [LispVal] -> ThrowsError LispVal
+cons [x, List []] = return $ List [x]
+cons [x, List xs] = return $ List $ [x] ++ xs
+cons [x, DottedList xs xlast] = return $ DottedList ([x] ++ xs) xlast
+cons [x, y] = return $ DottedList [x] y
+cons badArgList = throwError $ NumArgs 2 badArgList
+
+eqv :: [LispVal] -> ThrowsError LispVal
+eqv [(Bool arg1), (Bool arg2)] = return $ Bool $ arg1 == arg2
+eqv [(Number arg1), (Number arg2)] = return $ Bool $ arg1 == arg2
+eqv [(String arg1), (String arg2)] = return $ Bool $ arg1 == arg2
+eqv [(Atom arg1), (Atom arg2)] = return $ Bool $ arg1 == arg2
+eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
+                                  (and $ map eqvPair $ zip arg1 arg2)
+                                  where eqvPair (x, y) = case eqv[x, y] of
+                                                            Left err -> False
+                                                            Right (Bool val) -> val
+eqv [_, _] = return $ Bool False
+eqv badArgList = throwError $ NumArgs 2 badArgList
+
+unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
+unpackEquals x y (AnyUnpacker unpacker) =
+        do unpacked1 <- unpacker x
+           unpacked2 <- unpacker y
+           return $ unpacked1 == unpacked2
+        `catchError` (const $ return False)
+
+equal :: [LispVal] ->ThrowsError LispVal
+equal [x, y] = 
+        do primitiveEquals <- liftM or $ mapM (unpackEquals x y)
+                              [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
+                               AnyUnpacker unpackBool]
+           eqvEquals <- eqv [x, y]
+           return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
+equal badArgList = throwError $ NumArgs 2 badArgList
+
+

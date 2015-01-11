@@ -1,4 +1,4 @@
-override HFLAGS+=-O -XSafe -fwarn-unsafe
+override HFLAGS+=-O -XSafe -XExistentialQuantification -fwarn-unsafe
 PREFIX=/usr/bin/
 BUILDDIR=bin/
 DEBUGDIR=debug/
