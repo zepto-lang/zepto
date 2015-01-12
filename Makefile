@@ -13,6 +13,7 @@ SOURCES=$(wildcard src/*.hs)
 all:
 	mkdir -p $(BUILDDIR)  2> /dev/null
 	$(CC) $(HFLAGS) -package $(LIBS) $(SOURCES) -o $(BUILDDIR)$(TARGET)
+	rm src/*.hi src/*.o
 
 #Uses picky extensions and makes everything(Extensions may break compiling)
 dev:
