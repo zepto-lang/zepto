@@ -18,6 +18,14 @@ all:
 dev:
 	make all HFLAGS+=""
 
+#Stops after each step and saves every intermediate file generated
+debug: pp
+
+#Stops after preprocessing
+pp:
+	mkdir -p $(DEBUGDIR)  2> /dev/null
+	$(CC) $(HFLAGS) -E $(SOURCES)
+	mv src/*.hspp $(DEBUGDIR)
 #Cleans directory(no uninstall!)
 clean: 
 	rm -rf $(BUILDDIR) $(DEBUGDIR)
