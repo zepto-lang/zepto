@@ -126,6 +126,7 @@ eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val@(String _) = return val
 eval env val@(Number _) = return val
 eval env val@(Bool _) = return val
+eval env val@(Character _) = return val
 eval env val@(Atom id) = getVar env id
 eval env (List [Atom "quote", val]) = return val
 eval env (List [Atom "if", pred, conseq, alt]) = do result <- eval env pred
@@ -144,6 +145,8 @@ eval env (List (Atom "lambda" : DottedList params varargs : body)) =
                             makeVarargs varargs env params body
 eval env (List (Atom "lambda" : varargs@(Atom _) : body)) = 
                             makeVarargs varargs env [] body
+eval env (List [Atom "load", String filename]) =
+                            load filename >>= liftM last . mapM (eval env)
 eval env (List (function : args)) = do
                             func <- eval env function
                             argVals <- mapM (eval env) args

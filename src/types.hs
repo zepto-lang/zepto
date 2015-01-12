@@ -30,6 +30,7 @@ data LispVal = Atom String
              | DottedList [LispVal] LispVal
              | Number Integer
              | String String
+             | Character Char
              | Bool Bool
              | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
@@ -59,6 +60,7 @@ showVal (Atom name) = name
 showVal (Number contents) = show contents
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
+showVal (Character c) = show c
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
