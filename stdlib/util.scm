@@ -1,5 +1,8 @@
 (load "stdlib/logical.scm")
 
+(define (nil) ())
+(define (ok) ())
+
 (define (list . objs)
   objs)
 
@@ -124,3 +127,13 @@
 
 (define (every? pred . l)
   (apply and (map pred l)))
+
+(define all? every?)
+
+(define (case x . cs) 
+         if (== cs ())
+            ("No Case Found")
+            (if (== x (caar cs))  
+                (cadar cs) 
+                (unpack case (join (list x) (cdr cs)))))
+
