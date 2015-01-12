@@ -1,4 +1,4 @@
-module Parser(readExpr) where
+module Parser(readExpr, readExprList) where
 import Types
 import Control.Monad
 import Control.Monad.Error
@@ -52,7 +52,7 @@ parseExpr = parseAtom
                return x
 
 readOrThrow :: Parser a -> String -> ThrowsError a
-readOrThrow parser input = case parse parser "lisp" input off
+readOrThrow parser input = case parse parser "lisp" input of
     Left err -> throwError $ Parser err
     Right val -> return val
 

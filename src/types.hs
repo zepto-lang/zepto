@@ -16,6 +16,7 @@ module Types (LispVal(..),
               setVar,
               defineVar,
               bindVars) where
+import System.IO
 import Data.IORef
 import Control.Monad
 import Control.Monad.Error

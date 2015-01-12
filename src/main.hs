@@ -9,7 +9,6 @@ printUsage = putStrLn("R5RS version 0.1\nUsage: " ++
 
 main :: IO ()
 main = do args <- getArgs
-          case length args of
-                0 -> runRepl
-                1 -> runSingleStatement $ args !! 0
-                otherwise -> printUsage
+          if ((args !! 0) ==  "-h")
+                then printUsage
+                else if null args then runRepl else runSingleStatement $ args

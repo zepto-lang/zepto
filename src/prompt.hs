@@ -1,7 +1,6 @@
 module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
-import Eval
 import Primitives
 import System.IO
 import Control.Monad
@@ -30,8 +29,12 @@ evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn
 
-runSingleStatement :: String -> IO ()
-runSingleStatement expr = primitiveBindings >>= flip evalAndPrint expr
+runSingleStatement :: [String] -> IO ()
+runSingleStatement args = do
+    env <- primitiveBindings >>= flip bindVars[("args", 
+                                                List $ map String $ drop 1 args)]
+    (runIOThrows $ liftM show $ eval env (List [Atom "load", String (args !! 0)]))
+        >>= hPutStrLn stderr
 
 runRepl :: IO ()
 runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "R5RS> ") . evalAndPrint
