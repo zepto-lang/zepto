@@ -32,6 +32,17 @@ primitives = [("+", numericBinop (+)),
               ("eqv?", eqv),
               ("equal?", equal)]
 
+ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
+ioPrimitives = [("apply", applyProc),
+                ("open-input-file", makePort ReadMode),
+                ("open-output-file", makePort WriteMode),
+                ("close-input-file", closePort),
+                ("close-output-file", closePort),
+                ("read", readProc),
+                ("write", writeProc),
+                ("read-contents", readContents),
+                ("read-all", readALL)]
+
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op

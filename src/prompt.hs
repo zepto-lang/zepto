@@ -2,9 +2,15 @@ module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
 import Eval
-import Environment
+import Primitives
 import System.IO
 import Control.Monad
+
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
+                                map (makeFunc PrimitiveFunc) primitives)
+                where makeFunc constructor (var, func) = (var, constructor func)
 
 until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
 until_ pred prompt action = do result <- prompt
@@ -25,7 +31,7 @@ evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn
 
 runSingleStatement :: String -> IO ()
-runSingleStatement expr = nullEnv >>= flip evalAndPrint expr
+runSingleStatement expr = primitiveBindings >>= flip evalAndPrint expr
 
 runRepl :: IO ()
-runRepl = nullEnv >>= until_ (== "quit") (readPrompt "R5RS> ") . evalAndPrint
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "R5RS> ") . evalAndPrint
