@@ -148,8 +148,8 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (eval env)
 eval env (List [Atom "print", String val]) = eval env $ String val
-eval env (List [Atom "print", List val]) = eval env  $ List val
 eval env (List [Atom "print", List (function : args)]) = eval env $ List (function : args)
+eval env (List [Atom "print", List val]) = eval env  $ List val
 eval env (List [Atom "print", Atom val]) = eval env $ Atom val
 eval env (List [Atom "print", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
 eval env (List [Atom "print", Number val]) = return $ String $ showVal $ Number val
@@ -197,6 +197,7 @@ apply (Func params varargs body closure) args =
               bindVarArgs arg env = case arg of
                 Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
                 Nothing -> return env
+apply badVal badArgs = throwError $ BadSpecialForm "Unrecognized special form " badVal
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args

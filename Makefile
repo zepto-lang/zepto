@@ -24,13 +24,13 @@ debug: pp
 
 #Stops after preprocessing
 pp:
-	mkdir -p $(DEBUGDIR)  2> /dev/null
+	mkdir -p $(DEBUGDIR) 
 	$(CC) $(HFLAGS) -E $(SOURCES)
 	mv src/*.hspp $(DEBUGDIR)
 #Cleans directory(no uninstall!)
 clean: 
 	rm -rf $(BUILDDIR) $(DEBUGDIR)
-	rm src/*.hi src/*.o
+	rm src/*.hi src/*.o 2> /dev/null || true
 
 #Installs into specified(or default) directory
 install:
