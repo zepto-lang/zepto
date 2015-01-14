@@ -2,7 +2,8 @@ module Parser(readExpr, readExprList) where
 import Types
 import Numeric
 import Control.Monad
-import Control.Monad.Error
+import System.Environment
+import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
 
 symbol :: Parser Char
@@ -78,6 +79,10 @@ parseQuoted = do char '\''
                  x <- parseExpr
                  return $ List [Atom "quote", x]
 
+parseLet :: Parser LispVal
+parseLet = do string "let"
+              return $ Atom "define"
+
 parseBool = do string "#"
                x <- oneOf "tf"
                return $ case x of
@@ -95,7 +100,8 @@ parseCharName = do x <- try (string "space" <|> string "newline")
                     "newline" -> do return '\n'
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
+parseExpr = try parseLet
+        <|> parseAtom
         <|> parseString
         <|> parseQuoted
         <|> try parseNumber

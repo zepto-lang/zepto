@@ -2,7 +2,7 @@ module Primitives(primitives, ioPrimitives, eval) where
 import Types
 import Parser
 import System.IO
-import Control.Monad.Error
+import Control.Monad.Except
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),

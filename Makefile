@@ -17,7 +17,7 @@ all:
 
 #Uses picky extensions and makes everything(Extensions may break compiling)
 dev:
-	make all HFLAGS+=""
+	make all HFLAGS+="-dcore-lint"
 
 #Stops after each step and saves every intermediate file generated
 debug: pp

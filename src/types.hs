@@ -19,7 +19,7 @@ module Types (LispVal(..),
 import System.IO
 import Data.IORef
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import Text.ParserCombinators.Parsec.Error
 
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
@@ -39,9 +39,6 @@ data LispVal = Atom String
                      body :: [LispVal], closure :: Env}
 
 instance Show LispError where show = showError
-instance Error LispError where
-                        noMsg = Default "An error has occurred"
-                        strMsg = Default
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | Parser ParseError
@@ -52,7 +49,7 @@ data LispError = NumArgs Integer [LispVal]
 
 type ThrowsError = Either LispError
 type Env = IORef [(String, IORef LispVal)]
-type IOThrowsError = ErrorT LispError IO
+type IOThrowsError = ExceptT LispError IO
 
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""
@@ -78,7 +75,8 @@ showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form
 showError (NotFunction message func) = message ++ ": " ++ show func
 showError (NumArgs expected found) = "Expected " ++ show expected ++
-                                    " args: found values " ++ unwordsList found
+                                    " args; found " ++ show (length found) 
+                                    ++ "; values are " ++ unwordsList found
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found
 showError (Parser parseErr) = "Parse error at " ++ show parseErr
@@ -99,7 +97,7 @@ liftThrows (Left err) = throwError err
 liftThrows (Right val) = return val
 
 runIOThrows :: IOThrowsError String -> IO String
-runIOThrows action = runErrorT (trapError action) >>= return . extractValue
+runIOThrows action = runExceptT (trapError action) >>= return . extractValue
 
 isBound :: Env -> String -> IO Bool
 isBound envRef var = readIORef envRef >>= 
