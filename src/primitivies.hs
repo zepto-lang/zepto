@@ -135,7 +135,7 @@ eval env (List [Atom "if", pred, conseq, alt]) = do result <- eval env pred
                                                         otherwise -> eval env conseq
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
-eval env (List (Atom "define" : List (Atom var: params) : body)) = 
+eval env (List (Atom "define" : List (Atom var : params) : body)) = 
                             makeNormalFunc env params body >>= defineVar env var
 eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
                             makeVarargs varargs env params body >>= defineVar env var
