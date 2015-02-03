@@ -2,8 +2,22 @@ module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
 import Primitives
+import Data.List
 import System.IO
 import Control.Monad
+import System.Console.Haskeline
+import System.Console.Haskeline.History
+
+completion = ["print", "error", "lambda", "quoted"]
+
+completionSearch :: String -> [Completion]
+completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) completion
+
+addSettings :: Settings IO
+addSettings = Settings { historyFile = Just ".r5rs_history"
+                       , complete = completeWord Nothing " \t" $ return . completionSearch
+                       , autoAddHistory = True
+                       }
 
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
@@ -20,7 +34,14 @@ flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout
 
 readPrompt :: String -> IO String
-readPrompt prompt = flushStr prompt >> getLine
+readPrompt prompt = runInputT addSettings $ poll prompt
+                where
+                    poll :: String -> InputT IO String
+                    poll prompt = do
+                        input <- getInputLine prompt
+                        case input of
+                            Nothing -> return "(print \"\")"
+                            Just strinput -> return strinput
 
 evalString :: Env -> String -> IO String
 evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
