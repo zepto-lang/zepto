@@ -52,7 +52,7 @@ type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ExceptT LispError IO
 
 showVal :: LispVal -> String
-showVal (String contents) = "\"" ++ contents ++ "\""
+showVal (String contents) = "<String : " ++ contents ++ ">"
 showVal (Atom name) = name
 showVal (Number contents) = show contents
 showVal (Bool True) = "#t"

@@ -8,10 +8,13 @@ import Control.Monad
 import System.Console.Haskeline
 import System.Console.Haskeline.History
 
-completion = ["print", "error", "lambda", "quoted"]
+completion = ["print", "error", "lambda", "quote", "define", "if", "set!", 
+              "apply", "open-input-file", "open-output-file", 
+              "close-input-file", "close-output-file", "read", "write",
+              "read-contents", "read-all"]
 
 completionSearch :: String -> [Completion]
-completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) completion
+completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ map("(" ++) completion
 
 addSettings :: Settings IO
 addSettings = Settings { historyFile = Just ".r5rs_history"

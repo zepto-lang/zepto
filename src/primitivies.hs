@@ -197,7 +197,10 @@ apply (Func params varargs body closure) args =
               bindVarArgs arg env = case arg of
                 Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
                 Nothing -> return env
-apply badVal badArgs = throwError $ BadSpecialForm "Unrecognized special form " badVal
+apply badVal badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ foldl concatenate badVal badArgs 
+        where 
+            concatenate :: LispVal -> LispVal -> LispVal
+            concatenate a b = String $ (showVal a) ++  " " ++ (showVal b)
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
