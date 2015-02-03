@@ -51,6 +51,7 @@ type ThrowsError = Either LispError
 type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ExceptT LispError IO
 
+
 showVal :: LispVal -> String
 showVal (String contents) = "<String : " ++ contents ++ ">"
 showVal (Atom name) = name

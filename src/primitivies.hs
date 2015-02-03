@@ -154,9 +154,9 @@ eval env (List [Atom "print", Atom val]) = eval env $ Atom val
 eval env (List [Atom "print", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
 eval env (List [Atom "print", Number val]) = return $ String $ showVal $ Number val
 eval env (List (function : args)) = do
-                            func <- eval env function
-                            argVals <- mapM (eval env) args
-                            apply func argVals
+                                        func <- eval env function
+                                        argVals <- mapM (eval env) args
+                                        apply func argVals
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 
@@ -186,6 +186,7 @@ readAll [String filename] = liftM List $ load filename
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (IOFunc func) args = func args
 apply (Func params varargs body closure) args =
     if num params /= num args && varargs == Nothing
         then throwError $ NumArgs (num params) args
