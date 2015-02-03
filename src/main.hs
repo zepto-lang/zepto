@@ -4,8 +4,8 @@ import System.Environment
 
 printUsage :: IO ()
 printUsage = putStrLn("R5RS version 0.1\nUsage: " ++
-                    "\n\twithout arguments - runs REPL" ++
-                    "\n\t1 argument - executes single statement")
+                    "\n\twithout arguments\t- runs REPL" ++
+                    "\n\t1 argument\t\t- executes single statement")
 
 main :: IO ()
 main = do args <- getArgs

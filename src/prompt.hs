@@ -5,7 +5,6 @@ import Primitives
 import System.IO
 import Control.Monad
 
-
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
                                 map (makeFunc PrimitiveFunc) primitives)
