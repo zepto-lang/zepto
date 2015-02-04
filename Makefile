@@ -7,7 +7,7 @@ LIBS=parsec
 CC=ghc
 
 TARGET=r5rs
-SOURCES=$(filter-out src/primitivies.hs, $(wildcard src/*.hs))
+SOURCES=$(wildcard src/*.hs)
 
 #Makes everything
 all:
