@@ -5,14 +5,16 @@ import System.Environment
 printUsage :: IO ()
 printUsage = do printVersion
                 putStrLn("Usage: " ++
-                    "\n\twithout arguments\t- runs REPL" ++
-                    "\n\t1 argument\t\t- executes single statement")
+                         "\n\twithout arguments  - runs REPL" ++
+                         "\n\t-h/--help          - display this help message" ++
+                         "\n\t<some scheme file> - run file")
 
 printVersion :: IO ()
 printVersion = putStrLn "R5RS Version 0.2"
 
 printCommands :: IO ()
-printCommands = putStrLn "Type 'quit' or press Ctrl-C to exit interpreter"
+printCommands = putStrLn("Type 'quit' or press Ctrl-C to exit interpreter\n" ++
+                         "Type 'help' to get a simple help message")
 
 main :: IO ()
 main = do args <- getArgs
@@ -22,5 +24,5 @@ main = do args <- getArgs
                       putStrLn ""
                       runRepl
               else 
-                  if ((args !! 0) ==  "-h") then printUsage 
+                  if(((args !! 0) ==  "-h") || ((args !! 0) == "--help")) then printUsage 
                   else runSingleStatement $ args
