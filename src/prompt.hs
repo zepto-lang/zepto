@@ -11,7 +11,7 @@ import System.Console.Haskeline.History
 completion = ["print", "error", "lambda", "quote", "define", "if", "set!", 
               "apply", "open-input-file", "open-output-file", 
               "close-input-file", "close-output-file", "read", "write",
-              "read-contents", "read-all"]
+              "read-contents", "read-all", "let"]
 
 completionSearch :: String -> [Completion]
 completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ map("(" ++) completion
@@ -27,11 +27,27 @@ primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimiti
                                 map (makeFunc PrimitiveFunc) primitives)
                 where makeFunc constructor (var, func) = (var, constructor func)
 
-until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+printHelp :: IO ()
+printHelp = putStrLn("apply  - apply function to value\n" ++
+                     "define - define global variable\n" ++
+                     "error  - print value to stderr\n" ++
+                     "help   - display this help message(use without s-expression)\n" ++
+                     "if     - branch on condition\n" ++
+                     "lambda - create unnamed function\n" ++
+                     "let    - define local variable\n" ++
+                     "print  - print value to stdout\n" ++
+                     "quit   - quit interpreter(use without s-expression)")
+
+-- That's dead wrong; what is right?
+-- until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
 until_ pred prompt action = do result <- prompt
                                if pred result
                                then return ()
-                               else action result >> until_ pred prompt action
+                               else do 
+                                   if (result == "help") then do
+                                       printHelp
+                                       until_ pred prompt action
+                                   else action result >> until_ pred prompt action
 
 flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout
