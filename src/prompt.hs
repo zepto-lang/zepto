@@ -42,7 +42,9 @@ printHelp = putStrLn("apply  - apply function to value\n" ++
 -- until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
 until_ pred prompt action = do result <- prompt
                                if pred result
-                               then return ()
+                               then do
+                                    putStrLn("\nMoriturus te saluto.")
+                                    return ()
                                else do 
                                    if (result == "help") then do
                                        printHelp
