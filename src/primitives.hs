@@ -5,7 +5,7 @@ import System.IO
 import Control.Monad.Except
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
-primitives = [("+", numericBinop (+), "add two value"),
+primitives = [("+", numericBinop (+), "add two values"),
               ("-", numericBinop (-), "subtract two values"),
               ("*", numericBinop (*), "multiply two values"),
               ("/", numericBinop div, "divide two values"),
