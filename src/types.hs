@@ -27,6 +27,16 @@ import Text.ParserCombinators.Parsec.Error
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 instance Show LispNum where show = showNum
+instance Eq LispNum where
+    (NumI x) == (NumI y) = x == y
+    (NumF x) == (NumI y) = x == (fromIntegral y)
+    (NumI x) == (NumF y) = (fromIntegral x) == y
+    (NumF x) == (NumF y) = x == y
+instance Ord LispNum where
+    compare (NumI x) (NumI y) = compare x y
+    compare (NumF x) (NumI y) = compare x (fromIntegral y)
+    compare (NumI x) (NumF y) = compare (fromIntegral x) y
+    compare (NumF x) (NumF y) = compare x y
 instance Num LispNum where
     (NumI x) + (NumI y) = NumI $ x + y
     (NumF x) + (NumI y) = NumF $ x + (fromIntegral y)
@@ -50,6 +60,8 @@ instance Num LispNum where
 instance Integral LispNum where
     toInteger (NumI x) = x
     quotRem (NumI x) (NumI y) = ((NumI $ (quot x y)), (NumI $(rem x y)))
+    quotRem (NumF x) (NumI y) = ((NumF $ (x / (fromIntegral y))), (NumF $(mod' x (fromIntegral y))))
+    quotRem (NumI x) (NumF y) = ((NumF $ ((fromIntegral x) / y)), (NumF $(mod' (fromIntegral x) y)))
     quotRem (NumF x) (NumF y) = ((NumF $ ( x / y)), (NumF $(mod' x y)))
 instance Real LispNum where
     toRational (NumI x) = toRational x
@@ -60,7 +72,6 @@ instance Enum LispNum where
     -- fromEnum-}
 data LispNum = NumI Integer
              | NumF Double
-    deriving (Eq, Ord)
 
 instance Show LispVal where show = showVal
 data LispVal = Atom String

@@ -5,8 +5,8 @@ import System.IO
 import Control.Monad.Except
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
-primitives = [("+", numericBinop (+), "add two values"),
-              ("-", numericUnBinop (-), "subtract two values/negate value"),
+primitives = [("+", numericPlusop (+), "add two values"),
+              ("-", numericMinop (-), "subtract two values/negate value"),
               ("*", numericBinop (*), "multiply two values"),
               ("/", numericBinop div, "divide two values"),
               ("mod", numericBinop mod, "modulo of two values"),
@@ -50,10 +50,14 @@ numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError Lisp
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 
-numericUnBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericUnBinop op singleVal@[(Number (NumI l))] = return $ Number $ negate $ NumI l
-numericUnBinop op singleVal@[(Number (NumF l))] = return $ Number $ negate $ NumF l
-numericUnBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
+numericMinop op singleVal@[(Number l)] = return $ Number $ negate l
+numericMinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+
+numericPlusop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
+numericPlusop op singleVal@[(Number l)] = if(l > 0) then return $ Number $ l
+                                          else return $ Number $ negate l
+numericPlusop op params = mapM unpackNum params >>= return . Number . foldl1 op
 
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
@@ -138,7 +142,6 @@ eval env val@(String _) = return val
 eval env val@(Number _) = return val
 eval env val@(Bool _) = return val
 eval env val@(Character _) = return val
-eval env val@(Atom id) = getVar env id
 eval env (List [Atom "quote", val]) = return val
 eval env (List [Atom "if", pred, conseq, alt]) = do result <- eval env pred
                                                     case result of
@@ -164,6 +167,7 @@ eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval env (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
 eval env (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
+eval env val@(Atom id) = getVar env id
 eval env (List (function : args)) = do
                                         func <- eval env function
                                         argVals <- mapM (eval env) args
