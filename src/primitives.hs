@@ -3,7 +3,6 @@ import Types
 import Parser
 import System.IO
 import Control.Monad.Except
-import Debug.Trace
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [("+", numericBinop (+), "add two values"),
