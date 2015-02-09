@@ -1,4 +1,5 @@
-module Types (LispVal(..), 
+module Types (LispNum(..),
+              LispVal(..), 
               LispError(..), 
               Unpacker(AnyUnpacker), 
               ThrowsError, 
@@ -16,6 +17,7 @@ module Types (LispVal(..),
               setVar,
               defineVar,
               bindVars) where
+import Data.Int
 import System.IO
 import Data.IORef
 import Control.Monad
@@ -24,11 +26,41 @@ import Text.ParserCombinators.Parsec.Error
 
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
+instance Show LispNum where show = showNum
+instance Num LispNum where
+    (NumI x) + (NumI y) = NumI $ x + y
+    (NumF x) + (NumF y) = NumF $ x + y
+    (NumI x) * (NumI y) = NumI $ x * y
+    (NumF x) * (NumF y) = NumF $ x * y
+    (NumI x) - (NumI y) = NumI $ x - y
+    (NumF x) - (NumF y) = NumF $ x - y
+    negate (NumI x) = NumI $ negate x
+    negate (NumF x) = NumF $ negate x
+    abs (NumI x) = NumI $ abs x
+    abs (NumF x) = NumF $ abs x
+    signum (NumI x) = NumI $ signum x
+    signum (NumF x) = NumF $ signum x
+    fromInteger x = NumI $ fromInteger x
+instance Integral LispNum where
+    toInteger (NumI x) = x
+    {-quotRem (NumI x) (NumI y) = do z <- quotRem x y
+                                   return (NumI $ (fst z), NumI $ (snd z))-}
+instance Real LispNum where
+    toRational (NumI x) = toRational x
+    toRational (NumF x) = toRational x
+instance Enum LispNum where
+    {-toEnum (NumI x) = toEnum $ Int x
+    toEnum (NumF x) = toEnum x
+    -- fromEnum-}
+data LispNum = NumI Integer
+             | NumF Float
+    deriving (Eq, Ord)
+
 instance Show LispVal where show = showVal
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
-             | Number Integer
+             | Number LispNum
              | String String
              | Character Char
              | Bool Bool
@@ -51,14 +83,17 @@ type ThrowsError = Either LispError
 type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ExceptT LispError IO
 
+showNum :: LispNum -> String
+showNum (NumF contents) = show contents
+showNum (NumI contents) = show contents
 
 showVal :: LispVal -> String
 showVal (String contents) = "<String : " ++ contents ++ ">"
 showVal (Atom name) = name
-showVal (Number contents) = show contents
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
 showVal (Character c) = show c
+showVal (Number n) = showNum n
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"

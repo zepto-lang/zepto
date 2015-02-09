@@ -6,7 +6,7 @@ import Control.Monad.Except
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [("+", numericBinop (+), "add two values"),
-              ("-", numericBinop (-), "subtract two values"),
+              ("-", numericUnBinop (-), "subtract two values/negate value"),
               ("*", numericBinop (*), "multiply two values"),
               ("/", numericBinop div, "divide two values"),
               ("mod", numericBinop mod, "modulo of two values"),
@@ -46,9 +46,14 @@ ioPrimitives = [("apply", applyProc, "apply function"),
                 ("read-contents", readContents, "read contents of file"),
                 ("read-all", readAll, "read and parse file")]
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+
+numericUnBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
+numericUnBinop op singleVal@[(Number (NumI l))] = return $ Number $ negate $ NumI l
+numericUnBinop op singleVal@[(Number (NumF l))] = return $ Number $ negate $ NumF l
+numericUnBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
@@ -61,7 +66,7 @@ numBoolBinop = boolBinop unpackNum
 strBoolBinop = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
 
-unpackNum :: LispVal -> ThrowsError Integer
+unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (Number n) = return n
 unpackNum notNum = throwError $ TypeMismatch "number" notNum
 

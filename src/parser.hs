@@ -1,6 +1,7 @@
 module Parser(readExpr, readExprList) where
 import Types
 import Numeric
+import Debug.Trace
 import Control.Monad
 import System.Environment
 import Control.Monad.Except
@@ -28,7 +29,8 @@ parseAtom = do first <- letter <|> symbol
                         otherwise -> Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = do num <- parseDigital1 
+parseNumber = do num <- try parseReal 
+                    <|> parseDigital1
                     <|> parseDigital2 
                     <|> parseHex 
                     <|> parseOct 
@@ -37,27 +39,27 @@ parseNumber = do num <- parseDigital1
 
 parseDigital1 :: Parser LispVal
 parseDigital1 = do x <- many1 digit 
-                   (return . Number . read) x
+                   (return . Number . NumI . read) x
 
 parseDigital2 :: Parser LispVal
 parseDigital2 = do try $ string "#d" 
                    x <- many1 digit 
-                   (return . Number . read) x
+                   (return . Number . NumI . read) x
 
 parseHex :: Parser LispVal
 parseHex = do try $ string "#x"
               x <- many1 hexDigit
-              return $ Number (hex2dig x)
+              return $ Number $ NumI (hex2dig x)
 
 parseOct :: Parser LispVal
 parseOct = do try $ string "#o"
               x <- many1 octDigit
-              return $ Number (oct2dig x)
+              return $ Number $ NumI (oct2dig x)
 
 parseBin :: Parser LispVal
 parseBin = do try $ string "#b"
               x <- many1 (oneOf "10")
-              return $ Number (bin2dig x)
+              return $ Number $ NumI (bin2dig x)
 
 oct2dig x = fst $ readOct x !! 0
 hex2dig x = fst $ readHex x !! 0
@@ -65,6 +67,12 @@ bin2dig = bin2digx 0
 bin2digx digint "" = digint
 bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in 
                             bin2digx old xs
+
+parseReal :: Parser LispVal
+parseReal = do before <- many1 digit 
+               string "."
+               after <- many1 digit
+               (return . Number . NumF . read) (before ++ "." ++ after)
 
 parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
