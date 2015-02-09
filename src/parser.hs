@@ -1,7 +1,6 @@
 module Parser(readExpr, readExprList) where
 import Types
 import Numeric
-import Debug.Trace
 import Control.Monad
 import System.Environment
 import Control.Monad.Except
@@ -38,7 +37,7 @@ parseNumber = do num <- try parseReal
                  return num
 
 parseReal :: Parser LispVal
-parseReal = do neg <- optionMaybe $ optional (string "-")
+parseReal = do neg <- optionMaybe $ string "-"
                before <- many1 digit
                string "."
                after <- many1 digit
@@ -47,7 +46,7 @@ parseReal = do neg <- optionMaybe $ optional (string "-")
                     Nothing -> (return . Number . NumF . read) (before ++ "." ++ after)
 
 parseDigital1 :: Parser LispVal
-parseDigital1 = do neg <- optionMaybe $ optional (string "-")
+parseDigital1 = do neg <- optionMaybe $ string "-"
                    x <- many1 digit
                    case neg of
                       Just _ -> (return . Number . NumI . read) ("-" ++ x)
