@@ -17,7 +17,7 @@ module Types (LispNum(..),
               setVar,
               defineVar,
               bindVars) where
-import Data.Int
+import Data.Fixed
 import System.IO
 import Data.IORef
 import Control.Monad
@@ -29,10 +29,16 @@ data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 instance Show LispNum where show = showNum
 instance Num LispNum where
     (NumI x) + (NumI y) = NumI $ x + y
+    (NumF x) + (NumI y) = NumF $ x + (fromIntegral y)
+    (NumI x) + (NumF y) = NumF $ (fromIntegral x) + y
     (NumF x) + (NumF y) = NumF $ x + y
     (NumI x) * (NumI y) = NumI $ x * y
+    (NumF x) * (NumI y) = NumF $ x * (fromIntegral y)
+    (NumI x) * (NumF y) = NumF $ (fromIntegral x) * y
     (NumF x) * (NumF y) = NumF $ x * y
     (NumI x) - (NumI y) = NumI $ x - y
+    (NumF x) - (NumI y) = NumF $ x - (fromIntegral y)
+    (NumI x) - (NumF y) = NumF $ (fromIntegral x) - y
     (NumF x) - (NumF y) = NumF $ x - y
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
@@ -43,8 +49,8 @@ instance Num LispNum where
     fromInteger x = NumI $ fromInteger x
 instance Integral LispNum where
     toInteger (NumI x) = x
-    {-quotRem (NumI x) (NumI y) = do z <- quotRem x y
-                                   return (NumI $ (fst z), NumI $ (snd z))-}
+    quotRem (NumI x) (NumI y) = ((NumI $ (quot x y)), (NumI $(rem x y)))
+    quotRem (NumF x) (NumF y) = ((NumF $ ( x / y)), (NumF $(mod' x y)))
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
@@ -53,7 +59,7 @@ instance Enum LispNum where
     toEnum (NumF x) = toEnum x
     -- fromEnum-}
 data LispNum = NumI Integer
-             | NumF Float
+             | NumF Double
     deriving (Eq, Ord)
 
 instance Show LispVal where show = showVal

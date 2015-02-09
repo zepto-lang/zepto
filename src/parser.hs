@@ -29,17 +29,29 @@ parseAtom = do first <- letter <|> symbol
                         otherwise -> Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = do num <- try parseReal 
+parseNumber = do num <- try parseReal
                     <|> parseDigital1
                     <|> parseDigital2 
                     <|> parseHex 
                     <|> parseOct 
                     <|> parseBin
-                 return $ num
+                 return num
+
+parseReal :: Parser LispVal
+parseReal = do neg <- optionMaybe $ optional (string "-")
+               before <- many1 digit
+               string "."
+               after <- many1 digit
+               case neg of
+                    Just _ -> (return . Number . NumF . read) ("-" ++ before ++ "." ++ after)
+                    Nothing -> (return . Number . NumF . read) (before ++ "." ++ after)
 
 parseDigital1 :: Parser LispVal
-parseDigital1 = do x <- many1 digit 
-                   (return . Number . NumI . read) x
+parseDigital1 = do neg <- optionMaybe $ optional (string "-")
+                   x <- many1 digit
+                   case neg of
+                      Just _ -> (return . Number . NumI . read) ("-" ++ x)
+                      Nothing -> (return . Number . NumI . read) x
 
 parseDigital2 :: Parser LispVal
 parseDigital2 = do try $ string "#d" 
@@ -67,12 +79,6 @@ bin2dig = bin2digx 0
 bin2digx digint "" = digint
 bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in 
                             bin2digx old xs
-
-parseReal :: Parser LispVal
-parseReal = do before <- many1 digit 
-               string "."
-               after <- many1 digit
-               (return . Number . NumF . read) (before ++ "." ++ after)
 
 parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
@@ -109,10 +115,10 @@ parseCharName = do x <- try (string "space" <|> string "newline")
 
 parseExpr :: Parser LispVal
 parseExpr = try parseLet
+        <|> try parseNumber
         <|> parseAtom
         <|> parseString
         <|> parseQuoted
-        <|> try parseNumber
         <|> try parseBool
         <|> try parseChar
         <|> do char '('
