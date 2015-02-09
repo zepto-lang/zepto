@@ -75,7 +75,7 @@ unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
 printNewline :: [LispVal] -> ThrowsError LispVal
-printNewline [] = return $ String "\n"
+printNewline [] = return $ String $ unlines [""]
 printNewline [badArg] = throwError $ TypeMismatch "nothing" badArg
 printNewline badArgList = throwError $ NumArgs 1 badArgList
 
