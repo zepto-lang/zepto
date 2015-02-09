@@ -32,15 +32,15 @@ printHelp = mapM(putStrLn) $ map(getHelp) primitives
                       thirdEl (_, _, x) = x
 
 printPrimitives :: IO ()
-printPrimitives = putStrLn("apply  - apply function to value\n" ++
-                           "define - define global variable\n" ++
-                           "error  - print value to stderr\n" ++
-                           "help   - display this help message(use without s-expression)\n" ++
-                           "if     - branch on condition\n" ++
-                           "lambda - create unnamed function\n" ++
-                           "let    - define local variable\n" ++
-                           "print  - print value to stdout\n" ++
-                           "quit   - quit interpreter(use without s-expression)")
+printPrimitives = putStrLn("apply   - apply function to value\n" ++
+                           "define  - define global variable\n" ++
+                           "error   - print value to stderr\n" ++
+                           "help    - display this help message(use without s-expression)\n" ++
+                           "if      - branch on condition\n" ++
+                           "lambda  - create unnamed function\n" ++
+                           "let     - define local variable\n" ++
+                           "display - print value to stdout\n" ++
+                           "quit    - quit interpreter(use without s-expression)")
 
 -- That's dead wrong; what is right?
 -- until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()

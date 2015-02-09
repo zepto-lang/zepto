@@ -3,6 +3,7 @@ import Types
 import Parser
 import System.IO
 import Control.Monad.Except
+import Debug.Trace
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [("+", numericBinop (+), "add two values"),
@@ -27,6 +28,7 @@ primitives = [("+", numericBinop (+), "add two values"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
               ("string<=?", strBoolBinop (<=), "compare equality of two strings"),
               ("string>=?", strBoolBinop (>=), "compare equality of two strings"),
+              ("newline", printNewline, "print a newline"),
               ("car", car, "take head of list"),
               ("cdr", cdr, "take tail of list"),
               ("cons", cons, "construct list"),
@@ -71,6 +73,11 @@ unpackStr notString = throwError $ TypeMismatch "string" notString
 unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
+
+printNewline :: [LispVal] -> ThrowsError LispVal
+printNewline [] = return $ String "\n"
+printNewline [badArg] = throwError $ TypeMismatch "nothing" badArg
+printNewline badArgList = throwError $ NumArgs 1 badArgList
 
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)] = return x
@@ -147,12 +154,12 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
                             makeVarargs varargs env [] body
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (eval env)
-eval env (List [Atom "print", String val]) = eval env $ String val
-eval env (List [Atom "print", List (function : args)]) = eval env $ List (function : args)
-eval env (List [Atom "print", List val]) = eval env  $ List val
-eval env (List [Atom "print", Atom val]) = eval env $ Atom val
-eval env (List [Atom "print", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
-eval env (List [Atom "print", Number val]) = return $ String $ showVal $ Number val
+eval env (List [Atom "display", String val]) = eval env $ String val
+eval env (List [Atom "display", List (function : args)]) = eval env $ List (function : args)
+eval env (List [Atom "display", List val]) = eval env  $ List val
+eval env (List [Atom "display", Atom val]) = eval env $ Atom val
+eval env (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
+eval env (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
 eval env (List (function : args)) = do
                                         func <- eval env function
                                         argVals <- mapM (eval env) args
