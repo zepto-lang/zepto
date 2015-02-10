@@ -191,48 +191,48 @@ closePort _ = return $ Bool False
 
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
-readProc [Port port] = (liftIO $ hGetLine port) >>= liftThrows . readExpr
-readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
+readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 writeProc :: [LispVal] -> IOThrowsError LispVal
 writeProc [obj] = writeProc [obj, Port stdout]
-writeProc [obj, Port port] = liftIO $ hPrint port obj >> (return $ Bool True)
-writeProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+writeProc [obj, Port port] = liftIO $ hPrint port obj >> return (Bool True)
+writeProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [String filename] = liftM String $ liftIO $ readFile filename
-readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs 
 
 load :: String -> IOThrowsError [LispVal]
-load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
+load filename = liftIO $ readFile filename >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename
-readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (IOFunc func) args = func args
 apply (Func p varargs b c) args =
-    if num p /= num args && varargs == Nothing
+    if num p /= num args && isNothing varargs
         then throwError $ NumArgs (num p) args
-        else (liftIO $ bindVars c $ zip p args) >>=
+        else liftIO (bindVars c $ zip p args) >>=
             bindVarArgs varargs >>= evalBody
         where remainingArgs = drop (length p) args
               num = toInteger . length
               evalBody env = liftM last $ mapM (eval env) b
               bindVarArgs arg env = case arg of
-                Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+                Just argName -> liftIO $ bindVars env [(argName, List remainingArgs)]
                 Nothing -> return env
 apply badVal badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ foldl concatenate badVal badArgs 
         where 
             concatenate :: LispVal -> LispVal -> LispVal
-            concatenate a b = String $ (showVal a) ++  " " ++ (showVal b)
+            concatenate a b = String $ showVal a ++  " " ++ showVal b
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args
-applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
 makeFunc varargs env p b = return $ Func (map showVal p) varargs b env

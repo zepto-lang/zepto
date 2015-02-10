@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
@@ -10,8 +9,8 @@ import System.Console.Haskeline
 
 completionSearch :: String -> [Completion]
 completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       (map(extractString) primitives) ++ (map(extractString) ioPrimitives)
-                where extractString tuple = "(" ++ (firstEl tuple)
+                       map extractString primitives ++ map extractString ioPrimitives
+                where extractString tuple = "(" ++ firstEl tuple
                       firstEl (x, _, _) = x
 
 addSettings :: Settings IO
@@ -21,14 +20,14 @@ addSettings = Settings { historyFile = Just ".r5rs_history"
                        }
 
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
-                                map (makeFunc PrimitiveFunc) primitives)
+primitiveBindings = nullEnv >>= flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
+                                map (makeFunc PrimitiveFunc) primitives
                 where makeFunc constructor (var, func, _) = (var, constructor func)
 
 printHelp :: IO [()]
-printHelp = mapM(putStrLn) $ ["Primitives:"] ++ (map(getHelp) primitives) ++ 
-                             ["", "IO Primitives:"] ++ (map(getHelp) ioPrimitives) ++ [""]
-                where getHelp tuple = (firstEl tuple) ++ " - " ++ (thirdEl tuple)
+printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++ 
+                             ["", "IO Primitives:"] ++ map getHelp ioPrimitives ++ [""]
+                where getHelp tuple = firstEl tuple ++ " - " ++ thirdEl tuple
                       firstEl (x, _, _) = x
                       thirdEl (_, _, x) = x
 
@@ -44,14 +43,14 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "display - print value to stdout\n" ++
                            "quit    - quit interpreter(use without s-expression)")
 
-until_ :: ([Char] -> Bool) -> IO [Char] -> ([Char] -> IO a) -> IO ()
+until_ :: (String -> Bool) -> IO String -> (String -> IO a) -> IO ()
 until_ predicate prompt action = do result <- prompt
                                     if predicate result
                                     then do
-                                        putStrLn("\nMoriturus te saluto.")
+                                        putStrLn "\nMoriturus te saluto."
                                         return ()
-                                    else do 
-                                        if (result == "help") then do
+                                    else 
+                                        if result == "help" then do
                                             _ <- printHelp
                                             printKeywords
                                             until_ predicate prompt action
@@ -68,7 +67,7 @@ readPrompt prompt = runInputT addSettings $ poll prompt
                             Just strinput -> return strinput
 
 evalString :: Env -> String -> IO String
-evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
+evalString env expr = runIOThrows $ liftM show $ liftThrows $ readExpr expr >>= eval env
 
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn
@@ -77,7 +76,7 @@ runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
     env <- primitiveBindings >>= flip bindVars[("args", 
                                                 List $ map String $ drop 1 args)]
-    (runIOThrows $ liftM show $ eval env (List [Atom "load", String (args !! 0)]))
+    runIOThrows $ liftM show $ eval env (List [Atom "load", String head args])
         >>= hPutStrLn stderr
 
 runRepl :: IO ()

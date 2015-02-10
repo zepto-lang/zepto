@@ -29,8 +29,8 @@ data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 instance Show LispNum where show = showNum
 instance Eq LispNum where
     (NumI x) == (NumI y) = x == y
-    (NumF x) == (NumI y) = x == (fromIntegral y)
-    (NumI x) == (NumF y) = (fromIntegral x) == y
+    (NumF x) == (NumI y) = x == fromIntegral y
+    (NumI x) == (NumF y) = fromIntegral x == y
     (NumF x) == (NumF y) = x == y
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
@@ -39,16 +39,16 @@ instance Ord LispNum where
     compare (NumF x) (NumF y) = compare x y
 instance Num LispNum where
     (NumI x) + (NumI y) = NumI $ x + y
-    (NumF x) + (NumI y) = NumF $ x + (fromIntegral y)
-    (NumI x) + (NumF y) = NumF $ (fromIntegral x) + y
+    (NumF x) + (NumI y) = NumF $ x + fromIntegral y
+    (NumI x) + (NumF y) = NumF $ fromIntegral x + y
     (NumF x) + (NumF y) = NumF $ x + y
     (NumI x) * (NumI y) = NumI $ x * y
-    (NumF x) * (NumI y) = NumF $ x * (fromIntegral y)
-    (NumI x) * (NumF y) = NumF $ (fromIntegral x) * y
+    (NumF x) * (NumI y) = NumF $ x * fromIntegral y
+    (NumI x) * (NumF y) = NumF $ fromIntegral x * y
     (NumF x) * (NumF y) = NumF $ x * y
     (NumI x) - (NumI y) = NumI $ x - y
-    (NumF x) - (NumI y) = NumF $ x - (fromIntegral y)
-    (NumI x) - (NumF y) = NumF $ (fromIntegral x) - y
+    (NumF x) - (NumI y) = NumF $ x - fromIntegral y
+    (NumI x) - (NumF y) = NumF $ fromIntegral x - y
     (NumF x) - (NumF y) = NumF $ x - y
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
@@ -60,10 +60,10 @@ instance Num LispNum where
 instance Integral LispNum where
     toInteger (NumI x) = x
     toInteger (NumF x) = round x
-    quotRem (NumI x) (NumI y) = (NumI $ (quot x y), (NumI $ (rem x y)))
-    quotRem (NumF x) (NumI y) = (NumF $ (x / (fromIntegral y)), (NumF $ (mod' x (fromIntegral y))))
-    quotRem (NumI x) (NumF y) = (NumF $ ((fromIntegral x) / y), (NumF $ (mod' (fromIntegral x) y)))
-    quotRem (NumF x) (NumF y) = (NumF $ ( x / y), (NumF $(mod' x y)))
+    quotRem (NumI x) (NumI y) = (NumI $ quot x y, NumI $ rem x y)
+    quotRem (NumF x) (NumI y) = (NumF $ x / fromIntegral y, NumF $ mod' x (fromIntegral y))
+    quotRem (NumI x) (NumF y) = (NumF $ fromIntegral x / y, NumF $ mod' (fromIntegral x) y)
+    quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
@@ -85,7 +85,7 @@ data LispVal = Atom String
              | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
-             | Func {params :: [String], vararg :: (Maybe String),
+             | Func {params :: [String], vararg :: Maybe String,
                      body :: [LispVal], closure :: Env}
 
 instance Show LispError where show = showError
