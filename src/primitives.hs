@@ -122,6 +122,7 @@ eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
                                   where eqvPair (x, y) = case eqv[x, y] of
                                                             Left _ -> False
                                                             Right (Bool val) -> val
+                                                            _ -> False
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
@@ -182,6 +183,7 @@ eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
+makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 closePort :: [LispVal] -> IOThrowsError LispVal
 closePort [Port port] = liftIO $ hClose port >> (return $ Bool True)
@@ -190,19 +192,23 @@ closePort _ = return $ Bool False
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
 readProc [Port port] = (liftIO $ hGetLine port) >>= liftThrows . readExpr
+readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 writeProc :: [LispVal] -> IOThrowsError LispVal
 writeProc [obj] = writeProc [obj, Port stdout]
 writeProc [obj, Port port] = liftIO $ hPrint port obj >> (return $ Bool True)
+writeProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [String filename] = liftM String $ liftIO $ readFile filename
+readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 load :: String -> IOThrowsError [LispVal]
 load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename
+readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
@@ -226,6 +232,7 @@ apply badVal badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ foldl co
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args
+applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
 makeFunc varargs env p b = return $ Func (map showVal p) varargs b env

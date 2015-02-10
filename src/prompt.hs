@@ -7,7 +7,6 @@ import Data.List
 import System.IO
 import Control.Monad
 import System.Console.Haskeline
-import System.Console.Haskeline.History
 
 completionSearch :: String -> [Completion]
 completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
@@ -45,29 +44,25 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "display - print value to stdout\n" ++
                            "quit    - quit interpreter(use without s-expression)")
 
--- That's dead wrong; what is right?
--- until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
-until_ pred prompt action = do result <- prompt
-                               if pred result
-                               then do
-                                    putStrLn("\nMoriturus te saluto.")
-                                    return ()
-                               else do 
-                                   if (result == "help") then do
-                                       printHelp
-                                       printKeywords
-                                       until_ pred prompt action
-                                   else action result >> until_ pred prompt action
-
-flushStr :: String -> IO ()
-flushStr str = putStr str >> hFlush stdout
+until_ :: ([Char] -> Bool) -> IO [Char] -> ([Char] -> IO a) -> IO ()
+until_ predicate prompt action = do result <- prompt
+                                    if predicate result
+                                    then do
+                                        putStrLn("\nMoriturus te saluto.")
+                                        return ()
+                                    else do 
+                                        if (result == "help") then do
+                                            _ <- printHelp
+                                            printKeywords
+                                            until_ predicate prompt action
+                                        else action result >> until_ predicate prompt action
 
 readPrompt :: String -> IO String
 readPrompt prompt = runInputT addSettings $ poll prompt
                 where
                     poll :: String -> InputT IO String
-                    poll prompt = do
-                        input <- getInputLine prompt
+                    poll p = do
+                        input <- getInputLine p
                         case input of
                             Nothing -> return "(print \"\")"
                             Just strinput -> return strinput
