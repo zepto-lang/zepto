@@ -59,10 +59,11 @@ instance Num LispNum where
     fromInteger x = NumI $ fromInteger x
 instance Integral LispNum where
     toInteger (NumI x) = x
-    quotRem (NumI x) (NumI y) = ((NumI $ (quot x y)), (NumI $(rem x y)))
-    quotRem (NumF x) (NumI y) = ((NumF $ (x / (fromIntegral y))), (NumF $(mod' x (fromIntegral y))))
-    quotRem (NumI x) (NumF y) = ((NumF $ ((fromIntegral x) / y)), (NumF $(mod' (fromIntegral x) y)))
-    quotRem (NumF x) (NumF y) = ((NumF $ ( x / y)), (NumF $(mod' x y)))
+    toInteger (NumF x) = round x
+    quotRem (NumI x) (NumI y) = (NumI $ (quot x y), (NumI $ (rem x y)))
+    quotRem (NumF x) (NumI y) = (NumF $ (x / (fromIntegral y)), (NumF $ (mod' x (fromIntegral y))))
+    quotRem (NumI x) (NumF y) = (NumF $ ((fromIntegral x) / y), (NumF $ (mod' (fromIntegral x) y)))
+    quotRem (NumF x) (NumF y) = (NumF $ ( x / y), (NumF $(mod' x y)))
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
@@ -115,13 +116,12 @@ showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (Port _) = "<IO port>"
-showVal (Func {params = args, vararg = varargs, body = body, closure = env}) = 
+showVal (Func {params = args, vararg = varargs, body = _, closure = _}) = 
     "(lambda (" ++ unwords (map show args) ++
         (case varargs of
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
-showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ 
-                                 showVal tail ++ ")"
+showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
@@ -133,14 +133,18 @@ showError (NumArgs expected found) = "Expected " ++ show expected ++
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found
 showError (Parser parseErr) = "Parse error at " ++ show parseErr
+showError _ = "Unknown error"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
+trapError :: (MonadError e m, Show e) =>  m String -> m String
 trapError action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
+extractValue (Left _) = error("This should not be happening. " ++
+                              "Please consider reporting this incident.")
 
 nullEnv :: IO Env
 nullEnv = newIORef []
@@ -150,11 +154,10 @@ liftThrows (Left err) = throwError err
 liftThrows (Right val) = return val
 
 runIOThrows :: IOThrowsError String -> IO String
-runIOThrows action = runExceptT (trapError action) >>= return . extractValue
+runIOThrows action = liftM extractValue (runExceptT (trapError action))
 
 isBound :: Env -> String -> IO Bool
-isBound envRef var = readIORef envRef >>= 
-                        return . maybe False (const True) . lookup var
+isBound envRef var = liftM (maybe False (const True) . lookup var) (readIORef envRef)
 
 getVar :: Env -> String -> IOThrowsError LispVal
 getVar envRef var = do env <- liftIO $ readIORef envRef
@@ -167,7 +170,7 @@ setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
                              maybe (throwError $ UnboundVar
                                     "Setting an unbound variable" var)
-                                   (liftIO . (flip writeIORef value))
+                                   (liftIO . (`writeIORef` value))
                                    (lookup var env)
                              return value
 
@@ -185,7 +188,7 @@ defineVar envRef var value = do
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv
                            bindings >>= newIORef
-                           where extendEnv bindings env = liftM (++ env) (mapM
-                                    addBinding bindings)
+                           where extendEnv bind env = liftM (++ env) (mapM
+                                    addBinding bind)
                                  addBinding (var, value) = do ref <- newIORef value
                                                               return (var, ref)

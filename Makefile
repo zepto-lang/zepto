@@ -1,4 +1,4 @@
-override HFLAGS+=-O -XExistentialQuantification
+override HFLAGS+=-O -XExistentialQuantification -Wall -Werror
 PREFIX=/usr/bin/
 BUILDDIR=bin/
 DEBUGDIR=debug/

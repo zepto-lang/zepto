@@ -2,7 +2,6 @@ module Parser(readExpr, readExprList) where
 import Types
 import Numeric
 import Control.Monad
-import System.Environment
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
 
@@ -13,9 +12,9 @@ spaces :: Parser ()
 spaces = skipMany1 space
 
 parseString :: Parser LispVal
-parseString = do char '"'
+parseString = do _ <- char '"'
                  x <- many (noneOf"\"")
-                 char '"'
+                 _ <- char '"'
                  return $ String x
 
 parseAtom :: Parser LispVal
@@ -25,7 +24,7 @@ parseAtom = do first <- letter <|> symbol
                return $ case atom of
                         "#t" -> Bool True
                         "#f" -> Bool False
-                        otherwise -> Atom atom
+                        _ -> Atom atom
 
 parseNumber :: Parser LispVal
 parseNumber = do num <- try parseReal
@@ -39,7 +38,7 @@ parseNumber = do num <- try parseReal
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"
                before <- many1 digit
-               string "."
+               _ <- string "."
                after <- many1 digit
                case neg of
                     Just _ -> (return . Number . NumF . read) ("-" ++ before ++ "." ++ after)
@@ -53,29 +52,37 @@ parseDigital1 = do neg <- optionMaybe $ string "-"
                       Nothing -> (return . Number . NumI . read) x
 
 parseDigital2 :: Parser LispVal
-parseDigital2 = do try $ string "#d" 
+parseDigital2 = do _ <- try $ string "#d" 
                    x <- many1 digit 
                    (return . Number . NumI . read) x
 
 parseHex :: Parser LispVal
-parseHex = do try $ string "#x"
+parseHex = do _ <- try $ string "#x"
               x <- many1 hexDigit
               return $ Number $ NumI (hex2dig x)
 
 parseOct :: Parser LispVal
-parseOct = do try $ string "#o"
+parseOct = do _ <- try $ string "#o"
               x <- many1 octDigit
               return $ Number $ NumI (oct2dig x)
 
 parseBin :: Parser LispVal
-parseBin = do try $ string "#b"
+parseBin = do _ <- try $ string "#b"
               x <- many1 (oneOf "10")
               return $ Number $ NumI (bin2dig x)
 
+oct2dig :: [Char] -> Integer
 oct2dig x = fst $ readOct x !! 0
+
+hex2dig :: [Char] -> Integer
 hex2dig x = fst $ readHex x !! 0
+
+bin2dig :: [Char] -> Integer
 bin2dig = bin2digx 0
+
+bin2digx :: Integer -> [Char] -> Integer
 bin2digx digint "" = digint
+
 bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in 
                             bin2digx old xs
 
@@ -83,35 +90,40 @@ parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
 
 parseDottedList :: Parser LispVal
-parseDottedList = do head <- endBy parseExpr spaces
-                     tail <- char '.' >> spaces >> parseExpr
-                     return $ DottedList head tail
+parseDottedList = do h <- endBy parseExpr spaces
+                     t <- char '.' >> spaces >> parseExpr
+                     return $ DottedList h t
 
 parseQuoted :: Parser LispVal
-parseQuoted = do char '\''
+parseQuoted = do _ <- char '\''
                  x <- parseExpr
                  return $ List [Atom "quote", x]
 
 parseLet :: Parser LispVal
-parseLet = do string "let"
+parseLet = do _ <- string "let"
               return $ Atom "define"
 
-parseBool = do string "#"
+parseBool :: Parser LispVal
+parseBool = do _ <- string "#"
                x <- oneOf "tf"
                return $ case x of
                         't' -> Bool True
                         'f' -> Bool False
+                        _   -> error("This will never happen.")
 
 parseChar :: Parser LispVal
-parseChar = do try $ string "#\\"
+parseChar = do _ <- try $ string "#\\"
                x <- parseCharName <|> anyChar
                return $ Character x
 
+parseCharName :: Parser Char
 parseCharName = do x <- try (string "space" <|> string "newline")
                    case x of
                     "space" -> do return ' '
                     "newline" -> do return '\n'
+                    _ -> do return '\0'
 
+parseComments :: Parser (ParseError -> LispError)
 parseComments = (string ";" >> manyTill anyChar newline >> return Parser )
 
 parseExpr :: Parser LispVal
@@ -123,9 +135,9 @@ parseExpr = do optional $ many1 parseComments
                    parseQuoted <|> 
                     try parseBool <|> 
                      try parseChar <|> 
-                     do char '('
+                     do _ <- char '('
                         x <- (try parseList) <|> parseDottedList
-                        char ')'
+                        _ <- char ')'
                         return x
 
 readOrThrow :: Parser a -> String -> ThrowsError a
@@ -133,5 +145,8 @@ readOrThrow parser input = case parse parser input input of
     Left err -> throwError $ Parser err
     Right val -> return val
 
+readExpr :: String -> ThrowsError LispVal
 readExpr = readOrThrow parseExpr
+
+readExprList :: String -> ThrowsError [LispVal]
 readExprList = readOrThrow (endBy parseExpr spaces)

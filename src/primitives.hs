@@ -169,12 +169,12 @@ eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval env (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
 eval env (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
-eval env val@(Atom id) = getVar env id
+eval env val@(Atom ident) = getVar env ident
 eval env (List (function : args)) = do
                                         func <- eval env function
                                         argVals <- mapM (eval env) args
                                         apply func argVals
-eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
@@ -204,14 +204,14 @@ readAll [String filename] = liftM List $ load filename
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (IOFunc func) args = func args
-apply (Func params varargs body closure) args =
-    if num params /= num args && varargs == Nothing
-        then throwError $ NumArgs (num params) args
-        else (liftIO $ bindVars closure $ zip params args) >>=
+apply (Func p varargs b c) args =
+    if num p /= num args && varargs == Nothing
+        then throwError $ NumArgs (num p) args
+        else (liftIO $ bindVars c $ zip p args) >>=
             bindVarArgs varargs >>= evalBody
-        where remainingArgs = drop (length params) args
+        where remainingArgs = drop (length p) args
               num = toInteger . length
-              evalBody env = liftM last $ mapM (eval env) body
+              evalBody env = liftM last $ mapM (eval env) b
               bindVarArgs arg env = case arg of
                 Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
                 Nothing -> return env
@@ -224,6 +224,11 @@ applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args
 
-makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
+makeFunc varargs env p b = return $ Func (map showVal p) varargs b env
+
+makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc = makeFunc Nothing
+
+makeVarargs :: LispVal -> Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeVarargs = makeFunc . Just . showVal
