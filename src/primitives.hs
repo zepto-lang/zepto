@@ -18,10 +18,10 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("/=", numBoolBinop (/=), "compare equality of two values"),
               (">=", numBoolBinop (>=), "compare equality of two values"),
               ("<=", numBoolBinop (<=), "compare equality of two values"),
-              ("&&", boolBoolBinop (&&), "and operation"),
-              ("and", boolBoolBinop (&&), "and operation"),
-              ("||", boolBoolBinop (||), "or operation"),
-              ("or", boolBoolBinop (||), "or operation"),
+              ("&&", boolMulop (&&), "and operation"),
+              ("and", boolMulop (&&), "and operation"),
+              ("||", boolMulop (||), "or operation"),
+              ("or", boolMulop (||), "or operation"),
               ("string=?", strBoolBinop (==), "compare equality of two strings"),
               ("string?", strBoolBinop (>), "compare equality of two strings"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
@@ -66,9 +66,11 @@ boolBinop unpacker op args = if length args /= 2
                                      right <- unpacker $ args !! 1
                                      return $ Bool $ left `op` right
 
+boolMulop :: (Bool -> Bool -> Bool) -> [LispVal] -> ThrowsError LispVal
+boolMulop op params = mapM unpackBool params >>= return . Bool . foldl1 op
+
 numBoolBinop = boolBinop unpackNum
 strBoolBinop = boolBinop unpackStr
-boolBoolBinop = boolBinop unpackBool
 
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (Number n) = return n
