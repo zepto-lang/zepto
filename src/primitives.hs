@@ -47,17 +47,17 @@ ioPrimitives = [("apply", applyProc, "apply function"),
                 ("read-all", readAll, "read and parse file")]
 
 numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
-numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
+numericBinop op p = mapM unpackNum p >>= return . Number . foldl1 op
 
 numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericMinop op singleVal@[(Number l)] = return $ Number $ negate l
-numericMinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+numericMinop _ [(Number l)] = return $ Number $ negate l
+numericMinop op p = mapM unpackNum p >>= return . Number . foldl1 op
 
 numericPlusop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericPlusop op singleVal@[(Number l)] = if(l > 0) then return $ Number $ l
+numericPlusop _ [(Number l)] = if(l > 0) then return $ Number $ l
                                           else return $ Number $ negate l
-numericPlusop op params = mapM unpackNum params >>= return . Number . foldl1 op
+numericPlusop op p = mapM unpackNum p >>= return . Number . foldl1 op
 
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
@@ -67,9 +67,12 @@ boolBinop unpacker op args = if length args /= 2
                                      return $ Bool $ left `op` right
 
 boolMulop :: (Bool -> Bool -> Bool) -> [LispVal] -> ThrowsError LispVal
-boolMulop op params = mapM unpackBool params >>= return . Bool . foldl1 op
+boolMulop op p = mapM unpackBool p >>= return . Bool . foldl1 op
 
+numBoolBinop :: (LispNum -> LispNum -> Bool) -> [LispVal] -> ThrowsError LispVal
 numBoolBinop = boolBinop unpackNum
+
+strBoolBinop :: (String -> String -> Bool) -> [LispVal] -> ThrowsError LispVal
 strBoolBinop = boolBinop unpackStr
 
 unpackNum :: LispVal -> ThrowsError LispNum
@@ -90,13 +93,13 @@ printNewline [badArg] = throwError $ TypeMismatch "nothing" badArg
 printNewline badArgList = throwError $ NumArgs 1 badArgList
 
 car :: [LispVal] -> ThrowsError LispVal
-car [List (x : xs)] = return x
-car [DottedList (x : xs) _] = return x
+car [List (x : _)] = return x
+car [DottedList (x : _) _] = return x
 car [badArg] = throwError $ TypeMismatch "pair" badArg
 car badArgList = throwError $ NumArgs 1 badArgList
 
 cdr :: [LispVal] -> ThrowsError LispVal
-cdr [List (x : xs)] = return $ List xs
+cdr [List (_ : xs)] = return $ List xs
 cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg] = throwError $ TypeMismatch "pair" badArg
 cdr badArgList = throwError $ NumArgs 1 badArgList
@@ -117,7 +120,7 @@ eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++
 eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
                                   (and $ map eqvPair $ zip arg1 arg2)
                                   where eqvPair (x, y) = case eqv[x, y] of
-                                                            Left err -> False
+                                                            Left _ -> False
                                                             Right (Bool val) -> val
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
@@ -135,41 +138,41 @@ equal [x, y] =
                               [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
                                AnyUnpacker unpackBool]
            eqvEquals <- eqv [x, y]
-           return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
+           return $ Bool $ (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
-eval env val@(String _) = return val
-eval env val@(Number _) = return val
-eval env val@(Bool _) = return val
-eval env val@(Character _) = return val
-eval env (List [Atom "quote", val]) = return val
-eval env (List [Atom "if", pred, conseq, alt]) = do result <- eval env pred
-                                                    case result of
-                                                        Bool False -> eval env alt
-                                                        otherwise -> eval env conseq
+eval _ val@(String _) = return val
+eval _ val@(Number _) = return val
+eval _ val@(Bool _) = return val
+eval _ val@(Character _) = return val
+eval _ (List [Atom "quote", val]) = return val
+eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
+                                                 case result of
+                                                    Bool False -> eval env alt
+                                                    _          -> eval env conseq
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
-eval env (List (Atom "define" : List (Atom var : params) : body)) = 
-                            makeNormalFunc env params body >>= defineVar env var
-eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
-                            makeVarargs varargs env params body >>= defineVar env var
-eval env (List (Atom "lambda" : List params : body)) = 
-                            makeNormalFunc env params body
-eval env (List (Atom "lambda" : DottedList params varargs : body)) = 
-                            makeVarargs varargs env params body
-eval env (List (Atom "lambda" : varargs@(Atom _) : body)) = 
-                            makeVarargs varargs env [] body
+eval env (List (Atom "define" : List (Atom var : p) : b)) = 
+                            makeNormalFunc env p b >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : p) varargs : b)) =
+                            makeVarargs varargs env p b >>= defineVar env var
+eval env (List (Atom "lambda" : List p : b)) = 
+                            makeNormalFunc env p b
+eval env (List (Atom "lambda" : DottedList p varargs : b)) = 
+                            makeVarargs varargs env p b
+eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
+                            makeVarargs varargs env [] b
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (eval env)
 eval env (List [Atom "display", String val]) = eval env $ String val
 eval env (List [Atom "display", List (function : args)]) = eval env $ List (function : args)
 eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
-eval env (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
-eval env (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
-eval env val@(Atom ident) = getVar env ident
+eval _ (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
+eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
+eval env (Atom ident) = getVar env ident
 eval env (List (function : args)) = do
                                         func <- eval env function
                                         argVals <- mapM (eval env) args
