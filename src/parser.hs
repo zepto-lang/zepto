@@ -20,20 +20,19 @@ parseString = do _ <- char '"'
 parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol
                rest <- many (letter <|> digit <|> symbol)
-               let atom = [first] ++ rest
+               let atom = first : rest
                return $ case atom of
                         "#t" -> Bool True
                         "#f" -> Bool False
                         _ -> Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = do num <- try parseReal
-                    <|> parseDigital1
-                    <|> parseDigital2 
-                    <|> parseHex 
-                    <|> parseOct 
-                    <|> parseBin
-                 return num
+parseNumber = try parseReal
+              <|> parseDigital1
+              <|> parseDigital2 
+              <|> parseHex 
+              <|> parseOct 
+              <|> parseBin
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"
@@ -71,16 +70,16 @@ parseBin = do _ <- try $ string "#b"
               x <- many1 (oneOf "10")
               return $ Number $ NumI (bin2dig x)
 
-oct2dig :: [Char] -> Integer
-oct2dig x = fst $ readOct x !! 0
+oct2dig :: String -> Integer
+oct2dig x = fst $ head $ readOct x
 
-hex2dig :: [Char] -> Integer
-hex2dig x = fst $ readHex x !! 0
+hex2dig :: String -> Integer
+hex2dig x = fst $ head $ readHex x
 
-bin2dig :: [Char] -> Integer
+bin2dig :: String -> Integer
 bin2dig = bin2digx 0
 
-bin2digx :: Integer -> [Char] -> Integer
+bin2digx :: Integer -> String -> Integer
 bin2digx digint "" = digint
 
 bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in 
@@ -109,7 +108,7 @@ parseBool = do _ <- string "#"
                return $ case x of
                         't' -> Bool True
                         'f' -> Bool False
-                        _   -> error("This will never happen.")
+                        _   -> error "This will never happen."
 
 parseChar :: Parser LispVal
 parseChar = do _ <- try $ string "#\\"
@@ -119,12 +118,12 @@ parseChar = do _ <- try $ string "#\\"
 parseCharName :: Parser Char
 parseCharName = do x <- try (string "space" <|> string "newline")
                    case x of
-                    "space" -> do return ' '
-                    "newline" -> do return '\n'
-                    _ -> do return '\0'
+                    "space"   -> return ' '
+                    "newline" -> return '\n'
+                    _         -> return '\0'
 
 parseComments :: Parser (ParseError -> LispError)
-parseComments = (string ";" >> manyTill anyChar newline >> return Parser )
+parseComments = string ";" >> manyTill anyChar newline >> return Parser
 
 parseExpr :: Parser LispVal
 parseExpr = do optional $ many1 parseComments
@@ -136,7 +135,7 @@ parseExpr = do optional $ many1 parseComments
                     try parseBool <|> 
                      try parseChar <|> 
                      do _ <- char '('
-                        x <- (try parseList) <|> parseDottedList
+                        x <- try parseList <|> parseDottedList
                         _ <- char ')'
                         return x
 

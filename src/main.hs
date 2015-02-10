@@ -24,5 +24,5 @@ main = do args <- getArgs
                       putStrLn ""
                       runRepl
               else 
-                  if(((args !! 0) ==  "-h") || ((args !! 0) == "--help")) then printUsage 
-                  else runSingleStatement $ args
+                  if(head args ==  "-h") || (head args == "--help") then printUsage 
+                  else runSingleStatement args

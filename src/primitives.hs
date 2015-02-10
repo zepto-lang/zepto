@@ -2,6 +2,8 @@ module Primitives(primitives, ioPrimitives, eval) where
 import Types
 import Parser
 import System.IO
+import Data.Maybe
+import Control.Monad
 import Control.Monad.Except
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
@@ -48,26 +50,26 @@ ioPrimitives = [("apply", applyProc, "apply function"),
 
 numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
-numericBinop op p = mapM unpackNum p >>= return . Number . foldl1 op
+numericBinop op p = liftM (Number . foldl1 op) (mapM unpackNum p)
 
 numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericMinop _ [(Number l)] = return $ Number $ negate l
-numericMinop op p = mapM unpackNum p >>= return . Number . foldl1 op
+numericMinop _ [Number l] = return $ Number $ negate l
+numericMinop op p = liftM (Number . foldl1 op) (mapM unpackNum p)
 
 numericPlusop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericPlusop _ [(Number l)] = if(l > 0) then return $ Number $ l
-                                          else return $ Number $ negate l
-numericPlusop op p = mapM unpackNum p >>= return . Number . foldl1 op
+numericPlusop _ [Number l] = if l > 0 then return $ Number l
+                                      else return $ Number $ negate l
+numericPlusop op p = liftM (Number . foldl1 op) (mapM unpackNum p)
 
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
                              then throwError $ NumArgs 2 args
-                             else do left <- unpacker $ args !! 0
+                             else do left <- unpacker $ head args
                                      right <- unpacker $ args !! 1
                                      return $ Bool $ left `op` right
 
 boolMulop :: (Bool -> Bool -> Bool) -> [LispVal] -> ThrowsError LispVal
-boolMulop op p = mapM unpackBool p >>= return . Bool . foldl1 op
+boolMulop op p = liftM (Bool . foldl1 op) (mapM unpackBool p)
 
 numBoolBinop :: (LispNum -> LispNum -> Bool) -> [LispVal] -> ThrowsError LispVal
 numBoolBinop = boolBinop unpackNum
@@ -106,19 +108,19 @@ cdr badArgList = throwError $ NumArgs 1 badArgList
 
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x, List []] = return $ List [x]
-cons [x, List xs] = return $ List $ [x] ++ xs
-cons [x, DottedList xs xlast] = return $ DottedList ([x] ++ xs) xlast
+cons [x, List xs] = return $ List $ x : xs
+cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
 eqv :: [LispVal] -> ThrowsError LispVal
-eqv [(Bool arg1), (Bool arg2)] = return $ Bool $ arg1 == arg2
-eqv [(Number arg1), (Number arg2)] = return $ Bool $ arg1 == arg2
-eqv [(String arg1), (String arg2)] = return $ Bool $ arg1 == arg2
-eqv [(Atom arg1), (Atom arg2)] = return $ Bool $ arg1 == arg2
-eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
-eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
-                                  (and $ map eqvPair $ zip arg1 arg2)
+eqv [Bool arg1, Bool arg2] = return $ Bool $ arg1 == arg2
+eqv [Number arg1, Number arg2] = return $ Bool $ arg1 == arg2
+eqv [String arg1, String arg2] = return $ Bool $ arg1 == arg2
+eqv [Atom arg1, Atom arg2] = return $ Bool $ arg1 == arg2
+eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [List arg1, List arg2] = return $ Bool $ (length arg1 == length arg2) &&
+                                  and (zipWith (curry eqvPair) arg1 arg2)
                                   where eqvPair (x, y) = case eqv[x, y] of
                                                             Left _ -> False
                                                             Right (Bool val) -> val
@@ -131,7 +133,7 @@ unpackEquals x y (AnyUnpacker unpacker) =
         do unpacked1 <- unpacker x
            unpacked2 <- unpacker y
            return $ unpacked1 == unpacked2
-        `catchError` (const $ return False)
+        `catchError` const (return False)
 
 equal :: [LispVal] ->ThrowsError LispVal
 equal [x, y] = 
@@ -139,7 +141,7 @@ equal [x, y] =
                               [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
                                AnyUnpacker unpackBool]
            eqvEquals <- eqv [x, y]
-           return $ Bool $ (primitiveEquals || let (Bool z) = eqvEquals in z)
+           return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
 
@@ -171,7 +173,7 @@ eval env (List [Atom "display", String val]) = eval env $ String val
 eval env (List [Atom "display", List (function : args)]) = eval env $ List (function : args)
 eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
-eval _ (List [Atom "display", DottedList(beginning) end]) = return $ String $ showVal $ DottedList beginning end
+eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
 eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
 eval env (Atom ident) = getVar env ident
 eval env (List (function : args)) = do
@@ -183,10 +185,10 @@ eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
-makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ badArgs !! 0
+makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 closePort :: [LispVal] -> IOThrowsError LispVal
-closePort [Port port] = liftIO $ hClose port >> (return $ Bool True)
+closePort [Port port] = liftIO $ hClose port >> return (Bool True)
 closePort _ = return $ Bool False
 
 readProc :: [LispVal] -> IOThrowsError LispVal
@@ -204,7 +206,7 @@ readContents [String filename] = liftM String $ liftIO $ readFile filename
 readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs 
 
 load :: String -> IOThrowsError [LispVal]
-load filename = liftIO $ readFile filename >>= liftThrows . readExprList
+load filename = liftIO (readFile filename) >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename

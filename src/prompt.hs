@@ -20,8 +20,8 @@ addSettings = Settings { historyFile = Just ".r5rs_history"
                        }
 
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= flip bindVars $ map (makeFunc IOFunc) ioPrimitives ++
-                                map (makeFunc PrimitiveFunc) primitives
+primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc) ioPrimitives ++
+                                map (makeFunc PrimitiveFunc) primitives)
                 where makeFunc constructor (var, func, _) = (var, constructor func)
 
 printHelp :: IO [()]
@@ -67,7 +67,7 @@ readPrompt prompt = runInputT addSettings $ poll prompt
                             Just strinput -> return strinput
 
 evalString :: Env -> String -> IO String
-evalString env expr = runIOThrows $ liftM show $ liftThrows $ readExpr expr >>= eval env
+evalString env expr = runIOThrows $ liftM show $ liftThrows (readExpr expr) >>= eval env
 
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn
@@ -76,7 +76,7 @@ runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
     env <- primitiveBindings >>= flip bindVars[("args", 
                                                 List $ map String $ drop 1 args)]
-    runIOThrows $ liftM show $ eval env (List [Atom "load", String head args])
+    runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
         >>= hPutStrLn stderr
 
 runRepl :: IO ()
