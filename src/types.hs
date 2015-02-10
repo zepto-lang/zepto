@@ -67,9 +67,9 @@ instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
 instance Enum LispNum where
-    {-toEnum (NumI x) = toEnum $ Int x
-    toEnum (NumF x) = toEnum x
-    -- fromEnum-}
+    toEnum x = NumI $ toInteger x
+    fromEnum (NumI x) = fromIntegral x
+    fromEnum (NumF x) = round x
 data LispNum = NumI Integer
              | NumF Double
 
