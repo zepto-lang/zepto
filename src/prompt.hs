@@ -10,7 +10,8 @@ import System.Console.Haskeline
 import System.Console.Haskeline.History
 
 completionSearch :: String -> [Completion]
-completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ map(extractString) primitives
+completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
+                       (map(extractString) primitives) ++ (map(extractString) ioPrimitives)
                 where extractString tuple = "(" ++ (firstEl tuple)
                       firstEl (x, _, _) = x
 
@@ -26,13 +27,15 @@ primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimiti
                 where makeFunc constructor (var, func, _) = (var, constructor func)
 
 printHelp :: IO [()]
-printHelp = mapM(putStrLn) $ map(getHelp) primitives
+printHelp = mapM(putStrLn) $ ["Primitives:"] ++ (map(getHelp) primitives) ++ 
+                             ["", "IO Primitives:"] ++ (map(getHelp) ioPrimitives) ++ [""]
                 where getHelp tuple = (firstEl tuple) ++ " - " ++ (thirdEl tuple)
                       firstEl (x, _, _) = x
                       thirdEl (_, _, x) = x
 
-printPrimitives :: IO ()
-printPrimitives = putStrLn("apply   - apply function to value\n" ++
+printKeywords :: IO ()
+printKeywords = putStrLn("Keywords:\n" ++
+                           "apply   - apply function to value\n" ++
                            "define  - define global variable\n" ++
                            "error   - print value to stderr\n" ++
                            "help    - display this help message(use without s-expression)\n" ++
@@ -52,7 +55,7 @@ until_ pred prompt action = do result <- prompt
                                else do 
                                    if (result == "help") then do
                                        printHelp
-                                       printPrimitives
+                                       printKeywords
                                        until_ pred prompt action
                                    else action result >> until_ pred prompt action
 
