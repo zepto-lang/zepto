@@ -1,3 +1,4 @@
+(define (precision x) (* x 1.0))
 (define (abs x) ((if (< x 0) - +)  x))
 (define (almost-equal x y delta) 
     (> delta (abs (- x y))))
@@ -6,7 +7,7 @@
     (if (almost-equal (/ (+ x last-x) 2) x 0.000001) x
         (sqrt-prime (/ (+ x last-x) 2) x)))
 
-(define (sqrt x) (sqrt-prime x 1))
+(define (sqrt x) (sqrt-prime (precision x) 1))
 
 (define (quad x) (* x x))
 
