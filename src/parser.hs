@@ -112,18 +112,21 @@ parseCharName = do x <- try (string "space" <|> string "newline")
                     "space" -> do return ' '
                     "newline" -> do return '\n'
 
+parseComments = (string ";" >> manyTill anyChar newline >> return Parser )
+
 parseExpr :: Parser LispVal
-parseExpr = try parseLet
-        <|> try parseNumber
-        <|> parseAtom
-        <|> parseString
-        <|> parseQuoted
-        <|> try parseBool
-        <|> try parseChar
-        <|> do char '('
-               x <- (try parseList) <|> parseDottedList
-               char ')'
-               return x
+parseExpr = do optional $ many1 parseComments
+               try parseLet <|> 
+                try parseNumber <|> 
+                 parseAtom <|> 
+                  parseString  <|> 
+                   parseQuoted <|> 
+                    try parseBool <|> 
+                     try parseChar <|> 
+                     do char '('
+                        x <- (try parseList) <|> parseDottedList
+                        char ')'
+                        return x
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of

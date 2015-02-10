@@ -4,7 +4,7 @@
     (> delta (abs (- x y))))
 
 (define (sqrt-prime x last-x)
-    (if (almost-equal (/ (+ x last-x) 2) x 0.000001) x
+    (if (almost-equal (/ (+ x last-x) 2) x 0.000001) (/ x 2)
         (sqrt-prime (/ (+ x last-x) 2) x)))
 
 (define (sqrt x) (sqrt-prime (precision x) 1))
