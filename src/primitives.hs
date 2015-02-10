@@ -215,7 +215,7 @@ readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (IOFunc func) args = func args
-apply (Func p varargs b c) args =
+apply (Func (LispFun p varargs b c)) args =
     if num p /= num args && isNothing varargs
         then throwError $ NumArgs (num p) args
         else liftIO (bindVars c $ zip p args) >>=
@@ -237,7 +237,7 @@ applyProc (func : args) = apply func args
 applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
-makeFunc varargs env p b = return $ Func (map showVal p) varargs b env
+makeFunc varargs env p b = return $ Func $ LispFun (map showVal p) varargs b env
 
 makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc = makeFunc Nothing

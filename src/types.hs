@@ -1,5 +1,6 @@
 module Types (LispNum(..),
               LispVal(..), 
+              LispFun(..), 
               LispError(..), 
               Unpacker(AnyUnpacker), 
               ThrowsError, 
@@ -85,13 +86,16 @@ data LispVal = Atom String
              | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
-             | Func {params :: [String], vararg :: Maybe String,
-                     body :: [LispVal], closure :: Env}
+             | Func LispFun
+             
+             
+data LispFun = LispFun { params :: [String], vararg :: Maybe String,
+                         body :: [LispVal], closure :: Env}
 
 instance Show LispError where show = showError
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
-               | Parser ParseError
+               | ParseErr ParseError
                | BadSpecialForm String LispVal
                | NotFunction String String
                | UnboundVar String String
@@ -116,7 +120,7 @@ showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (Port _) = "<IO port>"
-showVal (Func {params = args, vararg = varargs, body = _, closure = _}) = 
+showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _}) = 
     "(lambda (" ++ unwords (map show args) ++
         (case varargs of
             Nothing -> ""
@@ -132,7 +136,7 @@ showError (NumArgs expected found) = "Expected " ++ show expected ++
                                     ++ "; values are " ++ unwordsList found
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found
-showError (Parser parseErr) = "Parse error at " ++ show parseErr
+showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError _ = "Unknown error"
 
 unwordsList :: [LispVal] -> String
