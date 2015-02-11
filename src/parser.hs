@@ -123,7 +123,7 @@ parseCharName = do x <- try (string "space" <|> string "newline")
                     _         -> return '\0'
 
 parseComments :: Parser (ParseError -> LispError)
-parseComments = string ";" >> manyTill anyChar newline >> return ParseErr
+parseComments = (string ";" <|> many1 newline) >> manyTill anyChar newline >> return ParseErr
 
 parseExpr :: Parser LispVal
 parseExpr = do optional $ many1 parseComments
