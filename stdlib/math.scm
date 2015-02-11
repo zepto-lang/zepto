@@ -6,7 +6,7 @@
     (> delta (abs (- x y))))
 
 (define (sqrt-prime x last-x)
-    (if (almost-equal (/ (+ x last-x) 2) x 0.000001) (/ x 2)
+    (if (almost-equal (/ (+ x last-x) 2) x 0.000001) x
         (sqrt-prime (/ (+ x last-x) 2) x)))
 
 ; This routine is broken

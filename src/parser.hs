@@ -1,6 +1,7 @@
 module Parser(readExpr, readExprList) where
 import Types
 import Numeric
+import Data.Char
 import Control.Monad
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
@@ -111,16 +112,34 @@ parseBool = do _ <- string "#"
                         _   -> error "This will never happen."
 
 parseChar :: Parser LispVal
-parseChar = do _ <- try $ string "#\\"
-               x <- parseCharName <|> anyChar
-               return $ Character x
+parseChar = do
+  _ <- try (string "#\\")
+  c <- anyChar
+  r <- many (letter <|> digit)
+  let pchr = c : r
+  case pchr of
+    "alarm"     -> return $ Character '\a' 
+    "backspace" -> return $ Character '\b' 
+    "delete"    -> return $ Character '\DEL'
+    "escape"    -> return $ Character '\ESC' 
+    "newline"   -> return $ Character '\n'
+    "null"      -> return $ Character '\0' 
+    "return"    -> return $ Character '\n' 
+    "space"     -> return $ Character ' '
+    "tab"       -> return $ Character '\t'
+    _ -> case (c : r) of
+        [ch] -> return $ Character ch
+        ('x' : hexs) -> do
+            rv <- parseHexScalar hexs
+            return $ Character rv
+        _ -> pzero
 
-parseCharName :: Parser Char
-parseCharName = do x <- try (string "space" <|> string "newline")
-                   case x of
-                    "space"   -> return ' '
-                    "newline" -> return '\n'
-                    _         -> return '\0'
+parseHexScalar :: Monad m => String -> m Char
+parseHexScalar num = do
+    let ns = Numeric.readHex num
+    case ns of
+        [] -> fail $ "Unable to parse hex value " ++ show num
+        _ -> return $ chr $ fst $ head ns
 
 parseComments :: Parser (ParseError -> LispError)
 parseComments = (string ";" <|> many1 newline) >> manyTill anyChar newline >> return ParseErr
