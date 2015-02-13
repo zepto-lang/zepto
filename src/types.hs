@@ -1,5 +1,6 @@
 module Types (LispNum(..),
               LispVal(..), 
+              LispPointer(..), 
               LispFun(..), 
               LispError(..), 
               Unpacker(AnyUnpacker), 
@@ -12,12 +13,7 @@ module Types (LispNum(..),
               extractValue,
               nullEnv,
               liftThrows,
-              runIOThrows,
-              isBound,
-              getVar,
-              setVar,
-              defineVar,
-              bindVars) where
+              runIOThrows) where
 import Data.Fixed
 import System.IO
 import Data.IORef
@@ -87,6 +83,11 @@ data LispVal = Atom String
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
              | Func LispFun
+             | Nil String
+             | Pointer LispPointer
+             
+             
+data LispPointer = LispPointer { pointerVar :: String, pointerEnv :: Env } 
              
              
 data LispFun = LispFun { params :: [String], vararg :: Maybe String,
@@ -99,10 +100,11 @@ data LispError = NumArgs Integer [LispVal]
                | BadSpecialForm String LispVal
                | NotFunction String String
                | UnboundVar String String
+               | InternalError String
                | Default String
 
+type Env = IORef [((String, String), IORef LispVal)]
 type ThrowsError = Either LispError
-type Env = IORef [(String, IORef LispVal)]
 type IOThrowsError = ExceptT LispError IO
 
 showNum :: LispNum -> String
@@ -126,6 +128,8 @@ showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _}) 
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
 showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
+showVal (Pointer (LispPointer p _)) = "<pointer " ++ p ++ ">"
+showVal (Nil _) = ""
 
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
@@ -160,7 +164,7 @@ liftThrows (Right val) = return val
 runIOThrows :: IOThrowsError String -> IO String
 runIOThrows action = liftM extractValue (runExceptT (trapError action))
 
-isBound :: Env -> String -> IO Bool
+{-isBound :: Env -> String -> IO Bool
 isBound envRef var = liftM (maybe False (const True) . lookup var) (readIORef envRef)
 
 getVar :: Env -> String -> IOThrowsError LispVal
@@ -195,4 +199,4 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv
                            where extendEnv bind env = liftM (++ env) (mapM
                                     addBinding bind)
                                  addBinding (var, value) = do ref <- newIORef value
-                                                              return (var, ref)
+                                                              return (var, ref)-}

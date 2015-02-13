@@ -99,10 +99,6 @@ parseQuoted = do _ <- char '\''
                  x <- parseExpr
                  return $ List [Atom "quote", x]
 
-parseLet :: Parser LispVal
-parseLet = do _ <- string "let"
-              return $ Atom "define"
-
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
                x <- oneOf "tf"
@@ -146,8 +142,7 @@ parseComments = (string ";" <|> many1 newline) >> manyTill anyChar newline >> re
 
 parseExpr :: Parser LispVal
 parseExpr = do optional $ many1 parseComments
-               try parseLet <|> 
-                try parseNumber <|> 
+               try parseNumber <|> 
                  parseAtom <|> 
                   parseString  <|> 
                    parseQuoted <|> 

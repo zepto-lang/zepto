@@ -1,8 +1,8 @@
 module Primitives(primitives, ioPrimitives, eval) where
 import Types
 import Parser
+import Variables
 import System.IO
-import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
 
@@ -212,24 +212,51 @@ readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename
 readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
-apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+{-apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (IOFunc func) args = func args
 apply (Func (LispFun p varargs b c)) args =
     if num p /= num args && isNothing varargs
         then throwError $ NumArgs (num p) args
-        else liftIO (bindVars c $ zip p args) >>=
-            bindVarArgs varargs >>= evalBody
+        else (liftIO $ bindVars closure $ 
+                zip (map ((,) vnamespace) params) args) 
+                >>= bindVarArgs varargs >>= (evalBody body)
         where remainingArgs = drop (length p) args
               num = toInteger . length
-              evalBody env = liftM last $ mapM (eval env) b
+              evalBody body env = do
+                case body of
+                    [lv] -> eval env lv
+                    (lv : lvs) -> do
+                        eval env lv
+                        evalBody lvs env
               bindVarArgs arg env = case arg of
-                Just argName -> liftIO $ bindVars env [(argName, List remainingArgs)]
+                Just argName -> liftIO $ defineVar env [(argName, List remainingArgs)]
                 Nothing -> return env
 apply badVal badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ foldl concatenate badVal badArgs 
         where 
             concatenate :: LispVal -> LispVal -> LispVal
-            concatenate a b = String $ showVal a ++  " " ++ showVal b
+            concatenate a b = String $ showVal a ++  " " ++ showVal b-}
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (IOFunc func) args = func args
+apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (Func (LispFun fparams varargs fbody fclosure)) args =
+    if num fparams /= num args && varargs == Nothing
+        then throwError $ NumArgs (num fparams) args
+        else (liftIO $ bindVars fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= (evalBody fbody)
+    where 
+        remainingArgs = drop (length fparams) args
+        num = toInteger . length
+        evalBody ebody env = do
+            case ebody of
+                [lv] -> eval env lv
+                (lv : lvs) -> do
+                    _ <- eval env lv
+                    evalBody lvs env
+                _ -> throwError $ InternalError "This should never happen"
+        bindVarArgs arg env = case arg of
+            Just argName -> liftIO $ bindVars env [((vnamespace, argName), List $ remainingArgs)]
+            Nothing -> return env
+apply func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args

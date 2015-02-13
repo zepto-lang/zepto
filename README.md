@@ -24,11 +24,11 @@ It implements a good enough subset of R5RS to make real programming possible.
   * Pairs
   * Utils
   * Math [x]
+* Local variables [x]
 
 **Language Features soon to be implemented:**
-* Local variables
-* call/cc
 * Macros
+* call/cc
 * Foreign Function Interface to C and Haskell
 
 The help message gives a pretty good overview over what's included by now:

@@ -2,6 +2,7 @@ module Prompt(runRepl, runSingleStatement) where
 import Types
 import Parser
 import Primitives
+import Variables
 import Data.List
 import System.IO
 import Control.Monad
@@ -22,7 +23,7 @@ addSettings = Settings { historyFile = Just ".r5rs_history"
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc) ioPrimitives ++
                                 map (makeFunc PrimitiveFunc) primitives)
-                where makeFunc constructor (var, func, _) = (var, constructor func)
+                where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
 
 printHelp :: IO [()]
 printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++ 
@@ -74,7 +75,7 @@ evalAndPrint env expr = evalString env expr >>= putStrLn
 
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
-    env <- primitiveBindings >>= flip bindVars[("args", 
+    env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
                                                 List $ map String $ drop 1 args)]
     runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
         >>= hPutStrLn stderr
