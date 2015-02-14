@@ -19,13 +19,12 @@ parseString = do _ <- char '"'
                  return $ String x
 
 parseAtom :: Parser LispVal
-parseAtom = do first <- letter <|> symbol
-               rest <- many (letter <|> digit <|> symbol)
+parseAtom = do first <- letter <|> symbol <|> (oneOf ".")
+               rest <- many (letter <|> digit <|> symbol <|> (oneOf "."))
                let atom = first : rest
-               return $ case atom of
-                        "#t" -> Bool True
-                        "#f" -> Bool False
-                        _ -> Atom atom
+               if atom == "."
+                   then pzero
+                   else return $ Atom atom
 
 parseNumber :: Parser LispVal
 parseNumber = try parseReal
@@ -152,6 +151,7 @@ parseExpr = do optional $ many1 parseComments
                         x <- try parseList <|> parseDottedList
                         _ <- char ')'
                         return x
+                    <?> "Expression"
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of

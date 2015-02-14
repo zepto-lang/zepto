@@ -1,0 +1,5 @@
+(load "stdlib/let.scm")
+(load "stdlib/logical.scm")
+(load "stdlib/math.scm")
+(load "stdlib/pairs.scm")
+(load "stdlib/util.scm")

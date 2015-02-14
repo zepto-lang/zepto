@@ -1,6 +1,5 @@
 module Prompt(runRepl, runSingleStatement) where
 import Types
-import Parser
 import Primitives
 import Variables
 import Data.List
@@ -67,11 +66,8 @@ readPrompt prompt = runInputT addSettings $ poll prompt
                             Nothing -> return "(print \"\")"
                             Just strinput -> return strinput
 
-evalString :: Env -> String -> IO String
-evalString env expr = runIOThrows $ liftM show $ liftThrows (readExpr expr) >>= eval env
-
 evalAndPrint :: Env -> String -> IO ()
-evalAndPrint env expr = evalString env expr >>= putStrLn
+evalAndPrint env expr = evalLine env expr >>= putStrLn
 
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
@@ -81,4 +77,9 @@ runSingleStatement args = do
         >>= hPutStrLn stderr
 
 runRepl :: IO ()
-runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "R5RS> ") . evalAndPrint
+runRepl = do
+        env <- primitiveBindings
+        _ <- loadFile env "stdlib/module.scm"
+        until_ (== "quit") (readPrompt "R5RS> ") (evalAndPrint env)
+    where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
+                          

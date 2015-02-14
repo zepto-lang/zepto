@@ -6,11 +6,12 @@
     (> delta (abs (- x y))))
 
 (define (sqrt-prime x last-x)
-    (if (almost-equal (/ (+ x last-x) 2) x 0.000001) x
-        (sqrt-prime (/ (+ x last-x) 2) x)))
+    (let ((next-x (/ (+ x last-x) 2.0)))
+        (if (almost-equal next-x x 0.0000001) x
+            (sqrt-prime next-x x))))
 
 ; This routine is broken
-(define (sqrt x) (sqrt-prime (precision x) 1))
+(define (sqrt x) (sqrt-prime (precision x) 1.0))
 
 (define (quad x) (* x x))
 

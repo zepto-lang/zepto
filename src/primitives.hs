@@ -1,4 +1,4 @@
-module Primitives(primitives, ioPrimitives, eval) where
+module Primitives(primitives, ioPrimitives, eval, evalLine) where
 import Types
 import Parser
 import Variables
@@ -146,8 +146,12 @@ equal [x, y] =
            return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
+evalLine :: Env -> String -> IO String
+evalLine env expr = runIOThrows $ liftM show $ 
+                    (liftThrows $ readExpr expr) >>= macroEval env >>= eval env
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
+eval _ val@(Nil _) = return val
 eval _ val@(String _) = return val
 eval _ val@(Number _) = return val
 eval _ val@(Bool _) = return val
