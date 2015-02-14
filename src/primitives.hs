@@ -254,7 +254,7 @@ apply (Func (LispFun fparams varargs fbody fclosure)) args =
                     evalBody lvs env
                 _ -> throwError $ InternalError "This should never happen"
         bindVarArgs arg env = case arg of
-            Just argName -> liftIO $ bindVars env [((vnamespace, argName), List $ remainingArgs)]
+            Just argName -> liftIO $ bindVars env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env
 apply func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 

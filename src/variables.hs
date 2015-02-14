@@ -8,14 +8,15 @@ vnamespace :: String
 vnamespace = "v"
 
 isBound :: Env -> String -> IO Bool
-isBound envRef var = isNamespacedBound envRef vnamespace var
+isBound envRef = isNamespacedBound envRef vnamespace
 
 isNamespacedBound :: Env -> String -> String -> IO Bool
-isNamespacedBound envRef namespace var = readIORef envRef >>= 
-                return . maybe False (const True) . lookup (namespace, var)
+isNamespacedBound envRef namespace var = liftM (maybe False (const True) . 
+                                         lookup (namespace, var))
+                                         (readIORef envRef)
 
 getVar :: Env -> String -> IOThrowsError LispVal
-getVar envRef var = getNamespacedVar envRef vnamespace var
+getVar envRef = getNamespacedVar envRef vnamespace
 
 getNamespacedVar :: Env -> String -> String -> IOThrowsError LispVal
 getNamespacedVar envRef namespace var = do 
@@ -25,14 +26,14 @@ getNamespacedVar envRef namespace var = do
               (lookup (namespace, var) env)
 
 setVar, defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-setVar envRef var value = setNamespacedVar envRef vnamespace var value
-defineVar envRef var value = defineNamespacedVar envRef vnamespace var value
+setVar envRef = setNamespacedVar envRef vnamespace 
+defineVar envRef = defineNamespacedVar envRef vnamespace
 
 setNamespacedVar :: Env -> String -> String -> LispVal -> IOThrowsError LispVal
 setNamespacedVar envRef namespace var value = do 
         env <- liftIO $ readIORef envRef
         maybe (throwError $ UnboundVar "Setting an unbound variable: " var)
-              (liftIO . (flip writeIORef value))
+              (liftIO . (`writeIORef` value))
               (lookup (namespace, var) env)
         return value
 
