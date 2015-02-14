@@ -3,6 +3,8 @@ import Types
 import Control.Monad
 import Control.Monad.Except
 import Data.IORef
+import Data.Maybe
+
 
 vnamespace :: String
 vnamespace = "v"
@@ -11,7 +13,7 @@ isBound :: Env -> String -> IO Bool
 isBound envRef = isNamespacedBound envRef vnamespace
 
 isNamespacedBound :: Env -> String -> String -> IO Bool
-isNamespacedBound envRef namespace var = liftM (maybe False (const True) . 
+isNamespacedBound envRef namespace var = liftM (isJust . 
                                          lookup (namespace, var))
                                          (readIORef envRef)
 
