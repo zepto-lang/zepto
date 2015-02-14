@@ -1,4 +1,5 @@
 # R5RS
+![general version](http://img.shields.io/badge/version-0.3.0-yellow.svg)
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)).
 It implements a good enough subset of R5RS to make real programming possible.
@@ -25,9 +26,9 @@ It implements a good enough subset of R5RS to make real programming possible.
   * Utils
   * Math [x]
 * Local variables [x]
+* Macros [x]
 
 **Language Features soon to be implemented:**
-* Macros
 * call/cc
 * Foreign Function Interface to C and Haskell
 

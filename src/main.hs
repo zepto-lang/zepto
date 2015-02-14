@@ -10,7 +10,7 @@ printUsage = do printVersion
                          "\n\t<some scheme file> - run file")
 
 printVersion :: IO ()
-printVersion = putStrLn "R5RS Version 0.2"
+printVersion = putStrLn "R5RS Version 0.3"
 
 printCommands :: IO ()
 printCommands = putStrLn("Type 'quit' or press Ctrl-C to exit interpreter\n" ++
