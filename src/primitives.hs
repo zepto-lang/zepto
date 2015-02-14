@@ -2,6 +2,7 @@ module Primitives(primitives, ioPrimitives, eval) where
 import Types
 import Parser
 import Variables
+import Macro
 import System.IO
 import Data.Maybe
 import Control.Monad
@@ -169,7 +170,8 @@ eval env (List (Atom "lambda" : DottedList p varargs : b)) =
 eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
                             makeVarargs varargs env [] b
 eval env (List [Atom "load", String filename]) =
-                            load filename >>= liftM last . mapM (eval env)
+                            load filename >>= liftM last . mapM (parse env)
+                            where parse en val = macroEval env val >>= eval en
 eval env (List [Atom "display", String val]) = eval env $ String val
 eval env (List [Atom "display", List (function : args)]) = eval env $ List (function : args)
 eval env (List [Atom "display", List val]) = eval env  $ List val

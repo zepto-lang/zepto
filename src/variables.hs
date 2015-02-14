@@ -5,6 +5,8 @@ import Control.Monad.Except
 import Data.IORef
 import Data.Maybe
 
+mnamespace :: String
+mnamespace = "m"
 
 vnamespace :: String
 vnamespace = "v"
