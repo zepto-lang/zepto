@@ -3,6 +3,7 @@ import Types
 import Parser
 import Variables
 import System.IO
+import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
 
@@ -240,19 +241,18 @@ apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (IOFunc func) args = func args
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (Func (LispFun fparams varargs fbody fclosure)) args =
-    if num fparams /= num args && varargs == Nothing
+    if num fparams /= num args && isNothing varargs
         then throwError $ NumArgs (num fparams) args
-        else (liftIO $ bindVars fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= (evalBody fbody)
+        else liftIO (bindVars fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
     where 
         remainingArgs = drop (length fparams) args
         num = toInteger . length
-        evalBody ebody env = do
-            case ebody of
-                [lv] -> eval env lv
-                (lv : lvs) -> do
-                    _ <- eval env lv
-                    evalBody lvs env
-                _ -> throwError $ InternalError "This should never happen"
+        evalBody ebody env = case ebody of
+                                [lv] -> eval env lv
+                                (lv : lvs) -> do
+                                    _ <- eval env lv
+                                    evalBody lvs env
+                                _ -> throwError $ InternalError "Internal state error"
         bindVarArgs arg env = case arg of
             Just argName -> liftIO $ bindVars env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env

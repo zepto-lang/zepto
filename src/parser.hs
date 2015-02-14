@@ -123,7 +123,7 @@ parseChar = do
     "return"    -> return $ Character '\n' 
     "space"     -> return $ Character ' '
     "tab"       -> return $ Character '\t'
-    _ -> case (c : r) of
+    _ -> case c : r of
         [ch] -> return $ Character ch
         ('x' : hexs) -> do
             rv <- parseHexScalar hexs
