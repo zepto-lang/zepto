@@ -73,6 +73,7 @@ runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
     env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
                                                 List $ map String $ drop 1 args)]
+    _ <- loadFile env "stdlib/module.scm"
     runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
         >>= hPutStrLn stderr
 

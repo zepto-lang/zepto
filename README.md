@@ -33,6 +33,7 @@ It implements a good enough subset of R5RS to make real programming possible.
 **Language Features soon to be implemented:**
 * call/cc
 * Foreign Function Interface to C and Haskell
+* A Compiler
 
 The help message gives a pretty good overview over what's included by now:
 ```
