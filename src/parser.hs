@@ -19,8 +19,8 @@ parseString = do _ <- char '"'
                  return $ String x
 
 parseAtom :: Parser LispVal
-parseAtom = do first <- letter <|> symbol <|> (oneOf ".")
-               rest <- many (letter <|> digit <|> symbol <|> (oneOf "."))
+parseAtom = do first <- letter <|> symbol <|> oneOf "."
+               rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
                if atom == "."
                    then pzero

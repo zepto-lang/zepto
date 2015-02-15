@@ -148,7 +148,7 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 
 evalLine :: Env -> String -> IO String
 evalLine env expr = runIOThrows $ liftM show $ 
-                    (liftThrows $ readExpr expr) >>= macroEval env >>= eval env
+                    liftThrows (readExpr expr) >>= macroEval env >>= eval env
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval _ val@(Nil _) = return val
@@ -182,6 +182,13 @@ eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
 eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
+eval env (List (Atom "begin" : funs)) 
+                        | null funs = eval env $ Nil ""
+                        | length funs == 1 = eval env (head funs)
+                        | otherwise = do
+                                    let fs = tail funs
+                                    _ <- eval env (head funs)
+                                    eval env (List (Atom "begin" : fs))
 eval env (Atom ident) = getVar env ident
 eval env (List (function : args)) = do
                                         func <- eval env function

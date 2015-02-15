@@ -28,6 +28,7 @@ It implements a good enough subset of R5RS to make real programming possible.
   * Math [x]
 * Local variables [x]
 * Macros [x]
+* Delayed Evaluation [x]
 
 **Language Features soon to be implemented:**
 * call/cc
