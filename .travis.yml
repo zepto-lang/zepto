@@ -13,4 +13,4 @@ install:
     - cabal install parsec haskeline
     - make
 script: 
-    - make test | grep "#f"
+    - make test | grep  "#f"
