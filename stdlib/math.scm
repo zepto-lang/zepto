@@ -19,3 +19,5 @@
     (if (<= n 0) 1
     (if (= n 1) x 
         (* (pow x (- n 1)) x))))
+
+(define expt pow)

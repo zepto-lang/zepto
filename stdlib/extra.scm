@@ -58,11 +58,13 @@
                 ((when test result1 result2 ...)
                  (if test
                    (begin result1 result2 ...)))))
+
 (define-syntax unless
   (syntax-rules ()
                 ((unless test result1 result2 ...)
                  (if (not test)
                    (begin result1 result2 ...)))))
+
 (define-syntax letrec*
   (syntax-rules ()
                 ((letrec* ((var1 init1) ...) body1 body2 ...)
@@ -70,17 +72,3 @@
                    (set! var1 init1)
                    ...
                    (let () body1 body2 ...)))))
-
-(define (make-parameter init . o)
-  (let* ((converter
-           (if (pair? o) (car o) (lambda (x) x))))
-    (lambda args
-      (cond
-        ((null? args)
-         (converter init))
-        ((eq? (car args) '<param-set!>)
-         (set! init (cadr args)))
-        ((eq? (car args) '<param-convert>)
-         converter)
-        (else
-          (error "bad parameter syntax"))))))

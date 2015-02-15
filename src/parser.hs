@@ -142,7 +142,7 @@ parseComments = (string ";" <|> many1 newline) >> manyTill anyChar newline >> re
 parseExpr :: Parser LispVal
 parseExpr = do optional $ many1 parseComments
                try parseNumber <|> 
-                 parseAtom <|> 
+                 try parseAtom <|> 
                   parseString  <|> 
                    parseQuoted <|> 
                     try parseBool <|> 

@@ -1,5 +1,3 @@
-(load "stdlib/logical.scm")
-
 (define (nil) ())
 (define (ok) ())
 
