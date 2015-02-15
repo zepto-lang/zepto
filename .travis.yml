@@ -1,0 +1,15 @@
+language: haskell
+
+os:
+  - osx
+  - linux
+
+python:
+  - 7.8
+  - 7.6
+  - 7.4
+
+install:
+    - make
+script: 
+    - make test | grep "#f"

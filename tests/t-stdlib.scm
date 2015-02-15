@@ -25,3 +25,4 @@
               '(1 2 3 4 5 6 7 "eight" "nine"))
 
 (unit-test-handler-results)
+(unit-test-all-passed)

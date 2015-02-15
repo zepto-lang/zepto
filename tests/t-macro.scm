@@ -105,3 +105,4 @@
  '((5 6 1 2 3) ()))
 
 (unit-test-handler-results)
+(unit-test-all-passed)

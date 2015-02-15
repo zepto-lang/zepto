@@ -30,3 +30,4 @@
 (assert-equal (lambda () (< 2 2.0)) #f)
 
 (unit-test-handler-results)
+(unit-test-all-passed)

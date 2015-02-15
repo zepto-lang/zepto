@@ -6,3 +6,4 @@
 			  'equal)
 
 (unit-test-handler-results)
+(unit-test-all-passed)

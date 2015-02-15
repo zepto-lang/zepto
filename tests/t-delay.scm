@@ -12,4 +12,4 @@
 (assert-equal (lambda () (p)) 51)
 
 (unit-test-handler-results)
-
+(unit-test-all-passed)
