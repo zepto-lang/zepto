@@ -1,3 +1,5 @@
+;; All implementations here are "borrowed" from 
+;; husk-scheme (github.com/justinethier/husk-scheme).
 (define-syntax let
     (syntax-rules ()
         ((_ ((x v) ...) e1 e2 ...)

@@ -1,3 +1,5 @@
+;; All definitions here are "borrowed" from
+;; husk (github.com/justinethier/husk-scheme).
 (define-syntax cond
     (syntax-rules (else =>)
         ((cond (else result1 result2 ...))
