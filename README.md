@@ -1,5 +1,6 @@
 # R5RS
-![general version](http://img.shields.io/badge/version-0.3.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.3.1-yellow.svg)
+[![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)).
