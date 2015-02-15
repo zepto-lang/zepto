@@ -11,6 +11,15 @@
   (lambda (arg1 arg2)
     (func arg2 arg1)))
 
+(define (list-tail l k)
+    (if (zero? k)
+      l
+      (list-tail (cdr l) (- k 1))))
+
+(define (list-ref l k) (car (list-tail l k)))
+
+(define (append i a) (foldr (lambda (ax ix) (cons ax ix)) a i))
+
 (define (curry func arg1)
   (lambda (arg)
     (func arg1 arg)))
@@ -81,12 +90,7 @@
 (define (reverse l)
   (fold (flip cons) '() l))
 
-(define (mem-helper pred op)
-  (lambda (acc next)
-    (if (and (not acc)
-             (pred (op next)))
-        next
-        acc)))
+(define (mem-helper pred op) (lambda (acc next) (if (and (not acc) (pred (op next))) next acc)))
 
 (define (memq obj l)
   (fold (mem-helper (curry eq? obj) id) #f l))
@@ -135,3 +139,5 @@
                 (cadar cs) 
                 (unpack case (join (list x) (cdr cs)))))
 
+(define head car)
+(define tail list-tail)

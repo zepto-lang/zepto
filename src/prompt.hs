@@ -71,11 +71,12 @@ evalAndPrint env expr = evalLine env expr >>= putStrLn
 
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
-    env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
-                                                List $ map String $ drop 1 args)]
-    _ <- loadFile env "stdlib/module.scm"
-    runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
-        >>= hPutStrLn stderr
+        env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
+                                                    List $ map String $ drop 1 args)]
+        _ <- loadFile env "stdlib/module.scm"
+        runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
+            >>= hPutStrLn stderr
+    where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
 
 runRepl :: IO ()
 runRepl = do

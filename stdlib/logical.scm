@@ -1,7 +1,4 @@
-(define (not x)
-  (if x
-    #f
-    #t))
+(define (not x) (if x #f #t))
 
 (define (null? obj)
     (if (eqv? obj '())

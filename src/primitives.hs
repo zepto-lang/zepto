@@ -161,6 +161,10 @@ eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
                                                  case result of
                                                     Bool False -> eval env alt
                                                     _          -> eval env conseq
+eval env (List [Atom "if", predicate, conseq]) = do result <- eval env predicate
+                                                    case result of
+                                                        Bool True -> eval env conseq
+                                                        _         -> eval env $ List []
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : b)) = 

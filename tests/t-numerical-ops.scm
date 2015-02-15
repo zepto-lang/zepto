@@ -1,0 +1,32 @@
+(load "tests/skim-unit.scm")
+
+(assert-equal (lambda () (max 3 4)) 4)
+(assert-equal (lambda () (max 3.9 4)) 4)
+
+(assert-equal (lambda () (+ 1 2 3 4 5)) 15)
+(assert-equal (lambda () (- 1 2)) -1)
+(assert-equal (lambda () (* 2 3)) 6)
+(assert-equal (lambda () (/ 2 1)) 2)
+(assert-equal (lambda () (/ 1 2)) 0)
+(assert-equal (lambda () (/ 1.0 2)) 0.5)
+(assert-equal (lambda () (modulo 8 2)) 0)
+(assert-equal (lambda () (modulo 9 2)) 1)
+(assert-equal (lambda () (quotient 44 2)) 22)
+
+(assert-equal (lambda () (modulo 13 -4)) -3)
+(assert-equal (lambda () (remainder 13 -4)) 1)
+(assert-equal (lambda () (modulo -13 -4)) -1)
+(assert-equal (lambda () (remainder -13 -4)) -1)
+
+(assert-equal (lambda () (= 1 (+ 0 1))) #t)
+(assert-equal (lambda () (= 1.0 1)) #t)
+(assert-equal (lambda () (> 2 1)) #t)
+(assert-equal (lambda () (> 2 1.9)) #t)
+(assert-equal (lambda () (>= 2 1)) #t)
+(assert-equal (lambda () (>= 2 1.9)) #t)
+(assert-equal (lambda () (>= 2 2)) #t)
+(assert-equal (lambda () (>= 2 2.0)) #t)
+(assert-equal (lambda () (<= 2 2.0)) #t)
+(assert-equal (lambda () (< 2 2.0)) #f)
+
+(unit-test-handler-results)

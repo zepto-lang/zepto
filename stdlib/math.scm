@@ -21,3 +21,4 @@
         (* (pow x (- n 1)) x))))
 
 (define expt pow)
+(define modulo mod)

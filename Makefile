@@ -19,6 +19,10 @@ all:
 dev:
 	make all HFLAGS+="-dcore-lint"
 
+#Runs all tests
+test: all
+	for i in tests/t-*; do echo""; echo "Running test $$i"; echo "---"; $(BUILDDIR)$(TARGET) $$i; echo "---"; done
+
 #Stops after each step and saves every intermediate file generated
 debug: pp
 
@@ -27,6 +31,7 @@ pp:
 	mkdir -p $(DEBUGDIR) 
 	$(CC) $(HFLAGS) -E $(SOURCES)
 	mv src/*.hspp $(DEBUGDIR)
+
 #Cleans directory(no uninstall!)
 clean: 
 	rm -rf $(BUILDDIR) $(DEBUGDIR)
