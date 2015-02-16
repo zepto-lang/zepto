@@ -23,9 +23,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               (">=", numBoolBinop (>=), "compare equality of two values"),
               ("<=", numBoolBinop (<=), "compare equality of two values"),
               ("&&", boolMulop (&&), "and operation"),
-              ("and", boolMulop (&&), "and operation"),
               ("||", boolMulop (||), "or operation"),
-              ("or", boolMulop (||), "or operation"),
               ("string=?", strBoolBinop (==), "compare equality of two strings"),
               ("string?", strBoolBinop (>), "compare equality of two strings"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
@@ -130,6 +128,15 @@ eqv [List arg1, List arg2] = return $ Bool $ (length arg1 == length arg2) &&
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
+eqvList :: ([LispVal] -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+eqvList eqvFunc [(List arg1), (List arg2)] =
+        return $ Bool $ (length arg1 == length arg2) && all eqvPair (zip arg1 arg2)
+    where eqvPair (x1, x2) = case eqvFunc [x1, x2] of
+                                Left _           -> False
+                                Right (Bool val) -> val
+                                _                -> False
+eqvList _ _ = throwError $ InternalError "Unexpected error in eqvList"
+
 unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
 unpackEquals x y (AnyUnpacker unpacker) =
         do unpacked1 <- unpacker x
@@ -138,8 +145,10 @@ unpackEquals x y (AnyUnpacker unpacker) =
         `catchError` const (return False)
 
 equal :: [LispVal] ->ThrowsError LispVal
-equal [x, y] = 
-        do primitiveEquals <- liftM or $ mapM (unpackEquals x y)
+equal [lx@(List _), ly@(List _)] = eqvList equal [lx, ly]
+equal [(DottedList xs x), (DottedList ys y)] = equal [List $ xs ++ [x], List $ ys ++ [y]]
+equal [x, y] = do 
+           primitiveEquals <- liftM or $ mapM (unpackEquals x y)
                               [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
                                AnyUnpacker unpackBool]
            eqvEquals <- eqv [x, y]
