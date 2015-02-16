@@ -4,6 +4,7 @@ import Parser
 import Variables
 import Macro
 import System.IO
+import Data.Array
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -25,7 +26,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("&&", boolMulop (&&), "and operation"),
               ("||", boolMulop (||), "or operation"),
               ("string=?", strBoolBinop (==), "compare equality of two strings"),
-              ("string?", strBoolBinop (>), "compare equality of two strings"),
+              ("string>?", strBoolBinop (>), "compare equality of two strings"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
               ("string<=?", strBoolBinop (<=), "compare equality of two strings"),
               ("string>=?", strBoolBinop (>=), "compare equality of two strings"),
@@ -35,7 +36,34 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("cons", cons, "construct list"),
               ("eq?", eqv, "check equality"),
               ("eqv?", eqv, "check equality"),
-              ("equal?", equal, "check equality")]
+              ("equal?", equal, "check equality"),
+              
+               ("pair?", isDottedList, "check whether variable is a pair"),
+               ("procedure?", isProcedure, "check whether variable is a procedure"),
+               ("number?", isNumber, "check whether variable is a number"),
+               ("integer?", isInteger, "check whether variable is an integer"),
+               ("real?", isReal, "check whether variable is a real number"),
+               ("list?", unaryOp isList, "check whether variable is list"),
+               ("null?", isNull, "check whether variable is null"),
+               ("symbol?", isSymbol, "check whether variable is symbol"),
+               ("vector?", unaryOp isVector, "check whether variable is vector"),
+               ("string?", isString, "check whether variable is string"),
+               ("boolean?", isBoolean, "check whether variable is boolean"),
+               ("vector", buildVector, "build a new vector"),
+               ("vector-length", vectorLength, "get length of vector"),
+               ("string-length", stringLength, "get length of string"),
+               ("make-string", makeString, "make a new string"),
+               ("make-vector", makeVector, "create a vector"),
+               ("vector->list", vectorToList, "makes list from vector"),
+               ("list->vector", listToVector, "makes vector from list"),
+               ("symbol->string", symbol2String, "makes string from symbol"),
+               ("string->symbol", string2Symbol, "makes symbol from string"),
+               ("string->number", stringToNumber, "makes number from string"),
+               ("string->list", stringToList, "makes list from string"),
+               ("string-copy", stringCopy, "copy string"),
+               ("substring", substring, "makes substring from string"),
+               ("vector-ref", vectorRef, "get element from vector"),
+               ("string-append", stringAppend, "append to string")]
 
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
 ioPrimitives = [("apply", applyProc, "apply function"),
@@ -76,6 +104,10 @@ numBoolBinop = boolBinop unpackNum
 
 strBoolBinop :: (String -> String -> Bool) -> [LispVal] -> ThrowsError LispVal
 strBoolBinop = boolBinop unpackStr
+
+unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+unaryOp f [v] = f v
+unaryOp _ _ = throwError $ InternalError "Internal error in unaryOp"
 
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (Number n) = return n
@@ -155,6 +187,137 @@ equal [x, y] = do
            return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
+makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector :: [LispVal] -> ThrowsError LispVal
+makeVector [(Number n)] = makeVector [Number n, List []]
+makeVector [(Number (NumI n)), a] = do
+    let l = replicate (fromInteger n) a
+    return $ Vector $ (listArray (0, length l - 1)) l
+makeVector [badType] = throwError $ TypeMismatch "integer" badType
+makeVector badArgList = throwError $ NumArgs 1 badArgList
+
+buildVector (o:os) = do
+    let l = o:os
+    return $ Vector $ (listArray (0, length l - 1)) l
+buildVector badArgList = throwError $ NumArgs 1 badArgList
+
+vectorLength [(Vector v)] = return $ Number $ NumI $ toInteger $ length (elems v)
+vectorLength [badType] = throwError $ TypeMismatch "vector" badType
+vectorLength badArgList = throwError $ NumArgs 1 badArgList
+
+vectorRef [(Vector v), (Number (NumI n))] = return $ v ! (fromInteger n)
+vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
+vectorRef badArgList = throwError $ NumArgs 2 badArgList
+
+vectorToList [(Vector v)] = return $ List $ elems v
+vectorToList [badType] = throwError $ TypeMismatch "vector" badType
+vectorToList badArgList = throwError $ NumArgs 1 badArgList
+
+listToVector [(List l)] = return $ Vector $ (listArray (0, length l - 1)) l
+listToVector [badType] = throwError $ TypeMismatch "list" badType
+listToVector badArgList = throwError $ NumArgs 1 badArgList
+
+makeString :: [LispVal] -> ThrowsError LispVal
+makeString [(Number n)] = return $ _makeString n ' ' ""
+    where _makeString count chr s =
+            if count == 0
+                then String s
+                else _makeString (count - 1) chr (s ++ [chr])
+makeString badArgList = throwError $ NumArgs 1 badArgList
+
+stringLength :: [LispVal] -> ThrowsError LispVal
+stringLength [String s] = return $ Number $ foldr (const (+1)) 0 s
+stringLength [badType] = throwError $ TypeMismatch "string" badType
+stringLength badArgList = throwError $ NumArgs 1 badArgList
+
+substring :: [LispVal] -> ThrowsError LispVal
+substring [(String s), (Number (NumI start)), (Number (NumI end))] = do 
+    let len = fromInteger $ end - start
+    let begin = fromInteger start
+    return $ String $ (take len . drop begin) s
+substring [badType] = throwError $ TypeMismatch "string integer integer" badType
+substring badArgList = throwError $ NumArgs 3 badArgList
+
+stringAppend :: [LispVal] -> ThrowsError LispVal
+stringAppend [(String s)] = return $ String s
+stringAppend (String st:sts) = do
+    rest <- stringAppend sts
+    case rest of
+        String s -> return $ String $ st ++ s
+        elsewise -> throwError $ TypeMismatch "string" elsewise
+stringAppend [badType] = throwError $ TypeMismatch "string" badType
+stringAppend badArgList = throwError $ NumArgs 1 badArgList
+
+stringToNumber :: [LispVal] -> ThrowsError LispVal
+stringToNumber [(String s)] = return $ Number $ NumI $ read s
+stringToNumber [badType] = throwError $ TypeMismatch "string" badType
+stringToNumber badArgList = throwError $ NumArgs 1 badArgList
+
+stringToList :: [LispVal] -> ThrowsError LispVal
+stringToList [(String s)] = return $ List $ map (Character) s
+stringToList [badType] = throwError $ TypeMismatch "string" badType
+stringToList badArgList = throwError $ NumArgs 1 badArgList
+
+stringCopy :: [LispVal] -> ThrowsError LispVal
+stringCopy [String s] = return $ String s
+stringCopy [badType] = throwError $ TypeMismatch "string" badType
+stringCopy badArgList = throwError $ NumArgs 2 badArgList
+
+isNumber :: [LispVal] -> ThrowsError LispVal
+isNumber ([Number _]) = return $ Bool True
+isNumber _ = return $ Bool False
+
+isReal :: [LispVal] -> ThrowsError LispVal
+isReal ([Number _]) = return $ Bool True
+isReal _ = return $ Bool False
+
+isInteger :: [LispVal] -> ThrowsError LispVal
+isInteger ([Number (NumI _)]) = return $ Bool True
+isInteger _ = return $ Bool False
+
+isDottedList :: [LispVal] -> ThrowsError LispVal
+isDottedList ([DottedList _ _]) = return $ Bool True
+isDottedList _ = return $ Bool False
+
+isProcedure :: [LispVal] -> ThrowsError LispVal
+isProcedure ([PrimitiveFunc _]) = return $ Bool True
+isProcedure ([Func _]) = return $ Bool True
+isProcedure ([IOFunc _]) = return $ Bool True
+isProcedure _ = return $ Bool False
+
+isVector, isList :: LispVal -> ThrowsError LispVal
+isVector (Vector _) = return $ Bool True
+isVector _ = return $ Bool False
+isList (List _) = return $ Bool True
+isList _ = return $ Bool False
+
+isNull :: [LispVal] -> ThrowsError LispVal
+isNull ([List []]) = return $ Bool True
+isNull _ = return $ Bool False
+
+isSymbol :: [LispVal] -> ThrowsError LispVal
+isSymbol ([Atom _]) = return $ Bool True
+isSymbol _ = return $ Bool False
+
+symbol2String :: [LispVal] -> ThrowsError LispVal
+symbol2String ([Atom a]) = return $ String a
+symbol2String [notAtom] = throwError $ TypeMismatch "symbol" notAtom
+symbol2String [] = return $ Bool False
+symbol2String _ = return $ Bool False
+
+string2Symbol :: [LispVal] -> ThrowsError LispVal
+string2Symbol ([String s]) = return $ Atom s
+string2Symbol [notString] = throwError $ TypeMismatch "string" notString
+string2Symbol [] = return $ Bool False
+string2Symbol _ = return $ Bool False
+
+isString :: [LispVal] -> ThrowsError LispVal
+isString ([String _]) = return $ Bool True
+isString _ = return $ Bool False
+
+isBoolean :: [LispVal] -> ThrowsError LispVal
+isBoolean ([Bool _]) = return $ Bool True
+isBoolean _ = return $ Bool False
+
 evalLine :: Env -> String -> IO String
 evalLine env expr = runIOThrows $ liftM show $ 
                     liftThrows (readExpr expr) >>= macroEval env >>= eval env
@@ -195,6 +358,18 @@ eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
 eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
+eval _ (List [Atom "help", String val]) = return $ String $ concat $ 
+        map(thirdElem) $ filter (\x -> (== val) $ firstElem x) primitives
+    where 
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
+eval _ (List [Atom "help", Atom val]) = return $ String $ concat $ 
+        map(thirdElem) $ 
+        filter (\x -> (== val) $ 
+        firstElem x) primitives
+    where 
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
