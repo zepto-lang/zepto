@@ -1,0 +1,32 @@
+Name:                r5rs
+Version:             0.3.1
+Synopsis:            Minimal R5RS Scheme interpreter and REPL.
+Description:         
+  R5RS is an implementation of the R5RS standard.
+  .
+  For detailed information on each release, see 
+  <https://github.com/hellerve/R5RS/README.md>.
+
+License:             MIT
+License-file:        LICENSE
+Author:              Veit Heller
+Maintainer:          Veit Heller <github.com/hellerve>
+Bug-Reports:         http://github.com/hellerve/r5rs/issues
+Build-Type:          Simple
+Category:            Compilers/Interpreters, Language
+Tested-with:         GHC == 7.8.4, GHC == 7.2.2
+
+Extra-Source-Files:  README.md
+                     LICENSE
+Data-Files:          stdlib/*.scm
+Cabal-Version:       >= 1.2 
+
+Source-Repository head
+    Type:            git
+    Location:        git://github.com/hellerve/R5RS.git
+
+Executable         r5rs
+  Build-Depends:   base, haskeline, parsec
+  Extensions:      ExistentialQuantification
+  Main-is:         Main.hs
+  Hs-Source-Dirs:  src/
