@@ -1,4 +1,4 @@
-(load "tests/skim-unit.scm")
+(load "scm-tests/skim-unit.scm")
 
 (define-syntax my-let 
   (syntax-rules ()

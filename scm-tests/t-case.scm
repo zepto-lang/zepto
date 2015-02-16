@@ -1,4 +1,4 @@
-(load "tests/skim-unit.scm")
+(load "scm-tests/skim-unit.scm")
 
 (assert-equal (lambda () (case (* 2 3) ((6) '(#t)) (else #f))) 
 			  '(#t))

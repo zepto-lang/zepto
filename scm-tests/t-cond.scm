@@ -1,4 +1,4 @@
-(load "tests/skim-unit.scm")
+(load "scm-tests/skim-unit.scm")
 
 (assert-equal (lambda () (cond ((> 3 2) 'greater) ((< 3 2) 'less)))
 			  'greater)

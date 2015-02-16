@@ -21,7 +21,7 @@ dev:
 
 #Runs all tests
 test: all
-	for i in tests/t-*; do echo""; echo "Running test $$i"; echo "---"; $(BUILDDIR)$(TARGET) $$i; echo "---"; done
+	for i in scm-tests/t-*; do echo""; echo "Running test $$i"; echo "---"; $(BUILDDIR)$(TARGET) $$i; echo "---"; done
 
 #Stops after each step and saves every intermediate file generated
 debug: pp

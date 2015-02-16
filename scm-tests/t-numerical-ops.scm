@@ -1,4 +1,4 @@
-(load "tests/skim-unit.scm")
+(load "scm-tests/skim-unit.scm")
 
 (assert-equal (lambda () (max 3 4)) 4)
 (assert-equal (lambda () (max 3.9 4)) 4)

@@ -1,4 +1,4 @@
-(load "tests/skim-unit.scm")
+(load "scm-tests/skim-unit.scm")
 
 (assert-equal (lambda () (map (curry + 2) '(1 2 3 4))) 
 			  '(3 4 5 6))
