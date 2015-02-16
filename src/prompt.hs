@@ -46,15 +46,17 @@ printKeywords = putStrLn("Keywords:\n" ++
 until_ :: (String -> Bool) -> IO String -> (String -> IO a) -> IO ()
 until_ predicate prompt action = do result <- prompt
                                     if predicate result
-                                    then do
-                                        putStrLn "\nMoriturus te saluto."
-                                        return ()
-                                    else 
-                                        if result == "help" then do
-                                            _ <- printHelp
-                                            printKeywords
-                                            until_ predicate prompt action
-                                        else action result >> until_ predicate prompt action
+                                        then do
+                                            putStrLn "\nMoriturus te saluto."
+                                            return ()
+                                        else 
+                                            if result == "help" 
+                                                then do
+                                                    _ <- printHelp
+                                                    printKeywords
+                                                    until_ predicate prompt action
+                                                else 
+                                                    action result >> until_ predicate prompt action
 
 readPrompt :: String -> IO String
 readPrompt prompt = runInputT addSettings $ poll prompt

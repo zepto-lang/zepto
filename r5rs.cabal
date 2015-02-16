@@ -26,7 +26,7 @@ Source-Repository head
     Location:        git://github.com/hellerve/R5RS.git
 
 Executable         r5rs
-  Build-Depends:   base, haskeline, parsec
+  Build-Depends:   base, haskeline, parsec, mtl
   Extensions:      ExistentialQuantification
   Main-is:         Main.hs
   Hs-Source-Dirs:  src/

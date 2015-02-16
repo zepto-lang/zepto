@@ -46,11 +46,11 @@ defineNamespacedVar envRef namespace var value = do
         alreadyDefined <- liftIO $ isNamespacedBound envRef namespace var
         if alreadyDefined
             then setNamespacedVar envRef namespace var value >> return value
-        else liftIO $ do
-            valueRef <- newIORef value
-            env <- readIORef envRef
-            writeIORef envRef (((namespace, var), valueRef) : env)
-            return value
+            else liftIO $ do
+                valueRef <- newIORef value
+                env <- readIORef envRef
+                writeIORef envRef (((namespace, var), valueRef) : env)
+                return value
 
 bindVars :: Env -> [((String, String), LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
