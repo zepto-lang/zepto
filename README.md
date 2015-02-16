@@ -1,5 +1,6 @@
 # R5RS
 ![general version](http://img.shields.io/badge/version-0.3.1-yellow.svg)
+![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 [![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
@@ -37,7 +38,6 @@ It implements a good enough subset of R5RS to make real programming possible.
 * A Compiler
 
 **Miscellaneous enhancements:**
-* Cabal toolchain
 * Quickcheck testing
 
 The help message gives a pretty good overview over what's included by now:
