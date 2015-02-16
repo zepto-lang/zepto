@@ -16,6 +16,7 @@ module Types (LispNum(..),
               runIOThrows) where
 import Data.Fixed
 import System.IO
+import Data.Array
 import Data.IORef
 import Control.Monad
 import Control.Monad.Except
@@ -75,6 +76,7 @@ instance Show LispVal where show = showVal
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
+             | Vector (Array Int LispVal)
              | Number LispNum
              | String String
              | Character Char
@@ -119,6 +121,7 @@ showVal (Bool False) = "#f"
 showVal (Character c) = show c
 showVal (Number n) = showNum n
 showVal (List contents) = "(" ++ unwordsList contents ++")"
+showVal (Vector contents) = "#(" ++ (unwordsList $ elems contents) ++ ")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (Port _) = "<IO port>"

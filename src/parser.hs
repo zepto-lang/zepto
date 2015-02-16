@@ -2,6 +2,7 @@ module Parser(readExpr, readExprList) where
 import Types
 import Numeric
 import Data.Char
+import Data.Array
 import Control.Monad
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
@@ -98,6 +99,11 @@ parseQuoted = do _ <- char '\''
                  x <- parseExpr
                  return $ List [Atom "quote", x]
 
+parseVect :: Parser LispVal
+parseVect = do
+    vals <- sepBy parseExpr spaces
+    return $ Vector (listArray (0, (length vals -1)) vals)
+
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
                x <- oneOf "tf"
@@ -136,22 +142,28 @@ parseHexScalar num = do
         [] -> fail $ "Unable to parse hex value " ++ show num
         _ -> return $ chr $ fst $ head ns
 
-parseComments :: Parser (ParseError -> LispError)
-parseComments = (string ";" <|> many1 newline) >> manyTill anyChar newline >> return ParseErr
+parseComments :: Parser LispVal
+parseComments = do _ <- char ';' 
+                   _ <- many (noneOf "\n")
+                   return $ Nil ""
 
 parseExpr :: Parser LispVal
-parseExpr = do optional $ many1 parseComments
-               try parseNumber <|> 
-                 try parseAtom <|> 
-                  parseString  <|> 
-                   parseQuoted <|> 
-                    try parseBool <|> 
-                     try parseChar <|> 
-                     do _ <- char '('
-                        x <- try parseList <|> parseDottedList
-                        _ <- char ')'
-                        return x
-                    <?> "Expression"
+parseExpr = parseComments
+        <|> try parseNumber
+        <|> do _ <- try $ string "#("
+               x <- parseVect
+               _ <- char ')'
+               return x
+        <|> try parseAtom 
+        <|> parseString   
+        <|> parseQuoted 
+        <|> try parseBool 
+        <|> try parseChar 
+        <|> do _ <- char '('
+               x <- try parseList <|> parseDottedList
+               _ <- char ')'
+               return x
+        <?> "Expression"
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
