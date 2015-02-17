@@ -1,5 +1,5 @@
 # R5RS
-![general version](http://img.shields.io/badge/version-0.3.1-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.4-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 [![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
