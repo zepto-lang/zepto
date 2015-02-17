@@ -45,6 +45,7 @@ It implements a good enough subset of R5RS to make real programming possible.
 
 The help message gives a pretty good overview over what's included by now:
 ```
+R5RS> help
 Primitives:
 + - add two values
 - - subtract two values/negate value
@@ -60,11 +61,9 @@ remainder - remainder of two values
 >= - compare equality of two values
 <= - compare equality of two values
 && - and operation
-and - and operation
 || - or operation
-or - or operation
 string=? - compare equality of two strings
-string? - compare equality of two strings
+string>? - compare equality of two strings
 string<? - compare equality of two strings
 string<=? - compare equality of two strings
 string>=? - compare equality of two strings
@@ -75,6 +74,32 @@ cons - construct list
 eq? - check equality
 eqv? - check equality
 equal? - check equality
+pair? - check whether variable is a pair
+procedure? - check whether variable is a procedure
+number? - check whether variable is a number
+integer? - check whether variable is an integer
+real? - check whether variable is a real number
+list? - check whether variable is list
+null? - check whether variable is null
+symbol? - check whether variable is symbol
+vector? - check whether variable is vector
+string? - check whether variable is string
+boolean? - check whether variable is boolean
+vector - build a new vector
+vector-length - get length of vector
+string-length - get length of string
+make-string - make a new string
+make-vector - create a vector
+vector->list - makes list from vector
+list->vector - makes vector from list
+symbol->string - makes string from symbol
+string->symbol - makes symbol from string
+string->number - makes number from string
+string->list - makes list from string
+string-copy - copy string
+substring - makes substring from string
+vector-ref - get element from vector
+string-append - append to string
 
 IO Primitives:
 apply - apply function
