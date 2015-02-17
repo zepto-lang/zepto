@@ -396,18 +396,18 @@ eval env (List [Atom "display", List val]) = eval env  $ List val
 eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
 eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
-eval _ (List [Atom "help", String val]) = return $ String $ concat $ 
-        map thirdElem $
-        filter filterTuple primitives {-++
-        filter filterTuple ioPrimitives-}
+eval _ (List [Atom "help", String val]) =
+        return $ String $ concat $ 
+        (map thirdElem $ filter filterTuple primitives) ++
+        (map thirdElem $ filter filterTuple ioPrimitives)
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ (List [Atom "help", Atom val]) = return $ String $ concat $ 
-        map thirdElem $ 
-        filter filterTuple primitives {-++ 
-        filter filterTuple ioPrimitives-}
+eval _ (List [Atom "help", Atom val]) =
+        return $ String $ concat $ 
+        (map thirdElem $ filter filterTuple primitives) ++
+        (map thirdElem $ filter filterTuple ioPrimitives)
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
