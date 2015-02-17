@@ -17,17 +17,17 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("mod", numericBinop mod, "modulo of two values"),
               ("quotient", numericBinop quot, "quotient of two values"),
               ("remainder", numericBinop rem, "remainder of two values"),
-              ("round", numRound, "rounds a number"),
-              ("floor", numFloor, "floors a number"),
-              ("ceil", numCeiling, "ceils a number"),
-              ("truncate", numTruncate, "truncates a number"),
+              ("round", numRound round, "rounds a number"),
+              ("floor", numRound floor, "floors a number"),
+              ("ceil", numRound ceiling, "ceils a number"),
+              ("truncate", numRound truncate, "truncates a number"),
               ("log", numLog, "logarithm function"),
-              ("sin", numSin, "sine function"),
-              ("cos", numCos, "cosine function"),
-              ("tan", numTan, "tangens function"),
-              ("asin", numAsin, "asine function"),
-              ("acos", numAcos, "acosine function"),
-              ("atan", numAtan, "atangens function"),
+              ("sin", numOp sin, "sine function"),
+              ("cos", numOp cos, "cosine function"),
+              ("tan", numOp tan, "tangens function"),
+              ("asin", numOp asin, "asine function"),
+              ("acos", numOp acos, "acosine function"),
+              ("atan", numOp atan, "atangens function"),
               ("=", numBoolBinop (==), "compare equality of two values"),
               ("<", numBoolBinop (<), "compare equality of two values"),
               (">", numBoolBinop (>), "compare equality of two values"),
@@ -133,65 +133,17 @@ unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
-numRound :: [LispVal] -> ThrowsError LispVal
-numRound [n@(Number (NumI _))] = return n
-numRound [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ round n
-numRound [x] = throwError $ TypeMismatch "number" x
-numRound badArgList = throwError $ NumArgs 1 badArgList
+numRound :: (Double -> Integer) -> [LispVal] -> ThrowsError LispVal
+numRound _ [n@(Number (NumI _))] = return n
+numRound op [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ op n
+numRound _ [x] = throwError $ TypeMismatch "number" x
+numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
-numFloor :: [LispVal] -> ThrowsError LispVal
-numFloor [n@(Number (NumI _))] = return n
-numFloor [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ floor n
-numFloor [x] = throwError $ TypeMismatch "number" x
-numFloor badArgList = throwError $ NumArgs 1 badArgList
-
-numCeiling :: [LispVal] -> ThrowsError LispVal
-numCeiling [n@(Number (NumI _))] = return n
-numCeiling [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ ceiling n
-numCeiling [x] = throwError $ TypeMismatch "number" x
-numCeiling badArgList = throwError $ NumArgs 1 badArgList
-
-numTruncate :: [LispVal] -> ThrowsError LispVal
-numTruncate [n@(Number (NumI _))] = return n
-numTruncate [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ truncate n
-numTruncate [x] = throwError $ TypeMismatch "number" x
-numTruncate badArgList = throwError $ NumArgs 1 badArgList
-
-numSin :: [LispVal] -> ThrowsError LispVal
-numSin [(Number (NumI n))] = return $ Number $ NumF $ sin $ fromInteger n
-numSin [(Number (NumF n))] = return $ Number $ NumF $ sin n
-numSin [x] = throwError $ TypeMismatch "number" x
-numSin badArgList = throwError $ NumArgs 1 badArgList
-
-numCos :: [LispVal] -> ThrowsError LispVal
-numCos [(Number (NumI n))] = return $ Number $ NumF $ cos $ fromInteger n
-numCos [(Number (NumF n))] = return $ Number $ NumF $ cos n
-numCos [x] = throwError $ TypeMismatch "number" x
-numCos badArgList = throwError $ NumArgs 1 badArgList
-
-numTan :: [LispVal] -> ThrowsError LispVal
-numTan [(Number (NumI n))] = return $ Number $ NumF $ tan $ fromInteger n
-numTan [(Number (NumF n))] = return $ Number $ NumF $ tan n
-numTan [x] = throwError $ TypeMismatch "number" x
-numTan badArgList = throwError $ NumArgs 1 badArgList
-
-numAsin :: [LispVal] -> ThrowsError LispVal
-numAsin [(Number (NumI n))] = return $ Number $ NumF $ asin $ fromInteger n
-numAsin [(Number (NumF n))] = return $ Number $ NumF $ asin n
-numAsin [x] = throwError $ TypeMismatch "number" x
-numAsin badArgList = throwError $ NumArgs 1 badArgList
-
-numAcos :: [LispVal] -> ThrowsError LispVal
-numAcos [(Number (NumI n))] = return $ Number $ NumF $ acos $ fromInteger n
-numAcos [(Number (NumF n))] = return $ Number $ NumF $ acos n
-numAcos [x] = throwError $ TypeMismatch "number" x
-numAcos badArgList = throwError $ NumArgs 1 badArgList
-
-numAtan :: [LispVal] -> ThrowsError LispVal
-numAtan [(Number (NumI n))] = return $ Number $ NumF $ atan $ fromInteger n
-numAtan [(Number (NumF n))] = return $ Number $ NumF $ atan n
-numAtan [x] = throwError $ TypeMismatch "number" x
-numAtan badArgList = throwError $ NumArgs 1 badArgList
+numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
+numOp op [(Number (NumI n))] = return $ Number $ NumF $ op $ fromInteger n
+numOp op [(Number (NumF n))] = return $ Number $ NumF $ op n
+numOp _ [x] = throwError $ TypeMismatch "number" x
+numOp _ badArgList = throwError $ NumArgs 1 badArgList
 
 numLog :: [LispVal] -> ThrowsError LispVal
 numLog [(Number (NumI n))] = return $ Number $ NumF $ log $ fromInteger n
@@ -445,15 +397,19 @@ eval env (List [Atom "display", Atom val]) = eval env $ Atom val
 eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
 eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
 eval _ (List [Atom "help", String val]) = return $ String $ concat $ 
-        map(thirdElem) $ filter (\x -> (== val) $ firstElem x) primitives
+        map thirdElem $
+        filter filterTuple primitives {-++
+        filter filterTuple ioPrimitives-}
     where 
+          filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
 eval _ (List [Atom "help", Atom val]) = return $ String $ concat $ 
-        map(thirdElem) $ 
-        filter (\x -> (== val) $ 
-        firstElem x) primitives
+        map thirdElem $ 
+        filter filterTuple primitives {-++ 
+        filter filterTuple ioPrimitives-}
     where 
+          filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
 eval env (List (Atom "begin" : funs)) 

@@ -43,20 +43,17 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "display - print value to stdout\n" ++
                            "quit    - quit interpreter(use without s-expression)")
 
-until_ :: (String -> Bool) -> IO String -> (String -> IO a) -> IO ()
-until_ predicate prompt action = do result <- prompt
-                                    if predicate result
-                                        then do
-                                            putStrLn "\nMoriturus te saluto."
-                                            return ()
-                                        else 
-                                            if result == "help" 
-                                                then do
-                                                    _ <- printHelp
-                                                    printKeywords
-                                                    until_ predicate prompt action
-                                                else 
-                                                    action result >> until_ predicate prompt action
+until_ :: IO String -> (String -> IO a) -> IO ()
+until_ prompt action = do result <- prompt
+                          case result of
+                            "help"  -> do
+                                _ <- printHelp
+                                printKeywords
+                                until_ prompt action
+                            "quit"  -> do
+                                putStrLn "\nMoriturus te saluto."
+                                return ()
+                            _ -> action result >> until_ prompt action
 
 readPrompt :: String -> IO String
 readPrompt prompt = runInputT addSettings $ poll prompt
@@ -84,6 +81,6 @@ runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
         _ <- loadFile env "stdlib/module.scm"
-        until_ (== "quit") (readPrompt "R5RS> ") (evalAndPrint env)
+        until_ (readPrompt "R5RS> ") (evalAndPrint env)
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
                           
