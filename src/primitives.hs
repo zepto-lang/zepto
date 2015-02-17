@@ -17,6 +17,17 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("mod", numericBinop mod, "modulo of two values"),
               ("quotient", numericBinop quot, "quotient of two values"),
               ("remainder", numericBinop rem, "remainder of two values"),
+              ("round", numRound, "rounds a number"),
+              ("floor", numFloor, "floors a number"),
+              ("ceil", numCeiling, "ceils a number"),
+              ("truncate", numTruncate, "truncates a number"),
+              ("log", numLog, "logarithm function"),
+              ("sin", numSin, "sine function"),
+              ("cos", numCos, "cosine function"),
+              ("tan", numTan, "tangens function"),
+              ("asin", numAsin, "asine function"),
+              ("acos", numAcos, "acosine function"),
+              ("atan", numAtan, "atangens function"),
               ("=", numBoolBinop (==), "compare equality of two values"),
               ("<", numBoolBinop (<), "compare equality of two values"),
               (">", numBoolBinop (>), "compare equality of two values"),
@@ -38,32 +49,33 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("eqv?", eqv, "check equality"),
               ("equal?", equal, "check equality"),
               
-               ("pair?", isDottedList, "check whether variable is a pair"),
-               ("procedure?", isProcedure, "check whether variable is a procedure"),
-               ("number?", isNumber, "check whether variable is a number"),
-               ("integer?", isInteger, "check whether variable is an integer"),
-               ("real?", isReal, "check whether variable is a real number"),
-               ("list?", unaryOp isList, "check whether variable is list"),
-               ("null?", isNull, "check whether variable is null"),
-               ("symbol?", isSymbol, "check whether variable is symbol"),
-               ("vector?", unaryOp isVector, "check whether variable is vector"),
-               ("string?", isString, "check whether variable is string"),
-               ("boolean?", isBoolean, "check whether variable is boolean"),
-               ("vector", buildVector, "build a new vector"),
-               ("vector-length", vectorLength, "get length of vector"),
-               ("string-length", stringLength, "get length of string"),
-               ("make-string", makeString, "make a new string"),
-               ("make-vector", makeVector, "create a vector"),
-               ("vector->list", vectorToList, "makes list from vector"),
-               ("list->vector", listToVector, "makes vector from list"),
-               ("symbol->string", symbol2String, "makes string from symbol"),
-               ("string->symbol", string2Symbol, "makes symbol from string"),
-               ("string->number", stringToNumber, "makes number from string"),
-               ("string->list", stringToList, "makes list from string"),
-               ("string-copy", stringCopy, "copy string"),
-               ("substring", substring, "makes substring from string"),
-               ("vector-ref", vectorRef, "get element from vector"),
-               ("string-append", stringAppend, "append to string")]
+              ("pair?", isDottedList, "check whether variable is a pair"),
+              ("procedure?", isProcedure, "check whether variable is a procedure"),
+              ("number?", isNumber, "check whether variable is a number"),
+              ("integer?", isInteger, "check whether variable is an integer"),
+              ("real?", isReal, "check whether variable is a real number"),
+              ("list?", unaryOp isList, "check whether variable is list"),
+              ("null?", isNull, "check whether variable is null"),
+              ("symbol?", isSymbol, "check whether variable is symbol"),
+              ("vector?", unaryOp isVector, "check whether variable is vector"),
+              ("string?", isString, "check whether variable is string"),
+              ("char?", isChar, "check whether vairable is char"),
+              ("boolean?", isBoolean, "check whether variable is boolean"),
+              ("vector", buildVector, "build a new vector"),
+              ("vector-length", vectorLength, "get length of vector"),
+              ("string-length", stringLength, "get length of string"),
+              ("make-string", makeString, "make a new string"),
+              ("make-vector", makeVector, "create a vector"),
+              ("vector->list", vectorToList, "makes list from vector"),
+              ("list->vector", listToVector, "makes vector from list"),
+              ("symbol->string", symbol2String, "makes string from symbol"),
+              ("string->symbol", string2Symbol, "makes symbol from string"),
+              ("string->number", stringToNumber, "makes number from string"),
+              ("string->list", stringToList, "makes list from string"),
+              ("string-copy", stringCopy, "copy string"),
+              ("substring", substring, "makes substring from string"),
+              ("vector-ref", vectorRef, "get element from vector"),
+              ("string-append", stringAppend, "append to string")]
 
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
 ioPrimitives = [("apply", applyProc, "apply function"),
@@ -120,6 +132,76 @@ unpackStr notString = throwError $ TypeMismatch "string" notString
 unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
+
+numRound :: [LispVal] -> ThrowsError LispVal
+numRound [n@(Number (NumI _))] = return n
+numRound [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ round n
+numRound [x] = throwError $ TypeMismatch "number" x
+numRound badArgList = throwError $ NumArgs 1 badArgList
+
+numFloor :: [LispVal] -> ThrowsError LispVal
+numFloor [n@(Number (NumI _))] = return n
+numFloor [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ floor n
+numFloor [x] = throwError $ TypeMismatch "number" x
+numFloor badArgList = throwError $ NumArgs 1 badArgList
+
+numCeiling :: [LispVal] -> ThrowsError LispVal
+numCeiling [n@(Number (NumI _))] = return n
+numCeiling [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ ceiling n
+numCeiling [x] = throwError $ TypeMismatch "number" x
+numCeiling badArgList = throwError $ NumArgs 1 badArgList
+
+numTruncate :: [LispVal] -> ThrowsError LispVal
+numTruncate [n@(Number (NumI _))] = return n
+numTruncate [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ truncate n
+numTruncate [x] = throwError $ TypeMismatch "number" x
+numTruncate badArgList = throwError $ NumArgs 1 badArgList
+
+numSin :: [LispVal] -> ThrowsError LispVal
+numSin [(Number (NumI n))] = return $ Number $ NumF $ sin $ fromInteger n
+numSin [(Number (NumF n))] = return $ Number $ NumF $ sin n
+numSin [x] = throwError $ TypeMismatch "number" x
+numSin badArgList = throwError $ NumArgs 1 badArgList
+
+numCos :: [LispVal] -> ThrowsError LispVal
+numCos [(Number (NumI n))] = return $ Number $ NumF $ cos $ fromInteger n
+numCos [(Number (NumF n))] = return $ Number $ NumF $ cos n
+numCos [x] = throwError $ TypeMismatch "number" x
+numCos badArgList = throwError $ NumArgs 1 badArgList
+
+numTan :: [LispVal] -> ThrowsError LispVal
+numTan [(Number (NumI n))] = return $ Number $ NumF $ tan $ fromInteger n
+numTan [(Number (NumF n))] = return $ Number $ NumF $ tan n
+numTan [x] = throwError $ TypeMismatch "number" x
+numTan badArgList = throwError $ NumArgs 1 badArgList
+
+numAsin :: [LispVal] -> ThrowsError LispVal
+numAsin [(Number (NumI n))] = return $ Number $ NumF $ asin $ fromInteger n
+numAsin [(Number (NumF n))] = return $ Number $ NumF $ asin n
+numAsin [x] = throwError $ TypeMismatch "number" x
+numAsin badArgList = throwError $ NumArgs 1 badArgList
+
+numAcos :: [LispVal] -> ThrowsError LispVal
+numAcos [(Number (NumI n))] = return $ Number $ NumF $ acos $ fromInteger n
+numAcos [(Number (NumF n))] = return $ Number $ NumF $ acos n
+numAcos [x] = throwError $ TypeMismatch "number" x
+numAcos badArgList = throwError $ NumArgs 1 badArgList
+
+numAtan :: [LispVal] -> ThrowsError LispVal
+numAtan [(Number (NumI n))] = return $ Number $ NumF $ atan $ fromInteger n
+numAtan [(Number (NumF n))] = return $ Number $ NumF $ atan n
+numAtan [x] = throwError $ TypeMismatch "number" x
+numAtan badArgList = throwError $ NumArgs 1 badArgList
+
+numLog :: [LispVal] -> ThrowsError LispVal
+numLog [(Number (NumI n))] = return $ Number $ NumF $ log $ fromInteger n
+numLog [(Number (NumF n))] = return $ Number $ NumF $ log n
+numLog [Number (NumI n), Number (NumI base)] = 
+    return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
+numLog [Number (NumF n), Number (NumI base)] = 
+    return $ Number $ NumF $ logBase (fromInteger base) n
+numLog [x] = throwError $ TypeMismatch "number" x
+numLog badArgList = throwError $ NumArgs 1 badArgList
 
 printNewline :: [LispVal] -> ThrowsError LispVal
 printNewline [] = return $ String $ unlines [""]
@@ -305,14 +387,18 @@ symbol2String [] = return $ Bool False
 symbol2String _ = return $ Bool False
 
 string2Symbol :: [LispVal] -> ThrowsError LispVal
+string2Symbol [] = return $ Bool False
 string2Symbol ([String s]) = return $ Atom s
 string2Symbol [notString] = throwError $ TypeMismatch "string" notString
-string2Symbol [] = return $ Bool False
-string2Symbol _ = return $ Bool False
+string2Symbol args@(_ : _) = throwError $ NumArgs 1 args
 
 isString :: [LispVal] -> ThrowsError LispVal
 isString ([String _]) = return $ Bool True
 isString _ = return $ Bool False
+
+isChar :: [LispVal] -> ThrowsError LispVal
+isChar ([Character _]) = return $ Bool True
+isChar _ = return $ Bool False
 
 isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
