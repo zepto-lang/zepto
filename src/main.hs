@@ -5,10 +5,12 @@ import System.Environment
 -- |Prints the usage
 printUsage :: IO ()
 printUsage = do printVersion
-                putStrLn("Usage: " ++
+                putStrLn("\nUsage: " ++
                          "\n\twithout arguments  - runs REPL" ++
                          "\n\t-h/--help          - display this help message" ++
-                         "\n\t<some scheme file> - run file")
+                         "\n\t<some scheme file> - run file" ++
+                         "\n\nMore information can be found on " ++
+                         "https://github.com/hellerve/R5RS")
 
 -- |Prints the version
 printVersion :: IO ()
