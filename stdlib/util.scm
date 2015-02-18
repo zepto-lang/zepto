@@ -1,6 +1,3 @@
-(define (nil) ())
-(define (ok) ())
-
 (define (list . objs)
   objs)
 
@@ -53,9 +50,6 @@
     accum
     (foldl func (func accum (car l)) (cdr l))))
 
-(define fold foldl)
-(define reduce fold)
-
 (define (generate func init pred)
   (if (pred init)
     (cons init '())
@@ -84,8 +78,6 @@
                 (+ x 1))
         0
         l))
-
-(define len length)
 
 (define (reverse l)
   (fold (flip cons) '() l))

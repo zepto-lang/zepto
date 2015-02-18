@@ -7,3 +7,5 @@
 (load "stdlib/pairs.scm")
 ;; (load "stdlib/random.scm")
 (load "stdlib/util.scm")
+
+(load "stdlib/definitions.scm")

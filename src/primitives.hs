@@ -394,12 +394,6 @@ eval env (List (Atom "lambda" : varargs@(Atom _) : b)) =
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (parse env)
                             where parse en val = macroEval env val >>= eval en
-eval env (List [Atom "display", String val]) = eval env $ String val
-eval env (List [Atom "display", List (function : args)]) = eval env $ List (function : args)
-eval env (List [Atom "display", List val]) = eval env  $ List val
-eval env (List [Atom "display", Atom val]) = eval env $ Atom val
-eval _ (List [Atom "display", DottedList beginning end]) = return $ String $ showVal $ DottedList beginning end
-eval _ (List [Atom "display", Number val]) = return $ String $ showVal $ Number val
 eval _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
         (map thirdElem $ filter filterTuple primitives) ++
