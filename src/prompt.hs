@@ -7,23 +7,27 @@ import System.IO
 import Control.Monad
 import System.Console.Haskeline
 
+-- | searches all primitives for a possible completion
 completionSearch :: String -> [Completion]
 completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
                        map extractString primitives ++ map extractString ioPrimitives
                 where extractString tuple = "(" ++ firstEl tuple
                       firstEl (x, _, _) = x
 
+-- | returns a fresh settings variable
 addSettings :: Settings IO
 addSettings = Settings { historyFile = Just ".r5rs_history"
                        , complete = completeWord Nothing " \t" $ return . completionSearch
                        , autoAddHistory = True
                        }
 
+-- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc) ioPrimitives ++
                                 map (makeFunc PrimitiveFunc) primitives)
                 where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
 
+-- | prints help for all primitives
 printHelp :: IO [()]
 printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++ 
                              ["", "IO Primitives:"] ++ map getHelp ioPrimitives ++ [""]
@@ -31,6 +35,7 @@ printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++
                       firstEl (x, _, _) = x
                       thirdEl (_, _, x) = x
 
+-- | prints help for all keywords
 printKeywords :: IO ()
 printKeywords = putStrLn("Keywords:\n" ++
                            "apply   - apply function to value\n" ++
@@ -43,6 +48,7 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "display - print value to stdout\n" ++
                            "quit    - quit interpreter(use without s-expression)")
 
+-- | the main interpreter loop; gets input and hands everything except help and quit over
 until_ :: IO String -> (String -> IO a) -> IO ()
 until_ prompt action = do result <- prompt
                           case result of
@@ -55,6 +61,7 @@ until_ prompt action = do result <- prompt
                                 return ()
                             _ -> action result >> until_ prompt action
 
+-- | reads from the prompt
 readPrompt :: String -> IO String
 readPrompt prompt = runInputT addSettings $ poll prompt
                 where
@@ -65,9 +72,11 @@ readPrompt prompt = runInputT addSettings $ poll prompt
                             Nothing -> return "(print \"\")"
                             Just strinput -> return strinput
 
+-- | evaluate a line of code and print it
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalLine env expr >>= putStrLn
 
+-- | run a single statement
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
         env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
@@ -77,6 +86,8 @@ runSingleStatement args = do
             >>= hPutStrLn stderr
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
 
+
+-- | run the REPL
 runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings

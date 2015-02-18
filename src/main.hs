@@ -2,6 +2,7 @@ module Main where
 import Prompt
 import System.Environment
 
+-- |Prints the usage
 printUsage :: IO ()
 printUsage = do printVersion
                 putStrLn("Usage: " ++
@@ -9,13 +10,16 @@ printUsage = do printVersion
                          "\n\t-h/--help          - display this help message" ++
                          "\n\t<some scheme file> - run file")
 
+-- |Prints the version
 printVersion :: IO ()
 printVersion = putStrLn "R5RS Version 0.4"
 
+-- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
 printCommands = putStrLn("Type 'quit' or press Ctrl-C to exit interpreter\n" ++
                          "Type 'help' to get a simple help message")
 
+-- |Parses arguments and runs the REPL
 main :: IO ()
 main = do args <- getArgs
           if null args
