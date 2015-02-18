@@ -9,6 +9,7 @@ import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
 
+-- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [("+", numericPlusop (+), "add two values"),
               ("-", numericMinop (-), "subtract two values/negate value"),
@@ -77,6 +78,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("vector-ref", vectorRef, "get element from vector"),
               ("string-append", stringAppend, "append to string")]
 
+-- | a list of all io-bound primitives
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
 ioPrimitives = [("apply", applyProc, "apply function"),
                 ("open-input-file", makePort ReadMode, "open a file for reading"),
@@ -356,10 +358,12 @@ isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
+-- | evaluates a parsed line
 evalLine :: Env -> String -> IO String
 evalLine env expr = runIOThrows $ liftM show $ 
                     liftThrows (readExpr expr) >>= macroEval env >>= eval env
 
+-- | evaluates a parsed expression
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval _ val@(Nil _) = return val
 eval _ val@(String _) = return val

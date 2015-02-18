@@ -3,6 +3,7 @@ import Types
 import Variables
 import Control.Monad.Except
 
+-- | evaluates a macro 
 macroEval :: Env -> LispVal -> IOThrowsError LispVal
 macroEval env (List [Atom "define-syntax", Atom keyword, syntaxRules@(List (Atom "syntax-rules" : (List _ : _)))]) = do
   _ <- defineNamespacedVar env mnamespace keyword syntaxRules

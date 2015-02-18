@@ -22,6 +22,7 @@ import Control.Monad
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec.Error
 
+-- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 instance Show LispNum where show = showNum
@@ -69,10 +70,12 @@ instance Enum LispNum where
     toEnum x = NumI $ toInteger x
     fromEnum (NumI x) = fromIntegral x
     fromEnum (NumF x) = round x
+-- | a LispNum data type comprising a float and an integer
 data LispNum = NumI Integer
              | NumF Double
 
 instance Show LispVal where show = showVal
+-- | a LispVal data type comprising all Lisp data types
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
@@ -88,14 +91,17 @@ data LispVal = Atom String
              | Nil String
              | Pointer LispPointer
              
-             
+-- | a LispPointer data type 
 data LispPointer = LispPointer { pointerVar :: String, pointerEnv :: Env } 
              
              
+-- | a LispFun data type 
 data LispFun = LispFun { params :: [String], vararg :: Maybe String,
                          body :: [LispVal], closure :: Env}
 
 instance Show LispError where show = showError
+-- | a LispError data type comprising all errors that
+-- | can be emitted from within the interpreter
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | ParseErr ParseError
@@ -105,14 +111,18 @@ data LispError = NumArgs Integer [LispVal]
                | InternalError String
                | Default String
 
+-- | an Environment type where all variables are stored
 type Env = IORef [((String, String), IORef LispVal)]
+-- | a ThrowsError type containing either an error or a value
 type ThrowsError = Either LispError
+-- | a IOThrowsError type containing either an error or an IO
 type IOThrowsError = ExceptT LispError IO
 
 showNum :: LispNum -> String
 showNum (NumF contents) = show contents
 showNum (NumI contents) = show contents
 
+-- | a show function for all LispVals
 showVal :: LispVal -> String
 showVal (String contents) = "<String : " ++ contents ++ ">"
 showVal (Atom name) = name
@@ -134,6 +144,7 @@ showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer (LispPointer p _)) = "<pointer " ++ p ++ ">"
 showVal (Nil _) = ""
 
+-- | a show function for all LispErrors
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form
@@ -149,20 +160,25 @@ showError _ = "Unknown error"
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
+-- | traps an error and shows it
 trapError :: (MonadError e m, Show e) =>  m String -> m String
 trapError action = catchError action (return . show)
 
+-- | extracts a value from a possible error
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
 extractValue (Left _) = error("This should not be happening. " ++
                               "Please consider reporting this incident.")
 
+-- | returns a new empty environment
 nullEnv :: IO Env
 nullEnv = newIORef []
 
+-- | lift a ThrowsError to an IOThrowsError
 liftThrows :: ThrowsError a -> IOThrowsError a
 liftThrows (Left err) = throwError err
 liftThrows (Right val) = return val
 
+-- | lift an IOThrowsError to an IO monad
 runIOThrows :: IOThrowsError String -> IO String
 runIOThrows action = liftM extractValue (runExceptT (trapError action))

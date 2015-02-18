@@ -170,8 +170,10 @@ readOrThrow parser input = case parse parser input input of
     Left err -> throwError $ ParseErr err
     Right val -> return val
 
+-- | read a single expression
 readExpr :: String -> ThrowsError LispVal
 readExpr = readOrThrow parseExpr
 
+-- | read a list of expressions
 readExprList :: String -> ThrowsError [LispVal]
 readExprList = readOrThrow (endBy parseExpr spaces)
