@@ -22,7 +22,7 @@ can then be found in the `bin` directory).
 ## Introduction
 
 If you know Scheme, working in the REPL should be pretty straightforward.
-Calling it via `r5rs`(`bin/r5rs` if you just built locally), you should
+Calling it via `r5rs` (`bin/r5rs` if you just built locally), you should
 be greeted by this:
 
 ```
@@ -37,7 +37,8 @@ Now you can just fiddle, maybe try something like
 
 ```
 R5RS> (pow 3 300)
-136891479058588375991326027382088315966463695625337436471480190078368997177499076593800206155688941388250484440597994042813512732765695774566001
+136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
+206155688941388250484440597994042813512732765695774566001
 ```
 
 If you need help with a specific primitive, invoke help on it like so:
