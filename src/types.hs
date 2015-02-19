@@ -124,7 +124,7 @@ showNum (NumI contents) = show contents
 
 -- | a show function for all LispVals
 showVal :: LispVal -> String
-showVal (String contents) = "<String : " ++ contents ++ ">"
+showVal (String contents) = contents
 showVal (Atom name) = name
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"

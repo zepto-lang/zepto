@@ -91,8 +91,7 @@ runSingleStatement args = do
 runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
-        x <- loadFile env "stdlib/module.scm"
-        putStrLn x
+        _ <- loadFile env "stdlib/module.scm"
         until_ (readPrompt "R5RS> ") (evalAndPrint env)
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
                           

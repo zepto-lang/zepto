@@ -4,122 +4,58 @@
 [![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
-[this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)).
+[this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
+extended massively).
 It implements a good enough subset of R5RS to make real programming possible.
+Features implemented include Macros, lazy evaluation, a minimal stdlib, many
+native primitives and help for those.
 
-**Language Features implemented(Features not in the tutorial are denoted with [x]):**
-* Infinite precision integers
-* Large precision floats(up to ~10\*e310) [x]
-* Floats and integers can be used interchangably
-* Global variables
-* Functions
-* Lambdas
-* Value printing via `display` [x]
-* `help` statement within REPL providing information to all native primitives [x]
-* Many native primitives for type conversion and checking
-* Tail call elimination
-* REPL
-  * Loading libraries
-  * Command line history [x]
-  * Tab completion [x]
-* CLI
-  * Argument parsing [x]
-  * Execution from script files
-* stdlib
-  * Pairs
-  * Utils
-  * Math [x]
-  * ...
-* Local variables [x]
-* Macros [x]
-* Delayed Evaluation [x]
+## Installation
 
-**Features soon to be implemented:**
-* Docstrings
-* call/cc
-* Foreign Function Interface to C and Haskell
-* A Compiler
+You will need cabal/ghc for using R5RS. If you do not have cabal or do not
+want to install R5RS, a plain old Makefile is included, too.
 
-**Miscellaneous enhancements:**
-* Quickcheck testing
+After cloning via git, building via cabal is done via invoking `cabal install`.
+You can also do it via invoking `make`, which will build R5RS locally(the executable
+can then be found in the `bin` directory).
 
-The help message gives a pretty good overview over what's included by now:
+## Introduction
+
+If you know Scheme, working in the REPL should be pretty straightforward.
+Calling it via `r5rs`(`bin/r5rs` if you just built locally), you should
+be greeted by this:
+
 ```
-R5RS> help
-Primitives:
-+ - add two values
-- - subtract two values/negate value
-* - multiply two values
-/ - divide two values
-mod - modulo of two values
-quotient - quotient of two values
-remainder - remainder of two values
-= - compare equality of two values
-< - compare equality of two values
-> - compare equality of two values
-/= - compare equality of two values
->= - compare equality of two values
-<= - compare equality of two values
-&& - and operation
-|| - or operation
-string=? - compare equality of two strings
-string>? - compare equality of two strings
-string<? - compare equality of two strings
-string<=? - compare equality of two strings
-string>=? - compare equality of two strings
-newline - print a newline
-car - take head of list
-cdr - take tail of list
-cons - construct list
-eq? - check equality
-eqv? - check equality
-equal? - check equality
-pair? - check whether variable is a pair
-procedure? - check whether variable is a procedure
-number? - check whether variable is a number
-integer? - check whether variable is an integer
-real? - check whether variable is a real number
-list? - check whether variable is list
-null? - check whether variable is null
-symbol? - check whether variable is symbol
-vector? - check whether variable is vector
-string? - check whether variable is string
-boolean? - check whether variable is boolean
-vector - build a new vector
-vector-length - get length of vector
-string-length - get length of string
-make-string - make a new string
-make-vector - create a vector
-vector->list - makes list from vector
-list->vector - makes vector from list
-symbol->string - makes string from symbol
-string->symbol - makes symbol from string
-string->number - makes number from string
-string->list - makes list from string
-string-copy - copy string
-substring - makes substring from string
-vector-ref - get element from vector
-string-append - append to string
+R5RS Version 0.4.0
+Type 'quit' or press Ctrl-C to exit interpreter
+Type 'help' to get a simple help message
 
-IO Primitives:
-apply - apply function
-open-input-file - open a file for reading
-open-output-file - open a file for writing
-close-input-file - close a file opened for reading
-close-output-file - close a file opened for writing
-read - read from file
-write - write to file
-read-contents - read contents of file
-read-all - read and parse file
-
-Keywords:
-apply   - apply function to value
-define  - define global variable
-error   - print value to stderr
-help    - display this help message(use without s-expression)
-if      - branch on condition
-lambda  - create unnamed function
-let     - define local variable
-display - print value to stdout
-quit    - quit interpreter(use without s-expression)
+R5RS>
 ```
+
+Now you can just fiddle, maybe try something like
+
+```
+R5RS> (pow 3 300)
+136891479058588375991326027382088315966463695625337436471480190078368997177499076593800206155688941388250484440597994042813512732765695774566001
+```
+
+If you need help with a specific primitive, invoke help on it like so:
+
+```
+R5RS> (help +)
+add two values
+R5RS> (help "+")
+add two values
+```
+
+Once you're done with the fiddling, just do:
+
+```
+R5RS> quit
+
+Moriturus te saluto.
+```
+
+And you're back to your regular shell.
+
