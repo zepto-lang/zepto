@@ -12,7 +12,7 @@
 (define (assert-equal proc value) (unit-test-handler value (proc)))
 
 (define (unit-test-handler-results)
-  (write (list "Test Complete" "Passed:" pass-count "Failed:" fail-count)))
+  (write (list "Test Complete; " "Passed:" pass-count "Failed:" fail-count)))
 
 (define (unit-test-all-passed)
   (write (= fail-count 0)))

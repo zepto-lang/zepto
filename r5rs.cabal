@@ -9,7 +9,7 @@ Description:
 
 License:             GPL
 License-file:        LICENSE
-Author:              Veit Heller
+Author:              Veit Heller <veitheller.de>
 Maintainer:          Veit Heller <github.com/hellerve>
 Bug-Reports:         http://github.com/hellerve/r5rs/issues
 Build-Type:          Simple
@@ -28,5 +28,6 @@ Source-Repository head
 Executable         r5rs
   Build-Depends:   base, haskeline, parsec, mtl, array
   Extensions:      ExistentialQuantification
+  ghc-options:     -Wall -Werror -O2
   Main-is:         Main.hs
   Hs-Source-Dirs:  src/

@@ -402,14 +402,20 @@ eval _ (List [Atom "help", String val]) =
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ (List [Atom "help", Atom val]) =
-        return $ String $ concat $ 
-        (map thirdElem $ filter filterTuple primitives) ++
-        (map thirdElem $ filter filterTuple ioPrimitives)
+eval _ (List [Atom "help", Atom val]) = do
+        let x = concat $ 
+                (map thirdElem $ filter filterTuple primitives) ++
+                (map thirdElem $ filter filterTuple ioPrimitives)
+        if x == ""
+            then do
+                -- let y = getVar env val
+                return $ String "No documentation available"
+            else return $ String x
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
+          -- getDocString (LispFun _ _ _ _ doc) = doc
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
@@ -457,7 +463,7 @@ readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (IOFunc func) args = func args
 apply (PrimitiveFunc func) args = liftThrows $ func args
-apply (Func (LispFun fparams varargs fbody fclosure)) args =
+apply (Func (LispFun fparams varargs fbody fclosure _)) args =
     if num fparams /= num args && isNothing varargs
         then throwError $ NumArgs (num fparams) args
         else liftIO (bindVars fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
@@ -481,7 +487,7 @@ applyProc (func : args) = apply func args
 applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
-makeFunc varargs env p b = return $ Func $ LispFun (map showVal p) varargs b env
+makeFunc varargs env p b = return $ Func $ LispFun (map showVal p) varargs b env "No documentation"
 
 makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc = makeFunc Nothing

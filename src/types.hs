@@ -97,7 +97,7 @@ data LispPointer = LispPointer { pointerVar :: String, pointerEnv :: Env }
              
 -- | a LispFun data type 
 data LispFun = LispFun { params :: [String], vararg :: Maybe String,
-                         body :: [LispVal], closure :: Env}
+                         body :: [LispVal], closure :: Env, docstring :: String}
 
 instance Show LispError where show = showError
 -- | a LispError data type comprising all errors that
