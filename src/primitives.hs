@@ -381,16 +381,20 @@ eval env (List [Atom "if", predicate, conseq]) = do result <- eval env predicate
                                                         _         -> eval env $ List []
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
+eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
+                            makeDocFunc env p b doc >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : b)) = 
                             makeNormalFunc env p b >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : p) varargs : String doc : b)) =
+                            makeVarargs varargs env p b doc >>= defineVar env var
 eval env (List (Atom "define" : DottedList (Atom var : p) varargs : b)) =
-                            makeVarargs varargs env p b >>= defineVar env var
+                            makeVarargs varargs env p b "No documentation" >>= defineVar env var
 eval env (List (Atom "lambda" : List p : b)) = 
                             makeNormalFunc env p b
 eval env (List (Atom "lambda" : DottedList p varargs : b)) = 
-                            makeVarargs varargs env p b
+                            makeVarargs varargs env p b "lambda"
 eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
-                            makeVarargs varargs env [] b
+                            makeVarargs varargs env [] b "lambda"
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (parse env)
                             where parse en val = macroEval env val >>= eval en
@@ -402,20 +406,19 @@ eval _ (List [Atom "help", String val]) =
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ (List [Atom "help", Atom val]) = do
+eval env (List [Atom "help", Atom val]) = do
         let x = concat $ 
                 (map thirdElem $ filter filterTuple primitives) ++
                 (map thirdElem $ filter filterTuple ioPrimitives)
         if x == ""
-            then do
-                -- let y = getVar env val
-                return $ String "No documentation available"
+            then return $ getDocString $ getVar env val
             else return $ String x
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-          -- getDocString (LispFun _ _ _ _ doc) = doc
+          {-getDocString (Right (LispFun _ _ _ _ doc)) = String doc-}
+          getDocString _ = String "No documentation available"
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
@@ -486,11 +489,14 @@ applyProc [func, List args] = apply func args
 applyProc (func : args) = apply func args
 applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
-makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> m LispVal
-makeFunc varargs env p b = return $ Func $ LispFun (map showVal p) varargs b env "No documentation"
+makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> String -> m LispVal
+makeFunc varargs env p b doc = return $ Func $ LispFun (map showVal p) varargs b env doc
 
 makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
-makeNormalFunc = makeFunc Nothing
+makeNormalFunc env p b = makeFunc Nothing env p b "No documentationa available"
 
-makeVarargs :: LispVal -> Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
+makeDocFunc :: Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
+makeDocFunc env p b doc = makeFunc Nothing env p b doc
+
+makeVarargs :: LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
 makeVarargs = makeFunc . Just . showVal

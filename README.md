@@ -1,5 +1,5 @@
 # R5RS
-![general version](http://img.shields.io/badge/version-0.4.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.4.1-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 [![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
@@ -8,7 +8,20 @@ A simple Scheme(R5RS) interpreter in Haskell(based on
 extended massively).
 It implements a good enough subset of R5RS to make real programming possible.
 Features implemented include Macros, lazy evaluation, a minimal stdlib, many
-native primitives and help for those.
+native primitives and help for those or via docstrings included in the function 
+definition.
+
+## Table of Contents
+
+1. **[Maintainers](#maintainers)**
+2. **[Installation](#installation)**
+3. **[Introduction](#introduction)**
+4. **[Future](#future)**
+5. **[Contribute](#contribute)**
+
+## Maintainers
+
+* Veit Heller (<veit@veitheller.de>, <veit.heller@htw-berlin.de>)
 
 ## Installation
 
@@ -26,7 +39,7 @@ Calling it via `r5rs` (`bin/r5rs` if you just built locally), you should
 be greeted by this:
 
 ```
-R5RS Version 0.4.0
+R5RS Version 0.4.1
 Type 'quit' or press Ctrl-C to exit interpreter
 Type 'help' to get a simple help message
 
@@ -41,6 +54,16 @@ R5RS> (pow 3 300)
 206155688941388250484440597994042813512732765695774566001
 ```
 
+Please note that integers are promoted when they work together with floats:
+
+```
+R5RS> (+ 1 1.5)
+2.5
+```
+
+There are a few datatypes, namely integers, floats, strings, lists and
+vectors. Quoted expressions are supported, too.
+
 If you need help with a specific primitive, invoke help on it like so:
 
 ```
@@ -48,6 +71,15 @@ R5RS> (help +)
 add two values
 R5RS> (help "+")
 add two values
+```
+
+You can also get help for normal functions:
+
+```
+R5RS> (define (x fst snd) "multiply two values" (* fst snd))
+(lambda ("fst" "snd") ...)
+R5RS> (help x)
+"multiply two values"
 ```
 
 Once you're done with the fiddling, just do:
@@ -60,3 +92,16 @@ Moriturus te saluto.
 
 And you're back to your regular shell.
 
+## Future
+
+Features that are planned, but not yet implemented, include `call/cc` and a 
+small compiler based on LLVM. Both features will take a while for me to 
+implement, though. If you have any other features, you would like to see
+in the language/implementation, contact me. I'm not an experienced Scheme
+programmer myself, so any feedback is welcome.
+
+## Contribute
+
+There is a messy TODO that tells you what could be done if you would like
+to contribute. Any contributions are welcome, be it in the form of code,
+feature requests or bug reports.
