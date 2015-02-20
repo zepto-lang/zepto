@@ -15,7 +15,7 @@
 
 (define (quad x) (* x x))
 
-(define (pow x n) 
+(define (pow x n) "power of; x: base, n: exponent"
     (if (<= n 0) 1
     (if (= n 1) x 
         (* (pow x (- n 1)) x))))

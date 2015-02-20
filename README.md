@@ -77,9 +77,9 @@ You can also get help for normal functions:
 
 ```
 R5RS> (define (x fst snd) "multiply two values" (* fst snd))
-(lambda ("fst" "snd") ...)
+multiply two values; source: (lambda ("fst" "snd") ...)
 R5RS> (help x)
-"multiply two values"
+multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
 Once you're done with the fiddling, just do:

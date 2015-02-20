@@ -135,7 +135,9 @@ showVal (Vector contents) = "#(" ++ (unwordsList $ elems contents) ++ ")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (Port _) = "<IO port>"
-showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _}) = 
+showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
+                       docstring = doc}) = 
+    doc ++ "; source: " ++
     "(lambda (" ++ unwords (map show args) ++
         (case varargs of
             Nothing -> ""

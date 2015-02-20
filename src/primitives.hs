@@ -411,14 +411,12 @@ eval env (List [Atom "help", Atom val]) = do
                 (map thirdElem $ filter filterTuple primitives) ++
                 (map thirdElem $ filter filterTuple ioPrimitives)
         if x == ""
-            then return $ getDocString $ getVar env val
+            then getVar env val
             else return $ String x
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-          {-getDocString (Right (LispFun _ _ _ _ doc)) = String doc-}
-          getDocString _ = String "No documentation available"
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
@@ -493,7 +491,7 @@ makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> String -
 makeFunc varargs env p b doc = return $ Func $ LispFun (map showVal p) varargs b env doc
 
 makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
-makeNormalFunc env p b = makeFunc Nothing env p b "No documentationa available"
+makeNormalFunc env p b = makeFunc Nothing env p b "No documentation available"
 
 makeDocFunc :: Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
 makeDocFunc env p b doc = makeFunc Nothing env p b doc
