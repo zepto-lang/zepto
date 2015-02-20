@@ -87,6 +87,7 @@ ioPrimitives = [("apply", applyProc, "apply function"),
                 ("close-output-file", closePort, "close a file opened for writing"),
                 ("read", readProc, "read from file"),
                 ("write", writeProc, "write to file"),
+                ("error", errorProc, "write to stderr"),
                 ("read-contents", readContents, "read contents of file"),
                 ("read-all", readAll, "read and parse file")]
 
@@ -449,6 +450,10 @@ writeProc :: [LispVal] -> IOThrowsError LispVal
 writeProc [obj] = writeProc [obj, Port stdout]
 writeProc [obj, Port port] = liftIO $ hPrint port obj >> return (Bool True)
 writeProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+errorProc :: [LispVal] -> IOThrowsError LispVal
+errorProc [obj] = liftIO $ hPrint stderr obj >> return (Bool True)
+errorProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [String filename] = liftM String $ liftIO $ readFile filename
