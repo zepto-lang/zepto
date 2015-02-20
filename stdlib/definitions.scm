@@ -1,6 +1,6 @@
 (define display write)
 (define len length)
-(define (nil) ())
-(define (ok) ())
+(define (nil) "nil obj" ())
+(define (ok) "ok obj" ())
 (define fold foldl)
 (define reduce fold)

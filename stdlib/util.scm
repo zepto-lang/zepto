@@ -31,7 +31,7 @@
 (define positive?
   (curry < 0))
 
-(define negative?
+(define negative? 
   (curry > 0))
 
 (define (odd? num)

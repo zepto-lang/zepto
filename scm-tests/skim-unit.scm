@@ -3,7 +3,7 @@
 
 (define (unit-test-handler expected actual) 
   (if (not (eqv? expected actual))
-    (begin (write (list "Test failed; expected value:" expected ", actual value:" actual))
+    (begin (write (list "Test failed; expected value:\"" expected "\" type:" type?  ", actual value:\"" actual "\""))
            (set! fail-count (+ fail-count 1)))
     (set! pass-count (+ pass-count 1))))
 

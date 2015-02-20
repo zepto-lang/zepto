@@ -15,9 +15,22 @@ spaces = skipMany1 space
 
 parseString :: Parser LispVal
 parseString = do _ <- char '"'
-                 x <- many (noneOf"\"")
+                 x <- many (parseEscaped <|> noneOf"\"")
                  _ <- char '"'
                  return $ String x
+
+parseEscaped :: forall u . GenParser Char u Char
+parseEscaped =  do
+    _ <- char '\\'
+    c <- anyChar
+    case c of
+        'a' -> return '\a'
+        'b' -> return '\b'
+        'n' -> return '\n'
+        't' -> return '\t'
+        'r' -> return '\r'
+        '"' -> return '\"'
+        _ -> return c
 
 parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol <|> oneOf "."
