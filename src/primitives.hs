@@ -138,19 +138,19 @@ unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
 numRound :: (Double -> Integer) -> [LispVal] -> ThrowsError LispVal
 numRound _ [n@(Number (NumI _))] = return n
-numRound op [(Number (NumF n))] = return $ Number $ NumI $ fromInteger $ op n
+numRound op [Number (NumF n)] = return $ Number $ NumI $ fromInteger $ op n
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
-numOp op [(Number (NumI n))] = return $ Number $ NumF $ op $ fromInteger n
-numOp op [(Number (NumF n))] = return $ Number $ NumF $ op n
+numOp op [Number (NumI n)] = return $ Number $ NumF $ op $ fromInteger n
+numOp op [Number (NumF n)] = return $ Number $ NumF $ op n
 numOp _ [x] = throwError $ TypeMismatch "number" x
 numOp _ badArgList = throwError $ NumArgs 1 badArgList
 
 numLog :: [LispVal] -> ThrowsError LispVal
-numLog [(Number (NumI n))] = return $ Number $ NumF $ log $ fromInteger n
-numLog [(Number (NumF n))] = return $ Number $ NumF $ log n
+numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
+numLog [Number (NumF n)] = return $ Number $ NumF $ log n
 numLog [Number (NumI n), Number (NumI base)] = 
     return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
 numLog [Number (NumF n), Number (NumI base)] = 
@@ -198,7 +198,7 @@ eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
 eqvList :: ([LispVal] -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
-eqvList eqvFunc [(List arg1), (List arg2)] =
+eqvList eqvFunc [List arg1, List arg2] =
         return $ Bool $ (length arg1 == length arg2) && all eqvPair (zip arg1 arg2)
     where eqvPair (x1, x2) = case eqvFunc [x1, x2] of
                                 Left _           -> False
@@ -215,7 +215,7 @@ unpackEquals x y (AnyUnpacker unpacker) =
 
 equal :: [LispVal] ->ThrowsError LispVal
 equal [lx@(List _), ly@(List _)] = eqvList equal [lx, ly]
-equal [(DottedList xs x), (DottedList ys y)] = equal [List $ xs ++ [x], List $ ys ++ [y]]
+equal [DottedList xs x, DottedList ys y] = equal [List $ xs ++ [x], List $ ys ++ [y]]
 equal [x, y] = do 
            primitiveEquals <- liftM or $ mapM (unpackEquals x y)
                               [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
@@ -225,36 +225,36 @@ equal [x, y] = do
 equal badArgList = throwError $ NumArgs 2 badArgList
 
 makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector :: [LispVal] -> ThrowsError LispVal
-makeVector [(Number n)] = makeVector [Number n, List []]
-makeVector [(Number (NumI n)), a] = do
+makeVector [Number n] = makeVector [Number n, List []]
+makeVector [Number (NumI n), a] = do
     let l = replicate (fromInteger n) a
-    return $ Vector $ (listArray (0, length l - 1)) l
+    return $ Vector $ listArray (0, length l - 1) l
 makeVector [badType] = throwError $ TypeMismatch "integer" badType
 makeVector badArgList = throwError $ NumArgs 1 badArgList
 
 buildVector (o:os) = do
     let l = o:os
-    return $ Vector $ (listArray (0, length l - 1)) l
+    return $ Vector $ listArray (0, length l - 1) l
 buildVector badArgList = throwError $ NumArgs 1 badArgList
 
-vectorLength [(Vector v)] = return $ Number $ NumI $ toInteger $ length (elems v)
+vectorLength [Vector v] = return $ Number $ NumI $ toInteger $ length (elems v)
 vectorLength [badType] = throwError $ TypeMismatch "vector" badType
 vectorLength badArgList = throwError $ NumArgs 1 badArgList
 
-vectorRef [(Vector v), (Number (NumI n))] = return $ v ! (fromInteger n)
+vectorRef [Vector v, Number (NumI n)] = return $ v ! fromInteger n
 vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
 vectorRef badArgList = throwError $ NumArgs 2 badArgList
 
-vectorToList [(Vector v)] = return $ List $ elems v
+vectorToList [Vector v] = return $ List $ elems v
 vectorToList [badType] = throwError $ TypeMismatch "vector" badType
 vectorToList badArgList = throwError $ NumArgs 1 badArgList
 
-listToVector [(List l)] = return $ Vector $ (listArray (0, length l - 1)) l
+listToVector [List l] = return $ Vector $ listArray (0, length l - 1) l
 listToVector [badType] = throwError $ TypeMismatch "list" badType
 listToVector badArgList = throwError $ NumArgs 1 badArgList
 
 makeString :: [LispVal] -> ThrowsError LispVal
-makeString [(Number n)] = return $ _makeString n ' ' ""
+makeString [Number n] = return $ _makeString n ' ' ""
     where _makeString count chr s =
             if count == 0
                 then String s
@@ -267,7 +267,7 @@ stringLength [badType] = throwError $ TypeMismatch "string" badType
 stringLength badArgList = throwError $ NumArgs 1 badArgList
 
 substring :: [LispVal] -> ThrowsError LispVal
-substring [(String s), (Number (NumI start)), (Number (NumI end))] = do 
+substring [String s, Number (NumI start), Number (NumI end)] = do 
     let len = fromInteger $ end - start
     let begin = fromInteger start
     return $ String $ (take len . drop begin) s
@@ -275,7 +275,7 @@ substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
 stringAppend :: [LispVal] -> ThrowsError LispVal
-stringAppend [(String s)] = return $ String s
+stringAppend [String s] = return $ String s
 stringAppend (String st:sts) = do
     rest <- stringAppend sts
     case rest of
@@ -285,12 +285,12 @@ stringAppend [badType] = throwError $ TypeMismatch "string" badType
 stringAppend badArgList = throwError $ NumArgs 1 badArgList
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
-stringToNumber [(String s)] = return $ Number $ NumI $ read s
+stringToNumber [String s] = return $ Number $ NumI $ read s
 stringToNumber [badType] = throwError $ TypeMismatch "string" badType
 stringToNumber badArgList = throwError $ NumArgs 1 badArgList
 
 stringToList :: [LispVal] -> ThrowsError LispVal
-stringToList [(String s)] = return $ List $ map (Character) s
+stringToList [String s] = return $ List $ map Character s
 stringToList [badType] = throwError $ TypeMismatch "string" badType
 stringToList badArgList = throwError $ NumArgs 1 badArgList
 
@@ -401,16 +401,16 @@ eval env (List [Atom "load", String filename]) =
                             where parse en val = macroEval env val >>= eval en
 eval _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
-        (map thirdElem $ filter filterTuple primitives) ++
-        (map thirdElem $ filter filterTuple ioPrimitives)
+        map thirdElem (filter filterTuple primitives) ++
+        map thirdElem (filter filterTuple ioPrimitives)
     where 
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
 eval env (List [Atom "help", Atom val]) = do
         let x = concat $ 
-                (map thirdElem $ filter filterTuple primitives) ++
-                (map thirdElem $ filter filterTuple ioPrimitives)
+                map thirdElem (filter filterTuple primitives) ++
+                map thirdElem (filter filterTuple ioPrimitives)
         if x == ""
             then getVar env val
             else return $ String x
@@ -499,7 +499,7 @@ makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc env p b = makeFunc Nothing env p b "No documentation available"
 
 makeDocFunc :: Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
-makeDocFunc env p b doc = makeFunc Nothing env p b doc
+makeDocFunc = makeFunc Nothing
 
 makeVarargs :: LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
 makeVarargs = makeFunc . Just . showVal

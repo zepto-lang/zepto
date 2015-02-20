@@ -115,7 +115,7 @@ parseQuoted = do _ <- char '\''
 parseVect :: Parser LispVal
 parseVect = do
     vals <- sepBy parseExpr spaces
-    return $ Vector (listArray (0, (length vals -1)) vals)
+    return $ Vector (listArray (0, length vals -1) vals)
 
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
