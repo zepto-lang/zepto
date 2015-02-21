@@ -7,10 +7,15 @@ import System.IO
 import Control.Monad
 import System.Console.Haskeline
 
+keywords :: [String]
+keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
+
 -- | searches all primitives for a possible completion
 completionSearch :: String -> [Completion]
 completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       map extractString primitives ++ map extractString ioPrimitives
+                       map ("(" ++) keywords 
+                       ++ map extractString primitives 
+                       ++ map extractString ioPrimitives
                 where extractString tuple = "(" ++ firstEl tuple
                       firstEl (x, _, _) = x
 
