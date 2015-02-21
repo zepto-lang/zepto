@@ -8,7 +8,7 @@
   (lambda (arg1 arg2)
     (func arg2 arg1)))
 
-(define (list-tail l k)
+(define (list-tail l k) "get tail of a list"
     (if (zero? k)
       l
       (list-tail (cdr l) (- k 1))))
