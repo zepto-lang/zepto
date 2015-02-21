@@ -93,6 +93,9 @@ Moriturus te saluto.
 
 And you're back to your regular shell.
 
+If you want to see examples of real programs, look in the `examples`
+directory.
+
 ## Future
 
 Features that are planned, but not yet implemented, include `call/cc` and a 
