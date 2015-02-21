@@ -4,3 +4,4 @@
 (define (ok) "ok obj" ())
 (define fold foldl)
 (define reduce fold)
+(define ceil ceiling)
