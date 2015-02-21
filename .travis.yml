@@ -9,7 +9,6 @@ python:
   - 7.6
   - 7.4
 
-install:
-    - cabal install
 script: 
+    - cabal install
     - make test | grep "#f"; [ $? == 1 ]
