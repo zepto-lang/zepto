@@ -8,8 +8,9 @@ A simple Scheme(R5RS) interpreter in Haskell(based on
 extended massively).
 It implements a good enough subset of R5RS to make real programming possible.
 Features implemented include Macros, lazy evaluation, a minimal stdlib, many
-native primitives and help for those or via docstrings included in the function 
-definition.
+native primitives and help for those or for functions provided via docstrings 
+included in the function definition. And it actually has a decent shell with
+completion and history.
 
 ## Table of Contents
 
