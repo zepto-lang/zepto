@@ -16,13 +16,13 @@
 
 (define-syntax let*
     (syntax-rules ()
-        ((_ () body) ((lambda () body)))
-        ((_ ((var val)
-                (vars vals) ...)
-            body)
-            (let ((var val))
-                (let* ((vars vals) ...)
-            body)))))
+       ((let* () body1 body2 ...)
+        (let () body1 body2 ...))
+       ((let* ((name1 val1) (name2 val2) ...)
+          body1 body2 ...)
+        (let ((name1 val1))
+          (let* ((name2 val2) ...)
+            body1 body2 ...)))))
 
 (define-syntax letrec
   (syntax-rules ()
@@ -52,3 +52,26 @@
                    (newtemp temp ...)
                    ((var1 init1) ...)
                    body ...))))
+
+(define-syntax do
+    (syntax-rules ()
+        ((do ((var init step ...) ...)
+           (test expr ...)
+           command ...)
+         (letrec
+           ((loop
+              (lambda (var ...)
+                (if test
+                  (begin
+                    (if #f #f)
+                    expr ...)
+                  (begin
+                    command
+                    ...
+                    (loop (do "step" var step ...)
+                          ...))))))
+           (loop init ...)))
+        ((do "step" x)
+         x)
+        ((do "step" x y)
+         y)))
