@@ -380,7 +380,17 @@ eval env (List [Atom "if", predicate, conseq]) = do result <- eval env predicate
                                                     case result of
                                                         Bool True -> eval env conseq
                                                         _         -> eval env $ List []
+eval _ (List [Atom "if", x]) = throwError $ BadSpecialForm 
+                            ("if needs a predicate and a consequence "
+                            ++ "plus an optional alternative clause")
+                            x
+eval _ (List (Atom "if" : x)) = throwError $ NumArgs 2 x
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
+eval _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm 
+                            ("set takes a previously defined variable and "
+                            ++ "its new value")
+                            x
+eval _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
                             makeDocFunc env p b doc >>= defineVar env var
@@ -390,15 +400,20 @@ eval env (List (Atom "define" : DottedList (Atom var : p) varargs : String doc :
                             makeVarargs varargs env p b doc >>= defineVar env var
 eval env (List (Atom "define" : DottedList (Atom var : p) varargs : b)) =
                             makeVarargs varargs env p b "No documentation" >>= defineVar env var
+eval _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
 eval env (List (Atom "lambda" : List p : b)) = 
                             makeNormalFunc env p b
 eval env (List (Atom "lambda" : DottedList p varargs : b)) = 
                             makeVarargs varargs env p b "lambda"
 eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
                             makeVarargs varargs env [] b "lambda"
+eval _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
 eval env (List [Atom "load", String filename]) =
                             load filename >>= liftM last . mapM (parse env)
                             where parse en val = macroEval env val >>= eval en
+eval _ (List [Atom "load", x]) = throwError $ 
+                            BadSpecialForm "Malformed load" x
+eval _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
         map thirdElem (filter filterTuple primitives) ++
@@ -418,6 +433,8 @@ eval env (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
+eval _ (List [Atom "help", x]) = throwError $ BadSpecialForm "Malformed help" x
+eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)

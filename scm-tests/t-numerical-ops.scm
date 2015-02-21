@@ -1,7 +1,12 @@
 (load "scm-tests/skim-unit.scm")
 
+(assert-equal (real? 3) #t)
+(assert-equal (integer? 3.0) #t)
+(assert-equal (integer? 3.2) #f)
+
 (assert-equal (lambda () (max 3 4)) 4)
 (assert-equal (lambda () (max 3.9 4)) 4)
+(assert-equal (lambda () (abs -10)) 10)
 
 (assert-equal (lambda () (+ 1 2 3 4 5)) 15)
 (assert-equal (lambda () (- 1 2)) -1)
@@ -12,11 +17,20 @@
 (assert-equal (lambda () (modulo 8 2)) 0)
 (assert-equal (lambda () (modulo 9 2)) 1)
 (assert-equal (lambda () (quotient 44 2)) 22)
-
 (assert-equal (lambda () (modulo 13 -4)) -3)
 (assert-equal (lambda () (remainder 13 -4)) 1)
 (assert-equal (lambda () (modulo -13 -4)) -1)
 (assert-equal (lambda () (remainder -13 -4)) -1)
+
+(assert-equal (floor -4.3) -5.0)
+(assert-equal (ceiling -4.3) -4.0)
+(assert-equal (truncate -4.3) -4.0)
+(assert-equal (round -4.3) -4.0)
+(assert-equal (floor 3.5) 3.0)
+(assert-equal (ceiling 3.5) 4.0)
+(assert-equal (truncate 3.5) 3.0)
+(assert-equal (round 3.5) 4.0)
+(assert-equal (round 7) 7)
 
 (assert-equal (lambda () (= 1 (+ 0 1))) #t)
 (assert-equal (lambda () (= 1.0 1)) #t)
