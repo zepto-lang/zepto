@@ -157,7 +157,8 @@ showError (NumArgs expected found) = "Expected " ++ show expected ++
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
-showError _ = "Unknown error"
+showError (InternalError err) = "Internal error: " ++ err
+showError (Default err) = err
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal

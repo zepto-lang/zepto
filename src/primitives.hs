@@ -8,6 +8,8 @@ import Data.Array
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
+import System.Directory hiding (findFile)
+import Paths_r5rs
 
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
@@ -364,6 +366,19 @@ evalLine :: Env -> String -> IO String
 evalLine env expr = runIOThrows $ liftM show $ 
                     liftThrows (readExpr expr) >>= macroEval env >>= eval env
 
+findFile :: String -> ExceptT LispError IO String
+findFile filename = do
+        fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
+        exists <- fex filename
+        existsLib <- fex fileAsLib
+        case (exists, existsLib) of
+            (Bool False, Bool True) -> return fileAsLib
+            _ -> return filename
+    where
+        fex file = do ex <-liftIO $ doesFileExist file
+                      return $ Bool ex
+
+
 -- | evaluates a parsed expression
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval _ val@(Nil _) = return val
@@ -408,7 +423,8 @@ eval env (List (Atom "lambda" : DottedList p varargs : b)) =
 eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
                             makeVarargs varargs env [] b "lambda"
 eval _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
-eval env (List [Atom "load", String filename]) =
+eval env (List [Atom "load", String file]) = do
+                            filename <- findFile file
                             load filename >>= liftM last . mapM (parse env)
                             where parse en val = macroEval env val >>= eval en
 eval _ (List [Atom "load", x]) = throwError $ 
@@ -477,7 +493,11 @@ readContents [String filename] = liftM String $ liftIO $ readFile filename
 readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs 
 
 load :: String -> IOThrowsError [LispVal]
-load filename = liftIO (readFile filename) >>= liftThrows . readExprList
+load filename = do
+    res <- liftIO $ doesFileExist filename
+    if res 
+        then liftIO (readFile filename) >>= liftThrows . readExprList
+        else throwError $ Default $ "File does not exist: " ++ filename
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename

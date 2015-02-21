@@ -6,6 +6,7 @@ import Data.List
 import System.IO
 import Control.Monad
 import System.Console.Haskeline
+import Paths_r5rs
 
 keywords :: [String]
 keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
@@ -86,7 +87,8 @@ runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
         env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
                                                     List $ map String $ drop 1 args)]
-        _ <- loadFile env "stdlib/module.scm"
+        lib <- getDataFileName "stdlib/module.scm"
+        _ <- loadFile env lib
         runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
             >>= hPutStrLn stderr
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
@@ -96,7 +98,8 @@ runSingleStatement args = do
 runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
-        _ <- loadFile env "stdlib/module.scm"
+        lib <- getDataFileName "stdlib/module.scm"
+        _ <- loadFile env lib
         until_ (readPrompt "R5RS> ") (evalAndPrint env)
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
                           
