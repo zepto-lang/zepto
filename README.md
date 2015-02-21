@@ -26,18 +26,15 @@ completion and history.
 
 ## Installation
 
-You will need cabal/ghc for using R5RS. If you do not have cabal or do not
-want to install R5RS, a plain old Makefile is included, too.
+You will need cabal for using R5RS. A plain old Makefile is included, too.
+Run `make test` to check your installation.
 
 After cloning via git, building via cabal is done via invoking `cabal install`.
-You can also do it via invoking `make`, which will build R5RS locally(the executable
-can then be found in the `bin` directory).
 
 ## Introduction
 
 If you know Scheme, working in the REPL should be pretty straightforward.
-Calling it via `r5rs` (`bin/r5rs` if you just built locally), you should
-be greeted by this:
+Calling it via `r5rs`, you should be greeted by this:
 
 ```
 R5RS Version 0.4.1
