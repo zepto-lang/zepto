@@ -106,8 +106,8 @@ checkLocal localEnv identifiers hasEllipsis (Atom pattern) input =
                                  return $ Bool True
                                else return $ Bool False
                         _ -> return $ Bool False
-                _ -> do _ <- addPatternVar isDefined input
-                        return $ Bool True
+                  _ -> do _ <- addPatternVar isDefined input
+                          return $ Bool True
      else do
          isIdent <- findAtom (Atom pattern) identifiers
          case isIdent of
@@ -119,8 +119,8 @@ checkLocal localEnv identifiers hasEllipsis (Atom pattern) input =
                                    return $ Bool True
                            else return $ Bool False
                     _ -> return $ Bool False
-            _ -> do _ <- defineVar localEnv pattern input
-                    return $ Bool True
+              _ -> do _ <- defineVar localEnv pattern input
+                      return $ Bool True
     where
       addPatternVar isDefined val = 
              if isDefined
@@ -214,17 +214,17 @@ transformDottedList localEnv ellipsisIndex (List result) (List (DottedList ds d 
           lsto <- transformRule localEnv ellipsisIndex (List []) (List ds) (List ellipsisList)
           case lsto of
             List lst -> do
-                           r <- transformRule localEnv ellipsisIndex (List []) (List [d]) (List ellipsisList)
-                           case r of
-                                List [List []] -> transformRule localEnv ellipsisIndex (List $ result ++ [List lst]) (List ts) (List ellipsisList)
-                                List [rst] -> do
-                                                 src <- lookupPatternVarSrc localEnv $ List ds
-                                                 case src of
-                                                    String "pair" -> transformRule localEnv ellipsisIndex (List $ result ++ [DottedList lst rst]) (List ts) (List ellipsisList)
-                                                    _ -> transformRule localEnv ellipsisIndex (List $ result ++ [List $ lst ++ [rst]]) (List ts) (List ellipsisList)
-                                _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
-            Nil _ -> return $ List [Nil "", List ellipsisList]
-            _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
+                r <- transformRule localEnv ellipsisIndex (List []) (List [d]) (List ellipsisList)
+                case r of
+                    List [List []] -> transformRule localEnv ellipsisIndex (List $ result ++ [List lst]) (List ts) (List ellipsisList)
+                    List [rst] -> do
+                        src <- lookupPatternVarSrc localEnv $ List ds
+                        case src of
+                            String "pair" -> transformRule localEnv ellipsisIndex (List $ result ++ [DottedList lst rst]) (List ts) (List ellipsisList)
+                            _ -> transformRule localEnv ellipsisIndex (List $ result ++ [List $ lst ++ [rst]]) (List ts) (List ellipsisList)
+                    _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
+              Nil _ -> return $ List [Nil "", List ellipsisList]
+              _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
 transformDottedList _ _ _ _ _ = throwError $ Default "Unexpected error in transformDottedList"
 
 findAtom :: LispVal -> LispVal -> IOThrowsError LispVal
