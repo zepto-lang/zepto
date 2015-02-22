@@ -48,7 +48,7 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "define  - define global variable\n" ++
                            "error   - print value to stderr\n" ++
                            "help    - display this help message(use without s-expression)\n" ++
-                           "help    - display help for functio" +
+                           "help    - display help for function" +
                            "if      - branch on condition\n" ++
                            "lambda  - create unnamed function\n" ++
                            "let     - define local variable\n" ++
