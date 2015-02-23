@@ -17,9 +17,14 @@
 (define (square x) "square a value; x: value to be squared" (* x x))
 
 (define (pow x n) "power of; x: base, n: exponent"
-    (if (<= n 0) 1
-    (if (= n 1) x 
-        (* (pow x (- n 1)) x))))
+    (let ((t (* (pow x (/ n 2)) 2)))
+    (if (<= n 1) 
+      1
+      (if (= (modulo n 2) 0) 
+        t 
+        (if (> y 0)
+          (* x t)
+          (/ t x))))))
 
 (define expt pow)
 (define modulo mod)

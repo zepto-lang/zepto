@@ -24,6 +24,8 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("floor", numRound floor, "floors a number"),
               ("ceiling", numRound ceiling, "ceils a number"),
               ("truncate", numRound truncate, "truncates a number"),
+              ("pow", binNumOp (**), "power of function"),
+              ("sqrt", numOp sqrt, "square root function"),
               ("log", numLog, "logarithm function"),
               ("sin", numOp sin, "sine function"),
               ("cos", numOp cos, "cosine function"),
@@ -159,6 +161,18 @@ numLog [Number (NumF n), Number (NumI base)] =
     return $ Number $ NumF $ logBase (fromInteger base) n
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
+
+binNumOp :: (Double -> Double -> Double) -> [LispVal] -> ThrowsError LispVal
+binNumOp op [Number (NumI n), Number (NumI base)] = 
+    return $ Number $ NumF $ op (fromIntegral n) (fromIntegral base)
+binNumOp op [Number (NumF n), Number (NumI base)] = 
+    return $ Number $ NumF $ op n (fromIntegral base)
+binNumOp op [Number (NumI n), Number (NumF base)] = 
+    return $ Number $ NumF $ op (fromIntegral n) base
+binNumOp op [Number (NumF n), Number (NumF base)] = 
+    return $ Number $ NumF $ op n base
+binNumOp _ [x] = throwError $ TypeMismatch "number" x
+binNumOp _ badArgList = throwError $ NumArgs 2 badArgList
 
 printNewline :: [LispVal] -> ThrowsError LispVal
 printNewline [] = return $ String $ unlines [""]
