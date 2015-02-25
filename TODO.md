@@ -26,9 +26,10 @@
 * Local variables [x]
 * Macros [x]
 * Delayed Evaluation [x]
+* Docstrings [x]
 
 **Features soon to be implemented:**
-* Docstrings
+* Complex Numbers
 * call/cc
 * Foreign Function Interface to C and Haskell
 * A Compiler

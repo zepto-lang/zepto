@@ -1,10 +1,10 @@
-(define (list . objs)
+(define (list . objs) "creates a list from objects"
   objs)
 
-(define (id obj)
+(define (id obj) "returns an object"
   obj)
 
-(define (flip func)
+(define (flip func) "flips two arguments for a function"
   (lambda (arg1 arg2)
     (func arg2 arg1)))
 
@@ -13,15 +13,17 @@
       l
       (list-tail (cdr l) (- k 1))))
 
-(define (list-ref l k) (car (list-tail l k)))
+(define (list-ref l k) "get reference to list element at certain point"
+    (car (list-tail l k)))
 
-(define (append i a) (foldr (lambda (ax ix) (cons ax ix)) a i))
+(define (append i a) "append something to a list"
+    (foldr (lambda (ax ix) (cons ax ix)) a i))
 
-(define (curry func arg1)
+(define (curry func arg1) "curry a function"
   (lambda (arg)
     (func arg1 arg)))
 
-(define (compose f g)
+(define (compose f g) "compose two functions"
   (lambda (arg)
     (f (apply g arg))))
 
@@ -31,21 +33,21 @@
 (define positive?
   (curry < 0))
 
-(define negative? 
+(define negative?
   (curry > 0))
 
-(define (odd? num)
+(define (odd? num) "is the variable odd?"
   (= (mod num 2) 1))
 
-(define (even? num)
+(define (even? num) "is the variable even?"
   (= (mod num 2) 0))
 
-(define (foldr func end l)
+(define (foldr func end l) "fold right"
   (if (null? l)
     end
     (func (car l) (foldr func end (cdr l)))))
 
-(define (foldl func accum l)
+(define (foldl func accum l) "fold left"
   (if (null? l)
     accum
     (foldl func (func accum (car l)) (cdr l))))
@@ -55,31 +57,31 @@
     (cons init '())
     (cons init (unfold func (func init) pred))))
 
-(define (sum . l)
+(define (sum . l) "sum of values"
   (fold + 0 l))
 
-(define (product . l)
+(define (product . l) "product of values"
   (fold * 1 l))
 
-(define (max first . l)
+(define (max first . l) "maximum of values"
   (fold (lambda (old new)
                 (if (> old new) old new))
         first
         l))
 
-(define (min first . l)
+(define (min first . l) "minimum of values"
   (fold (lambda (old new)
           (if (< old new) old new))
         first
         l))
 
-(define (length l)
+(define (length l) "length of list"
   (fold (lambda (x y)
                 (+ x 1))
         0
         l))
 
-(define (reverse l)
+(define (reverse l) "reverse list"
   (fold (flip cons) '() l))
 
 (define (my-mem-helper obj lst cmp-proc)
@@ -102,13 +104,13 @@
 
 (define (assoc obj alist) (fold (mem-helper (curry equal? obj) car) #f alist))
 
-(define (map func l)
+(define (map func l) "map function to list"
   (foldr (lambda (x y)
            (cons (func x) y))
          '()
          l))
 
-(define (filter pred l)
+(define (filter pred l) "filter list through preidcate"
   (foldr (lambda (x y)
            (if (pred x)
                (cons x y)
@@ -116,7 +118,7 @@
          '()
          l))
 
-(define (any? pred lst)
+(define (any? pred lst) "does anything in the list satisfy the predicate?"
   (let any* ((l (map pred lst)))
     (cond
       ((null? l) #f)
@@ -124,7 +126,7 @@
       (else
         (any* (cdr l))))))
 
-(define (every? pred lst)
+(define (every? pred lst) "do all values in the list satisfy the predicate?"
   (let every* ((l (map pred lst)))
     (cond
       ((null? l) #t)

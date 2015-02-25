@@ -18,15 +18,18 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("*", numericBinop (*), "multiply two values"),
               ("/", numericBinop div, "divide two values"),
               ("mod", numericBinop mod, "modulo of two values"),
+              ("modulo", numericBinop mod, "modulo of two values"),
               ("quotient", numericBinop quot, "quotient of two values"),
               ("remainder", numericBinop rem, "remainder of two values"),
               ("round", numRound round, "rounds a number"),
               ("floor", numRound floor, "floors a number"),
               ("ceiling", numRound ceiling, "ceils a number"),
               ("truncate", numRound truncate, "truncates a number"),
+              ("expt", numPow, "power of function"),
               ("pow", numPow, "power of function"),
               ("sqrt", numOp sqrt, "square root function"),
               ("log", numLog, "logarithm function"),
+              ("abs", numOp abs, "get absolute value"),
               ("sin", numOp sin, "sine function"),
               ("cos", numOp cos, "cosine function"),
               ("tan", numOp tan, "tangens function"),
@@ -41,6 +44,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("<=", numBoolBinop (<=), "compare equality of two values"),
               ("&&", boolMulop (&&), "and operation"),
               ("||", boolMulop (||), "or operation"),
+
               ("string=?", strBoolBinop (==), "compare equality of two strings"),
               ("string>?", strBoolBinop (>), "compare equality of two strings"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
@@ -444,7 +448,7 @@ eval env (List [Atom "load", String file]) = do
                             load filename >>= liftM last . mapM (parse env)
                             where parse en val = macroEval env val >>= eval en
 eval _ (List [Atom "load", x]) = throwError $ 
-                            BadSpecialForm "Malformed load" x
+                            TypeMismatch "string" x
 eval _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
@@ -465,7 +469,7 @@ eval env (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ (List [Atom "help", x]) = throwError $ BadSpecialForm "Malformed help" x
+eval _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
 eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""

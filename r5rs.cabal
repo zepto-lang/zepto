@@ -1,5 +1,5 @@
 Name:                r5rs
-Version:             0.4.3
+Version:             0.4.4
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
   R5RS is an implementation of the R5RS standard.
