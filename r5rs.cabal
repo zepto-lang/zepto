@@ -3,6 +3,9 @@ Version:             0.4.4
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
   R5RS is an implementation of the R5RS standard.
+  Implemented features include but are not limited to
+  macros, the datatypes described in the standard and 
+  a help function.
   .
   For detailed information on each release, see 
   <https://github.com/hellerve/R5RS/README.md>.
