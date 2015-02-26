@@ -7,8 +7,8 @@ Description:
   macros, the datatypes described in the standard and 
   a help function.
   .
-  For detailed information on each release, see 
-  <https://github.com/hellerve/R5RS/README.md>.
+  For detailed information on each release and a quick
+  howto, see <https://github.com/hellerve/R5RS/README.md>.
 
 License:             GPL
 License-file:        LICENSE
@@ -28,9 +28,9 @@ Source-Repository head
     Type:            git
     Location:        git://github.com/hellerve/R5RS.git
 
-Executable         r5rs
-  Build-Depends:   base, haskeline, parsec, mtl, array, directory
-  Extensions:      ExistentialQuantification
-  ghc-options:     -Wall -Werror -O2
-  Main-is:         Main.hs
-  Hs-Source-Dirs:  src/
+Executable           r5rs
+    Build-Depends:   base, haskeline, parsec, mtl, array, directory
+    Extensions:      ExistentialQuantification
+    ghc-options:     -Wall -Werror -O2
+    Main-is:         Main.hs
+    Hs-Source-Dirs:  src/
