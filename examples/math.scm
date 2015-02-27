@@ -5,26 +5,12 @@
 (define (almost-equal x y delta)  "internal function for sqrt"
     (> delta (abs (- x y))))
 
-(define (sqrt-prime x last-x) "internal function for sqrt"
-    (let ((next-x (/ (+ x last-x) 2.0)))
-        (if (almost-equal next-x x 0.0000001) x
-            (sqrt-prime next-x x))))
-
-; This routine is broken
-(define (sqrt x) "square root of; x: base; routine is broken"
-    (sqrt-prime (precision x) 1.0))
-
 (define (square x) "square a value; x: value to be squared" (* x x))
 
 (define (pow x n) "power of; x: base, n: exponent"
-    (let ((t (* (pow x (/ n 2)) 2)))
-    (if (<= n 1) 
+    (if (<= n 1)
       1
-      (if (= (modulo n 2) 0) 
-        t 
-        (if (> y 0)
-          (* x t)
-          (/ t x))))))
+      (* n (pow x (- n 1)))))
 
 (define expt pow)
 (define modulo mod)
