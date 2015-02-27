@@ -1,6 +1,7 @@
 # R5RS
-![general version](http://img.shields.io/badge/version-0.4.5-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.4.6-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
+![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Mediocre-orange.svg)
 [![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
