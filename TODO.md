@@ -30,6 +30,7 @@
 * Numbers with e-notation [x]
 
 **Features soon to be implemented:**
+* Quasiquoting
 * Complex Numbers
 * Hashtables
 * call/cc
