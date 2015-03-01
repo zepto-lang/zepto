@@ -27,11 +27,11 @@
 * Macros [x]
 * Delayed Evaluation [x]
 * Docstrings [x]
+* Numbers with e-notation [x]
 
 **Features soon to be implemented:**
 * Complex Numbers
 * Hashtables
-* Numbers with e-notation
 * call/cc
 * Foreign Function Interface to C and Haskell
 * A Compiler
