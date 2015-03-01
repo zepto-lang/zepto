@@ -172,9 +172,9 @@ numPow [Number (NumI n), wrong@(Number (NumI base))] =
         then return $ Number $ NumI $ n ^ base
         else throwError $ TypeMismatch "positive" wrong
 numPow [Number (NumF n), Number (NumI base)] = 
-    return $ Number $ NumF $ n ** (fromIntegral base)
+    return $ Number $ NumF $ n ** fromIntegral base
 numPow [Number (NumI n), Number (NumF base)] = 
-    return $ Number $ NumF $ (fromIntegral n) ** base
+    return $ Number $ NumF $ fromIntegral n ** base
 numPow [Number (NumF n), Number (NumF base)] = 
     return $ Number $ NumF $ n ** base
 numPow [x] = throwError $ TypeMismatch "number" x
