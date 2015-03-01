@@ -32,6 +32,8 @@
 (assert-equal (lambda () (truncate 3.5)) 3.0)
 (assert-equal (lambda () (round 3.5)) 4.0)
 (assert-equal (lambda () (round 7)) 7)
+(assert-equal (lambda () (expt 2 10)) 1024)
+(assert-equal (lambda () (sqrt 9)) 3.0)
 
 (assert-equal (lambda () (= 1 (+ 0 1))) #t)
 (assert-equal (lambda () (= 1.0 1)) #t)
