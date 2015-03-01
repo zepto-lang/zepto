@@ -1,8 +1,8 @@
-# R5RS
-![general version](http://img.shields.io/badge/version-0.4.6-yellow.svg)
+# Pico
+![general version](http://img.shields.io/badge/version-0.5.0-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Mediocre-orange.svg)
-[![Build Status](https://travis-ci.org/hellerve/R5RS.png?branch=master)](https://travis-ci.org/hellerve/R5RS)
+[![Build Status](https://travis-ci.org/hellerve/pico.png?branch=master)](https://travis-ci.org/hellerve/pico)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
@@ -12,6 +12,8 @@ Features implemented include Macros, lazy evaluation, a minimal stdlib, many
 native primitives and help for those or for functions provided via docstrings 
 included in the function definition. And it actually has a decent shell with
 completion and history.
+
+It is very small, so the name might or might not be appropriate.
 
 ## Table of Contents
 
@@ -27,7 +29,7 @@ completion and history.
 
 ## Installation
 
-You will need cabal for using R5RS. A plain old Makefile is included, too.
+You will need cabal for using pico. A plain old Makefile is included, too.
 Run `make test` to check your installation.
 
 After cloning via git, building via cabal is done via invoking `cabal install`.
@@ -35,20 +37,20 @@ After cloning via git, building via cabal is done via invoking `cabal install`.
 ## Introduction
 
 If you know Scheme, working in the REPL should be pretty straightforward.
-Calling it via `r5rs`, you should be greeted by this:
+Calling it via `pico`, you should be greeted by this:
 
 ```
-R5RS Version 0.4.1
+pico Version 0.5.0
 Type 'quit' or press Ctrl-C to exit interpreter
 Type 'help' to get a simple help message
 
-R5RS>
+pico>
 ```
 
 Now you can just fiddle, maybe try something like
 
 ```
-R5RS> (pow 3 300)
+pico> (pow 3 300)
 136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
 206155688941388250484440597994042813512732765695774566001
 ```
@@ -56,7 +58,7 @@ R5RS> (pow 3 300)
 Please note that integers are promoted when they work together with floats:
 
 ```
-R5RS> (+ 1 1.5)
+pico> (+ 1 1.5)
 2.5
 ```
 
@@ -66,25 +68,25 @@ vectors. Quoted expressions are supported, too.
 If you need help with a specific primitive, invoke help on it like so:
 
 ```
-R5RS> (help +)
+pico> (help +)
 add two values
-R5RS> (help "+")
+pico> (help "+")
 add two values
 ```
 
 You can also get help for normal functions:
 
 ```
-R5RS> (define (x fst snd) "multiply two values" (* fst snd))
+pico> (define (x fst snd) "multiply two values" (* fst snd))
 multiply two values; source: (lambda ("fst" "snd") ...)
-R5RS> (help x)
+pico> (help x)
 multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
 Once you're done with the fiddling, just do:
 
 ```
-R5RS> quit
+pico> quit
 
 Moriturus te saluto.
 ```

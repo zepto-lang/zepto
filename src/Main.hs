@@ -14,7 +14,7 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn "R5RS Version 0.4.6"
+printVersion = putStrLn "pico Version 0.5.0"
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
