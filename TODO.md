@@ -30,6 +30,7 @@
 * Numbers with e-notation [x]
 
 **Features soon to be implemented:**
+* FIX do-macro
 * Quasiquoting
 * Complex Numbers
 * Hashtables
