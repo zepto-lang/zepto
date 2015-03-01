@@ -6,7 +6,7 @@ import Data.List
 import System.IO
 import Control.Monad
 import System.Console.Haskeline
-import Paths_pico
+import Paths_zepto
 
 keywords :: [String]
 keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
