@@ -1,4 +1,4 @@
-# Pico
+# pico
 ![general version](http://img.shields.io/badge/version-0.5.0-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Mediocre-orange.svg)
