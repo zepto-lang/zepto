@@ -54,8 +54,9 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
                            Just _ -> do base <- parseDigital1
                                         return $ expt num base
                            Nothing -> return num
-                where expt (Number x) (Number y) = Number $ x * (10 ^ y)
-                      expt _ _ = Nil ""
+                where expt (Number x) (Number y) = Number $ x * (convert y)
+                      expt _ _ = Nil "This will never happen"
+                      convert x = NumF $ 10 ** (fromInteger (toInteger x))
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"
