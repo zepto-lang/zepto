@@ -28,10 +28,10 @@
 * Delayed Evaluation [x]
 * Docstrings [x]
 * Numbers with e-notation [x]
+* Quasiquoting [x]
 
 **Features soon to be implemented:**
 * FIX do-macro
-* Quasiquoting
 * Complex Numbers
 * Hashtables
 * call/cc

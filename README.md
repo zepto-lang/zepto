@@ -1,7 +1,7 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.5.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.5.1-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
-![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Mediocre-orange.svg)
+![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Decent-yellow.svg)
 [![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
@@ -98,8 +98,8 @@ directory.
 
 ## Future
 
-Features that are planned, but not yet implemented, include quasiquoting, 
-complex numbers, hashtables `call/cc` and a small compiler based on LLVM. 
+Features that are planned, but not yet implemented, include complex numbers, 
+hashtables, `call/cc` and a small compiler based on LLVM. 
 Both latter features will take a while for me to implement, though. If 
 you have any other features, you would like to see in the 
 language/implementation, contact me. I'm not an experienced Scheme
