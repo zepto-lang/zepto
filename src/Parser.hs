@@ -41,12 +41,21 @@ parseAtom = do first <- letter <|> symbol <|> oneOf "."
                    else return $ Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = try parseReal
-              <|> parseDigital1
+parseNumber = try parseStandardNum
               <|> parseDigital2 
               <|> parseHex 
               <|> parseOct 
               <|> parseBin
+
+parseStandardNum :: Parser LispVal
+parseStandardNum = do num <- try parseReal <|> parseDigital1
+                      e <- optionMaybe $ string "e"
+                      case e of
+                           Just _ -> do base <- parseDigital1
+                                        return $ expt num base
+                           Nothing -> return num
+                where expt (Number x) (Number y) = Number $ x * (10 ^ y)
+                      expt _ _ = Nil ""
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"

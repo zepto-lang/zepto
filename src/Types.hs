@@ -70,6 +70,8 @@ instance Enum LispNum where
     toEnum x = NumI $ toInteger x
     fromEnum (NumI x) = fromIntegral x
     fromEnum (NumF x) = round x
+{-instance Fractional LispNum where
+    fromRational x = NumF $ x-}
 -- | a LispNum data type comprising a float and an integer
 data LispNum = NumI Integer
              | NumF Double
