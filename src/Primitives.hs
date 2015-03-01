@@ -6,13 +6,10 @@ import Macro
 import System.IO
 import Data.Array
 import Data.Maybe
-import qualified Data.Foldable
 import Control.Monad
 import Control.Monad.Except
 import System.Directory hiding (findFile)
 import Paths_zepto
-
-import Debug.Trace
 
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
@@ -511,8 +508,8 @@ eval env (List [Atom "quasiquote", val]) = doUnQuote env val
                     let len = length (elems vec)
                     vList <- unquoteListM env $ elems vec >>= return
                     return $ Vector $ listArray (0, len) vList
-                _ -> eval env (List [Atom "quote", val])
-          unquoteListM e lst = Data.Foldable.foldlM (unquoteListFld e) ([]) lst
+                _ -> eval env (List [Atom "quote", v])
+          unquoteListM e lst = foldlM (unquoteListFld e) ([]) lst
           unquoteListFld e (acc) v = do
             case v of
                 List [Atom "unquote-splicing", x] -> do
@@ -520,8 +517,11 @@ eval env (List [Atom "quasiquote", val]) = doUnQuote env val
                     case value of
                         List t -> return $ (acc ++ t)
                         _ -> throwError $ TypeMismatch "proper list" value
-                _ -> do result <- doUnQuote env val
+                _ -> do result <- doUnQuote env v
                         return $ (acc ++ [result])
+          foldlM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
+          foldlM f v (x : xs) = (f v x) >>= \ a -> foldlM f a xs
+          foldlM _ v [] = return v
 eval env (List [Atom "string-fill!", Atom var, character]) = do 
   str <- eval env =<< getVar env var
   chr <- eval env character
@@ -548,7 +548,7 @@ eval env (List [Atom "vector-set!", Atom var, i, object]) = do
   obj <- eval env object
   vec <- eval env =<< getVar env var
   (eval env $ (updateVector vec idx obj)) >>= setVar env var
-  where updateVector (Vector vec) (Number (NumI idx)) obj = trace (show obj ++ " " ++ show idx) Vector $ vec//[(fromInteger idx, obj)]
+  where updateVector (Vector vec) (Number (NumI idx)) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = Nil "This should never happen"
 eval _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
 eval env (List [Atom "vector-fill!", Atom var, object]) = do 
