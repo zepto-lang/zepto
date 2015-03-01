@@ -1,8 +1,8 @@
-# pico
+# zepto
 ![general version](http://img.shields.io/badge/version-0.5.0-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Mediocre-orange.svg)
-[![Build Status](https://travis-ci.org/hellerve/pico.png?branch=master)](https://travis-ci.org/hellerve/pico)
+[![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
@@ -29,7 +29,7 @@ It is very small, so the name might or might not be appropriate.
 
 ## Installation
 
-You will need cabal for using pico. A plain old Makefile is included, too.
+You will need cabal for using zepto. A plain old Makefile is included, too.
 Run `make test` to check your installation.
 
 After cloning via git, building via cabal is done via invoking `cabal install`.
@@ -37,20 +37,20 @@ After cloning via git, building via cabal is done via invoking `cabal install`.
 ## Introduction
 
 If you know Scheme, working in the REPL should be pretty straightforward.
-Calling it via `pico`, you should be greeted by this:
+Calling it via `zepto`, you should be greeted by this:
 
 ```
-pico Version 0.5.0
+zepto Version 0.5.0
 Type 'quit' or press Ctrl-C to exit interpreter
 Type 'help' to get a simple help message
 
-pico>
+zepto>
 ```
 
 Now you can just fiddle, maybe try something like
 
 ```
-pico> (pow 3 300)
+zepto> (pow 3 300)
 136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
 206155688941388250484440597994042813512732765695774566001
 ```
@@ -58,7 +58,7 @@ pico> (pow 3 300)
 Please note that integers are promoted when they work together with floats:
 
 ```
-pico> (+ 1 1.5)
+zepto> (+ 1 1.5)
 2.5
 ```
 
@@ -68,25 +68,25 @@ vectors. Quoted expressions are supported, too.
 If you need help with a specific primitive, invoke help on it like so:
 
 ```
-pico> (help +)
+zepto> (help +)
 add two values
-pico> (help "+")
+zepto> (help "+")
 add two values
 ```
 
 You can also get help for normal functions:
 
 ```
-pico> (define (x fst snd) "multiply two values" (* fst snd))
+zepto> (define (x fst snd) "multiply two values" (* fst snd))
 multiply two values; source: (lambda ("fst" "snd") ...)
-pico> (help x)
+zepto> (help x)
 multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
 Once you're done with the fiddling, just do:
 
 ```
-pico> quit
+zepto> quit
 
 Moriturus te saluto.
 ```

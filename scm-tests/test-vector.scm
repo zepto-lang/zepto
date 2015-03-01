@@ -1,0 +1,20 @@
+(load "scm-tests/skim-unit.scm")
+
+(assert-equal (lambda () (vector? '#(1 2 3 4 5))) #t)
+(assert-equal (lambda () (vector? '(1 2 3 4 5))) #f)
+(assert-equal (lambda () (make-vector 4 "test")) '#("test" "test" "test" "test"))
+(assert-equal (lambda () (vector-length (make-vector 4 "test"))) 4)
+(assert-equal (lambda () (vector-length '#())) 0)
+(assert-equal (lambda () (vector-ref '#(1) 0)) 1)
+
+(define vec '#(1 2 3 4))
+;(vector-fill! vec "Num")
+;(assert-equal (lambda () (id vec)) '#("Num" "Num" "Num" "Num"))
+
+(assert-equal (lambda () (eqv? '#("Num" "Num" "Num") '#("Num" "Num" "Num"))) #t)
+(assert-equal (lambda () (eqv? '#("Num" "Num" "Num") '#("Num" "Num" "NaN"))) #f)
+(assert-equal (lambda () (eqv? '#("Num" "Num" "Num") '#("Num" "Num" 2))) #f)
+(assert-equal (lambda () (eqv? '#("1" "2" "3") '#(1 2 3))) #f)
+
+(unit-test-handler-results)
+(unit-test-all-passed)

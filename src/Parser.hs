@@ -122,10 +122,25 @@ parseQuoted = do _ <- char '\''
                  x <- parseExpr
                  return $ List [Atom "quote", x]
 
+
+parseQuasiquoted :: Parser LispVal
+parseQuasiquoted = do _ <- char '`'
+                      x <- parseExpr
+                      return $ List [Atom "quasiquote", x]
+
+parseUnquoted :: Parser LispVal
+parseUnquoted = do _ <- try (char ',')
+                   x <- parseExpr
+                   return $ List [Atom "unquote", x]
+
+parseSpliced :: Parser LispVal
+parseSpliced = do _ <- try (string ",@")
+                  x <- parseExpr
+                  return $ List [Atom "unquote-splicing", x]
+
 parseVect :: Parser LispVal
-parseVect = do
-    vals <- sepBy parseExpr spaces
-    return $ Vector (listArray (0, length vals -1) vals)
+parseVect = do vals <- sepBy parseExpr spaces
+               return $ Vector (listArray (0, length vals -1) vals)
 
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
@@ -177,10 +192,13 @@ parseExpr = parseComments
                x <- parseVect
                _ <- char ')'
                return x
+        <|> parseSpliced
         <|> try parseAtom 
         <|> parseString   
         <|> parseQuoted 
         <|> try parseBool 
+        <|> parseQuasiquoted
+        <|> parseUnquoted
         <|> try parseChar 
         <|> do _ <- char '('
                x <- try parseList <|> parseDottedList

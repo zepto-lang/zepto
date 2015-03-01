@@ -6,10 +6,13 @@ import Macro
 import System.IO
 import Data.Array
 import Data.Maybe
+import qualified Data.Foldable
 import Control.Monad
 import Control.Monad.Except
 import System.Directory hiding (findFile)
-import Paths_r5rs
+import Paths_zepto
+
+import Debug.Trace
 
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
@@ -71,6 +74,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("char?", isChar, "check whether vairable is char"),
               ("boolean?", isBoolean, "check whether variable is boolean"),
               ("vector", buildVector, "build a new vector"),
+              ("string", buildString, "build a new string"),
               ("vector-length", vectorLength, "get length of vector"),
               ("string-length", stringLength, "get length of string"),
               ("make-string", makeString, "make a new string"),
@@ -81,6 +85,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("string->symbol", string2Symbol, "makes symbol from string"),
               ("string->number", stringToNumber, "makes number from string"),
               ("string->list", stringToList, "makes list from string"),
+              ("list->string", listToString, "makes string from list"),
               ("string-copy", stringCopy, "copy string"),
               ("substring", substring, "makes substring from string"),
               ("vector-ref", vectorRef, "get element from vector"),
@@ -216,6 +221,7 @@ eqv [List arg1, List arg2] = return $ Bool $ (length arg1 == length arg2) &&
                                                             Left _ -> False
                                                             Right (Bool val) -> val
                                                             _ -> False
+eqv [Vector arg1, Vector arg2] = eqv [List $ (elems arg1), List $ (elems arg2)] 
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
@@ -238,6 +244,7 @@ unpackEquals x y (AnyUnpacker unpacker) =
 equal :: [LispVal] ->ThrowsError LispVal
 equal [lx@(List _), ly@(List _)] = eqvList equal [lx, ly]
 equal [DottedList xs x, DottedList ys y] = equal [List $ xs ++ [x], List $ ys ++ [y]]
+equal [Vector arg1, Vector arg2] = eqvList equal [List $ (elems arg1), List $ (elems arg2)] 
 equal [x, y] = do 
            primitiveEquals <- liftM or $ mapM (unpackEquals x y)
                               [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
@@ -274,6 +281,17 @@ vectorToList badArgList = throwError $ NumArgs 1 badArgList
 listToVector [List l] = return $ Vector $ listArray (0, length l - 1) l
 listToVector [badType] = throwError $ TypeMismatch "list" badType
 listToVector badArgList = throwError $ NumArgs 1 badArgList
+
+buildString :: [LispVal] -> ThrowsError LispVal
+buildString [List []] = return $ String ""
+buildString [Character c] = return $ String [c]
+buildString (Character c:rest) = do
+    cs <- buildString rest
+    case cs of
+        String s -> return $ String $ [c] ++ s
+        badType -> throwError $ TypeMismatch "character" badType
+buildString [badType] = throwError $ TypeMismatch "character" badType
+buildString badArgList = throwError $ NumArgs 1 badArgList
 
 makeString :: [LispVal] -> ThrowsError LispVal
 makeString [Number n] = return $ _makeString n ' ' ""
@@ -315,6 +333,12 @@ stringToList :: [LispVal] -> ThrowsError LispVal
 stringToList [String s] = return $ List $ map Character s
 stringToList [badType] = throwError $ TypeMismatch "string" badType
 stringToList badArgList = throwError $ NumArgs 1 badArgList
+
+listToString :: [LispVal] -> ThrowsError LispVal
+listToString [List []] = return $ String ""
+listToString [List l] = buildString l
+listToString [badType] = throwError $ TypeMismatch "list" badType
+listToString badArgList = throwError $ NumArgs 1 badArgList
 
 stringCopy :: [LispVal] -> ThrowsError LispVal
 stringCopy [String s] = return $ String s
@@ -469,6 +493,74 @@ eval env (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
+eval env (List [Atom "quasiquote", val]) = doUnQuote env val
+    where doUnQuote :: Env -> LispVal -> IOThrowsError LispVal
+          doUnQuote e v = do
+            case v of
+                List [Atom "unquote", s] -> eval e s
+                List (x : xs) -> unquoteListM e (x:xs) >>= return . List
+                DottedList xs x -> do
+                    rxs <- unquoteListM e xs >>= return
+                    rx <- doUnQuote e x
+                    case rx of
+                        List [] -> return $ List rxs
+                        List rxlst -> return $ List $ rxs ++ rxlst
+                        DottedList rxlst rxlast -> return $ DottedList (rxs ++ rxlst) rxlast
+                        _ -> return $ DottedList rxs rx
+                Vector vec -> do
+                    let len = length (elems vec)
+                    vList <- unquoteListM env $ elems vec >>= return
+                    return $ Vector $ listArray (0, len) vList
+                _ -> eval env (List [Atom "quote", val])
+          unquoteListM e lst = Data.Foldable.foldlM (unquoteListFld e) ([]) lst
+          unquoteListFld e (acc) v = do
+            case v of
+                List [Atom "unquote-splicing", x] -> do
+                    value <- eval e x
+                    case value of
+                        List t -> return $ (acc ++ t)
+                        _ -> throwError $ TypeMismatch "proper list" value
+                _ -> do result <- doUnQuote env val
+                        return $ (acc ++ [result])
+eval env (List [Atom "string-fill!", Atom var, character]) = do 
+  str <- eval env =<< getVar env var
+  chr <- eval env character
+  (eval env $ fillStr(str, chr)) >>= setVar env var
+  where fillStr (String str, Character chr) = 
+            doFillStr (String "", Character chr, length str)
+        fillStr (_, _) = Nil "This should never happen"
+        doFillStr (String str, Character chr, left) = do
+            if left == 0
+                then String str
+                else doFillStr(String $ chr : str, Character chr, left - 1)
+        doFillStr (_, _, _) = Nil "This should never happen"
+eval env (List [Atom "string-set!", Atom var, i, character]) = do 
+  idx <- eval env i
+  str <- eval env =<< getVar env var
+  (eval env $ substr(str, character, idx)) >>= setVar env var
+  where substr (String str, Character chr, Number (NumI j)) = do
+                              String $ (take (fromInteger j) . drop 0) str ++ 
+                                       [chr] ++
+                                       (take (length str) . drop (fromInteger j + 1)) str
+        substr (_, _, _) = Nil "This should never happen"
+eval env (List [Atom "vector-set!", Atom var, i, object]) = do 
+  idx <- eval env i
+  obj <- eval env object
+  vec <- eval env =<< getVar env var
+  (eval env $ (updateVector vec idx obj)) >>= setVar env var
+  where updateVector (Vector vec) (Number (NumI idx)) obj = trace (show obj ++ " " ++ show idx) Vector $ vec//[(fromInteger idx, obj)]
+        updateVector _ _ _ = Nil "This should never happen"
+eval _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
+eval env (List [Atom "vector-fill!", Atom var, object]) = do 
+  obj <- eval env object
+  vec <- eval env =<< getVar env var
+  (eval env $ (fillVector vec obj)) >>= setVar env var
+  where fillVector (Vector vec) obj = do
+          let l = replicate (lenVector vec) obj
+          Vector $ (listArray (0, length l - 1)) l
+        fillVector _ _ = Nil "This should never happen"
+        lenVector v = length (elems v)
+eval _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
 eval _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
 eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
 eval env (List (Atom "begin" : funs)) 

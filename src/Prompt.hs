@@ -6,7 +6,7 @@ import Data.List
 import System.IO
 import Control.Monad
 import System.Console.Haskeline
-import Paths_r5rs
+import Paths_pico
 
 keywords :: [String]
 keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
@@ -22,7 +22,7 @@ completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $
 
 -- | returns a fresh settings variable
 addSettings :: Settings IO
-addSettings = Settings { historyFile = Just ".r5rs_history"
+addSettings = Settings { historyFile = Just ".zepto_history"
                        , complete = completeWord Nothing " \t" $ return . completionSearch
                        , autoAddHistory = True
                        }
@@ -101,6 +101,6 @@ runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
-        until_ (readPrompt "R5RS> ") (evalAndPrint env)
+        until_ (readPrompt "zepto> ") (evalAndPrint env)
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
                           

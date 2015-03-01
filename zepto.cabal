@@ -1,20 +1,20 @@
-Name:                pico
+Name:                zepto
 Version:             0.5.0
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
-  R5RS is an implementation of the R5RS standard.
+  zeoto is an implementation of the R5RS standard.
   Implemented features include but are not limited to
   macros, the datatypes described in the standard and 
   a help function.
   .
   For detailed information on each release and a quick
-  howto, see <https://github.com/hellerve/R5RS/README.md>.
+  howto, see <https://github.com/hellerve/zepto/README.md>.
 
 License:             GPL
 License-file:        LICENSE
 Author:              Veit Heller <veitheller.de>
 Maintainer:          Veit Heller <github.com/hellerve>
-Bug-Reports:         http://github.com/hellerve/r5rs/issues
+Bug-Reports:         http://github.com/hellerve/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
 Tested-with:         GHC == 7.8.4, GHC == 7.2.2
@@ -26,9 +26,9 @@ Cabal-Version:       >= 1.2
 
 Source-Repository head
     Type:            git
-    Location:        git://github.com/hellerve/R5RS.git
+    Location:        git://github.com/hellerve/zepto.git
 
-Executable           r5rs
+Executable           zepto
     Build-Depends:   base, haskeline, parsec, mtl, array, directory
     Extensions:      ExistentialQuantification
     ghc-options:     -Wall -Werror -O2

@@ -10,11 +10,11 @@ printUsage = do printVersion
                          "\n\t-h/--help          - display this help message" ++
                          "\n\t<some scheme file> - run file" ++
                          "\n\nMore information can be found on " ++
-                         "https://github.com/hellerve/R5RS")
+                         "https://github.com/hellerve/zepto")
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn "pico Version 0.5.0"
+printVersion = putStrLn "zepto Version 0.5.0"
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
