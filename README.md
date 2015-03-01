@@ -96,10 +96,11 @@ directory.
 
 ## Future
 
-Features that are planned, but not yet implemented, include `call/cc` and a 
-small compiler based on LLVM. Both features will take a while for me to 
-implement, though. If you have any other features, you would like to see
-in the language/implementation, contact me. I'm not an experienced Scheme
+Features that are planned, but not yet implemented, include quasiquoting, 
+complex numbers, hashtables `call/cc` and a small compiler based on LLVM. 
+Both latter features will take a while for me to implement, though. If 
+you have any other features, you would like to see in the 
+language/implementation, contact me. I'm not an experienced Scheme
 programmer myself, so any feedback is welcome.
 
 ## Contribute
