@@ -27,7 +27,7 @@ addSettings :: Settings IO
 addSettings = do
                  {-home <- getHomeDirectory
                  dir <- return (Just (home </> ".zepto_history"))-}
-                 Settings { historyFile = Just ".zepto_histoory" --dir
+                 Settings { historyFile = Just ".zepto_history" --dir
                           , complete = completeWord Nothing " \t" $ return . completionSearch
                           , autoAddHistory = True
                           }
