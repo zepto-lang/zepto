@@ -4,6 +4,7 @@ import Parser
 import Variables
 import Macro
 import System.IO
+import Data.Char hiding(isNumber, isSymbol)
 import Data.Array
 import Data.Maybe
 import Control.Monad
@@ -50,6 +51,11 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("string<?", strBoolBinop (<), "compare equality of two strings"),
               ("string<=?", strBoolBinop (<=), "compare equality of two strings"),
               ("string>=?", strBoolBinop (>=), "compare equality of two strings"),
+              ("string-ci=?", strCIBoolBinop (==), "compare equality of two strings(case insensitive)"),
+              ("string-ci>?", strCIBoolBinop (>), "compare equality of two strings(case insensitive)"),
+              ("string-ci<?", strCIBoolBinop (<), "compare equality of two strings(case insensitive)"),
+              ("string-ci<=?", strCIBoolBinop (<=), "compare equality of two strings(case insensitive)"),
+              ("string-ci>=?", strBoolBinop (>=), "compare equality of two strings"),
               ("newline", printNewline, "print a newline"),
               ("car", car, "take head of list"),
               ("cdr", cdr, "take tail of list"),
@@ -130,6 +136,9 @@ numBoolBinop = boolBinop unpackNum
 strBoolBinop :: (String -> String -> Bool) -> [LispVal] -> ThrowsError LispVal
 strBoolBinop = boolBinop unpackStr
 
+strCIBoolBinop :: (String -> String -> Bool) -> [LispVal] -> ThrowsError LispVal
+strCIBoolBinop = boolBinop unpackCIStr
+
 unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryOp f [v] = f v
 unaryOp _ _ = throwError $ InternalError "Internal error in unaryOp"
@@ -141,6 +150,10 @@ unpackNum notNum = throwError $ TypeMismatch "number" notNum
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
 unpackStr notString = throwError $ TypeMismatch "string" notString
+
+unpackCIStr :: LispVal -> ThrowsError String
+unpackCIStr (String s) = return $ map toLower s
+unpackCIStr notString = throwError $ TypeMismatch "string" notString
 
 unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
@@ -292,10 +305,10 @@ buildString badArgList = throwError $ NumArgs 1 badArgList
 
 makeString :: [LispVal] -> ThrowsError LispVal
 makeString [Number n] = return $ _makeString n ' ' ""
-    where _makeString count chr s =
+    where _makeString count ch s =
             if count == 0
                 then String s
-                else _makeString (count - 1) chr (s ++ [chr])
+                else _makeString (count - 1) ch (s ++ [ch])
 makeString badArgList = throwError $ NumArgs 1 badArgList
 
 stringLength :: [LispVal] -> ThrowsError LispVal
@@ -524,23 +537,23 @@ eval env (List [Atom "quasiquote", val]) = doUnQuote env val
           foldlM _ v [] = return v
 eval env (List [Atom "string-fill!", Atom var, character]) = do 
   str <- eval env =<< getVar env var
-  chr <- eval env character
-  (eval env $ fillStr(str, chr)) >>= setVar env var
-  where fillStr (String str, Character chr) = 
-            doFillStr (String "", Character chr, length str)
+  ch <- eval env character
+  (eval env $ fillStr(str, ch)) >>= setVar env var
+  where fillStr (String str, Character ch) = 
+            doFillStr (String "", Character ch, length str)
         fillStr (_, _) = Nil "This should never happen"
-        doFillStr (String str, Character chr, left) = do
+        doFillStr (String str, Character ch, left) = do
             if left == 0
                 then String str
-                else doFillStr(String $ chr : str, Character chr, left - 1)
+                else doFillStr(String $ ch : str, Character ch, left - 1)
         doFillStr (_, _, _) = Nil "This should never happen"
 eval env (List [Atom "string-set!", Atom var, i, character]) = do 
   idx <- eval env i
   str <- eval env =<< getVar env var
   (eval env $ substr(str, character, idx)) >>= setVar env var
-  where substr (String str, Character chr, Number (NumI j)) = do
+  where substr (String str, Character ch, Number (NumI j)) = do
                               String $ (take (fromInteger j) . drop 0) str ++ 
-                                       [chr] ++
+                                       [ch] ++
                                        (take (length str) . drop (fromInteger j + 1)) str
         substr (_, _, _) = Nil "This should never happen"
 eval env (List [Atom "vector-set!", Atom var, i, object]) = do 

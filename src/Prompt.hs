@@ -4,6 +4,8 @@ import Primitives
 import Variables
 import Data.List
 import System.IO
+{-import System.Directory
+import System.FilePath-}
 import Control.Monad
 import System.Console.Haskeline
 import Paths_zepto
@@ -22,10 +24,13 @@ completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $
 
 -- | returns a fresh settings variable
 addSettings :: Settings IO
-addSettings = Settings { historyFile = Just ".zepto_history"
-                       , complete = completeWord Nothing " \t" $ return . completionSearch
-                       , autoAddHistory = True
-                       }
+addSettings = do
+                 {-home <- getHomeDirectory
+                 dir <- return (Just (home </> ".zepto_history"))-}
+                 Settings { historyFile = Just ".zepto_histoory" --dir
+                          , complete = completeWord Nothing " \t" $ return . completionSearch
+                          , autoAddHistory = True
+                          }
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
