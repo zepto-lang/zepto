@@ -13,3 +13,5 @@ cabal.config
 bin/
 
 .zepto_history
+zepto.prof
+profiling/

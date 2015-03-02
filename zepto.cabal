@@ -31,6 +31,13 @@ Source-Repository head
 Executable           zepto
     Build-Depends:   base, haskeline, parsec, mtl, array, directory, filepath
     Extensions:      ExistentialQuantification
-    ghc-options:     -Wall -Werror -O2
+    ghc-options:     -Wall -Werror -O2 
+    Main-is:         Main.hs
+    Hs-Source-Dirs:  src/
+
+Executable           zepto-profiling
+    Build-Depends:   base, haskeline, parsec, mtl, array, directory, filepath
+    Extensions:      ExistentialQuantification
+    ghc-options:     -O2 -threaded -fprof-auto "-with-rtsopts=-N -p -s -h -i0.1"
     Main-is:         Main.hs
     Hs-Source-Dirs:  src/
