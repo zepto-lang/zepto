@@ -21,11 +21,20 @@ printCommands :: IO ()
 printCommands = putStrLn("Type 'quit' or press Ctrl-C to exit interpreter\n" ++
                          "Type 'help' to get a simple help message")
 
+-- |Prints the copyright notice
+printCopyright :: IO ()
+printCopyright = putStrLn("Copyright (C) 2015 Veit Heller (GPL)\n" ++
+                          "This is free software; " ++
+                          "see the accompanying LICENSE " ++
+                          "for copying conditions.\n" ++ 
+                          "There is NO warranty whatsoever.\n")
+
 -- |Parses arguments and runs the REPL
 main :: IO ()
 main = do args <- getArgs
           if null args
               then do printVersion
+                      printCopyright
                       printCommands
                       putStrLn ""
                       runRepl

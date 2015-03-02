@@ -1,6 +1,7 @@
 ; george marsaglia's random number generators,
 ; taken from http://programmingpraxis.codepad.org/sf8Z4pJP, edited slightly
-; for testing the rngs, a test routine is included (test-rng)
+; for testing the rngs, a test routine is included (test-rng).
+; Testing might take a while, though, because do notation is still very slow.
 
 (define (ipow b e)
   (cond ((zero? e) 1)
