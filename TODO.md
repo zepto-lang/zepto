@@ -31,7 +31,7 @@
 * Quasiquoting [x]
 
 **Features soon to be implemented:**
-* FIX do-macro
+* Profiling shows getting variables(especially namespaced vars) takes ages(~93% of execution time). Fix that.
 * Complex Numbers
 * Hashtables
 * call/cc
