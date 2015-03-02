@@ -1,4 +1,6 @@
-;  george marsaglia's random number generators
+; george marsaglia's random number generators,
+; taken from http://programmingpraxis.codepad.org/sf8Z4pJP, edited slightly
+; for testing the rngs, a test routine is included (test-rng)
 
 (define (ipow b e)
   (cond ((zero? e) 1)
