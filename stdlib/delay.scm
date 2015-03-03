@@ -1,6 +1,6 @@
 ;; All implementations here are "borrowed" from 
 ;; husk-scheme (github.com/justinethier/husk-scheme).
-(define force
+(define (force) "force execution of a delayed function"
     (lambda (object)
         (object)))
 

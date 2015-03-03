@@ -27,13 +27,13 @@
   (lambda (arg)
     (f (apply g arg))))
 
-(define zero?
+(define (zero?) "is variable zero?"
   (curry = 0))
 
-(define positive?
+(define (positive?) "is variable positive?"
   (curry < 0))
 
-(define negative?
+(define (negative?) "is variable negative?"
   (curry > 0))
 
 (define (odd? num) "is the variable odd?"
@@ -143,6 +143,3 @@
             (if (== x (caar cs))  
                 (cadar cs) 
                 (unpack case (join (list x) (cdr cs)))))
-
-(define head car)
-(define tail list-tail)

@@ -5,3 +5,5 @@
 (define fold foldl)
 (define reduce fold)
 (define ceil ceiling)
+(define head car)
+(define tail list-tail)
