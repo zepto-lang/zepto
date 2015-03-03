@@ -635,7 +635,7 @@ apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (Func (LispFun fparams varargs fbody fclosure _)) args =
     if num fparams /= num args && isNothing varargs
         then throwError $ NumArgs (num fparams) args
-        else liftIO (bindVars fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
+        else liftIO (extendEnv fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
     where 
         remainingArgs = drop (length fparams) args
         num = toInteger . length
@@ -646,7 +646,7 @@ apply (Func (LispFun fparams varargs fbody fclosure _)) args =
                                     evalBody lvs env
                                 _ -> throwError $ InternalError "Internal state error"
         bindVarArgs arg env = case arg of
-            Just argName -> liftIO $ bindVars env [((vnamespace, argName), List remainingArgs)]
+            Just argName -> liftIO $ extendEnv env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env
 apply func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 

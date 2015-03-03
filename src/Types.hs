@@ -1,11 +1,10 @@
 module Types (LispNum(..),
               LispVal(..), 
-              LispPointer(..), 
               LispFun(..), 
               LispError(..), 
               Unpacker(AnyUnpacker), 
               ThrowsError, 
-              Env,
+              Env(..),
               IOThrowsError,
               showVal, 
               showError, 
@@ -18,6 +17,7 @@ import Data.Fixed
 import System.IO
 import Data.Array
 import Data.IORef
+import qualified Data.Map
 import Control.Monad
 import Control.Monad.Except
 import Text.ParserCombinators.Parsec.Error
@@ -91,10 +91,7 @@ data LispVal = Atom String
              | Port Handle
              | Func LispFun
              | Nil String
-             | Pointer LispPointer
-             
--- | a LispPointer data type 
-data LispPointer = LispPointer { pointerVar :: String, pointerEnv :: Env } 
+             | Pointer { pointerVar :: String, pointerEnv :: Env } 
              
              
 -- | a LispFun data type 
@@ -113,8 +110,15 @@ data LispError = NumArgs Integer [LispVal]
                | InternalError String
                | Default String
 
+instance Eq Env where
+    (Environment _ xb xp) == (Environment _ yb yp) = (xb == yb) && (xp == yp)
 -- | an Environment type where all variables are stored
-type Env = IORef [((String, String), IORef LispVal)]
+data Env = Environment {
+        parentEnv :: (Maybe Env)
+      , bindings :: (IORef (Data.Map.Map String (IORef LispVal)))
+      , pointers :: (IORef (Data.Map.Map String (IORef [LispVal])))
+}
+
 -- | a ThrowsError type containing either an error or a value
 type ThrowsError = Either LispError
 -- | a IOThrowsError type containing either an error or an IO
@@ -145,7 +149,7 @@ showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
 showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
-showVal (Pointer (LispPointer p _)) = "<pointer " ++ p ++ ">"
+showVal (Pointer p _) = "<pointer " ++ p ++ ">"
 showVal (Nil _) = ""
 
 -- | a show function for all LispErrors
@@ -177,7 +181,10 @@ extractValue (Left _) = error("This should not be happening. " ++
 
 -- | returns a new empty environment
 nullEnv :: IO Env
-nullEnv = newIORef []
+nullEnv = do
+    nullb <- newIORef $ Data.Map.fromList []
+    nullp <- newIORef $ Data.Map.fromList []
+    return $ Environment Nothing nullb nullp
 
 -- | lift a ThrowsError to an IOThrowsError
 liftThrows :: ThrowsError a -> IOThrowsError a

@@ -5,7 +5,9 @@ import Variables
 import Data.List
 import System.IO
 {-import System.Directory
-import System.FilePath-}
+import System.FilePath
+import Control.Exception
+import Control.Monad.IO.Class-}
 import Control.Monad
 import System.Console.Haskeline
 import Paths_zepto
@@ -14,27 +16,39 @@ keywords :: [String]
 keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
 
 -- | searches all primitives for a possible completion
-completionSearch :: String -> [Completion]
-completionSearch str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
+completionSearch :: Env -> String -> [Completion]
+completionSearch {-env-}_ str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
                        map ("(" ++) keywords 
                        ++ map extractString primitives 
                        ++ map extractString ioPrimitives
+                       -- ++ getDefs env
                 where extractString tuple = "(" ++ firstEl tuple
                       firstEl (x, _, _) = x
+                      {-getDefs env = do
+                        defs <- liftIO $ recExportsFromEnv env
+                        let x = map (getAtom) defs
+                        return x !! 0
+                      getAtom (Atom a) = a-}
 
 -- | returns a fresh settings variable
-addSettings :: Settings IO
-addSettings = do
-                 {-home <- getHomeDirectory
-                 dir <- return (Just (home </> ".zepto_history"))-}
-                 Settings { historyFile = Just ".zepto_history" --dir
-                          , complete = completeWord Nothing " \t" $ return . completionSearch
-                          , autoAddHistory = True
-                          }
+addSettings :: Env -> Settings IO
+addSettings env = Settings { historyFile = Just "/.zepto_history"--getDir
+                       , complete = completeWord Nothing " \t" $ return . completionSearch env
+                       , autoAddHistory = True
+                       }
+            {-where 
+                  getDir :: Maybe FilePath
+                  getDir = do
+                    either_dir <- liftIO $ tryIO getHomeDirectory
+                    case either_dir of
+                        Right home -> (Just (home </> ".zepto_history"))
+                        _ -> Nothing
+                  tryIO :: IO a -> IO (Either IOException a)
+                  tryIO = try-}
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc) ioPrimitives ++
+primitiveBindings = nullEnv >>= flip extendEnv (map (makeFunc IOFunc) ioPrimitives ++
                                 map (makeFunc PrimitiveFunc) primitives)
                 where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
 
@@ -74,8 +88,8 @@ until_ prompt action = do result <- prompt
                             _ -> action result >> until_ prompt action
 
 -- | reads from the prompt
-readPrompt :: String -> IO String
-readPrompt prompt = runInputT addSettings $ poll prompt
+readPrompt :: String -> Env -> IO String
+readPrompt prompt env = runInputT (addSettings env) $ poll prompt
                 where
                     poll :: String -> InputT IO String
                     poll p = do
@@ -91,7 +105,7 @@ evalAndPrint env expr = evalLine env expr >>= putStrLn
 -- | run a single statement
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
-        env <- primitiveBindings >>= flip bindVars[((vnamespace, "args"), 
+        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"), 
                                                     List $ map String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
@@ -106,6 +120,6 @@ runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
-        until_ (readPrompt "zepto> ") (evalAndPrint env)
+        until_ (readPrompt "zepto> " env) (evalAndPrint env)
     where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
                           

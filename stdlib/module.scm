@@ -3,6 +3,7 @@
 (load "extra.scm")
 (load "delay.scm")
 (load "logical.scm")
+(load "marsaglia.scm")
 (load "pairs.scm")
 (load "random.scm")
 (load "util.scm")

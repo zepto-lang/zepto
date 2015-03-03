@@ -246,7 +246,7 @@ initializePatternVars localEnv src identifiers (DottedList ps p) = do
     _ <- initializePatternVars localEnv src identifiers $ List ps
     initializePatternVars localEnv src identifiers p
 initializePatternVars localEnv src identifiers (Atom pattern) =
-    do _ <- defineNamespacedVar localEnv "src" pattern $ String src
+    do _ <- defineNamespacedVar localEnv mnamespace pattern $ String src
        isDefined <- liftIO $ isBound localEnv pattern
        found <- findAtom (Atom pattern) identifiers
        case found of
@@ -271,8 +271,8 @@ lookupPatternVarSrc localEnv (DottedList ps p) = do
         Bool False -> lookupPatternVarSrc localEnv p
         _ -> return result
 lookupPatternVarSrc localEnv (Atom pattern) =
-    do isDefined <- liftIO $ isNamespacedBound localEnv "src" pattern
-       if isDefined then getNamespacedVar localEnv "src" pattern
+    do isDefined <- liftIO $ isNamespacedBound localEnv mnamespace pattern
+       if isDefined then getNamespacedVar localEnv mnamespace pattern
                     else return $ Bool False
 lookupPatternVarSrc _ _ =
     return $ Bool False
