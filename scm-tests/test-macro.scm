@@ -72,8 +72,8 @@
             (if (zero? n)
                 #f
                 (even? (- n 1))))))
-   (even? 88)))
-  #t)
+   (even? 89)))
+  #f)
 
 (assert-equal (lambda () 
   (letrec ((even?
@@ -86,8 +86,8 @@
             (if (zero? n)
                 #f
                 (even? (- n 1))))))
-   (odd? 89)))
-  #t)
+   (odd? 88)))
+  #f)
 
 (assert-equal (lambda ()
   (let loop ((numbers '(3 2 1 6 5))
