@@ -29,7 +29,7 @@ Source-Repository head
     Location:        git://github.com/hellerve/zepto.git
 
 Executable           zepto
-    Build-Depends:   base, haskeline, parsec, mtl, array, directory, filepath, containers, transformers >= 0.3.0
+    Build-Depends:   base, haskeline, parsec, mtl >= 2.2.1, array, directory, filepath, containers, transformers >= 0.3.0
     Extensions:      ExistentialQuantification
     ghc-options:     -Wall -Werror -O2 
     Main-is:         Main.hs
