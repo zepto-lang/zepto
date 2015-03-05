@@ -32,17 +32,19 @@ completionSearch {-env-}_ str = map simpleCompletion $ filter(str `isPrefixOf`) 
 
 -- | returns a fresh settings variable
 addSettings :: Env -> Settings IO
-addSettings env = Settings { historyFile = Just "/.zepto_history"--getDir
+addSettings env = Settings { historyFile = Nothing
                        , complete = completeWord Nothing " \t" $ return . completionSearch env
                        , autoAddHistory = True
                        }
-            {-where 
-                  getDir :: Maybe FilePath
-                  getDir = do
-                    either_dir <- liftIO $ tryIO getHomeDirectory
+            where 
+                  {-getDir :: Maybe FilePath
+                  getDir = liftIO ((getDataFileName ".zepto_history")::IO FilePath)
+
                     case either_dir of
-                        Right home -> (Just (home </> ".zepto_history"))
-                        _ -> Nothing
+                       {- Nothing -> Nothing
+                        Just home -> case home of-}
+                            Right val -> Just val
+                            _ -> Nothing
                   tryIO :: IO a -> IO (Either IOException a)
                   tryIO = try-}
 
