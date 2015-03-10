@@ -22,6 +22,7 @@ It is very small, so the name might or might not be appropriate.
 3. **[Introduction](#introduction)**
 4. **[Future](#future)**
 5. **[Contribute](#contribute)**
+6. **[License](#license)**
 
 ## Maintainers
 
@@ -110,3 +111,7 @@ programmer myself, so any feedback is welcome.
 There is a messy TODO that tells you what could be done if you would like
 to contribute. Any contributions are welcome, be it in the form of code,
 feature requests or bug reports.
+
+## License
+
+Licensed under GPLv2. Copyright (c) 2014-2015, Veit Heller
