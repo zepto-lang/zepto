@@ -29,9 +29,9 @@
 * Docstrings [x]
 * Numbers with e-notation [x]
 * Quasiquoting [x]
+* Completion and History [x]
 
 **Features soon to be implemented:**
-* CLI history
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
 * Complex Numbers
 * Hashtables

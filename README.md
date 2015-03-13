@@ -84,6 +84,8 @@ zepto> (help x)
 multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
+And it autocompletes your newly created function, too!
+
 Once you're done with the fiddling, just do:
 
 ```

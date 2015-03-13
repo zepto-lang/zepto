@@ -4,49 +4,33 @@ import Primitives
 import Variables
 import Data.List
 import System.IO
-{-import System.Directory
-import System.FilePath
-import Control.Exception
-import Control.Monad.IO.Class-}
+import System.Directory
 import Control.Monad
 import System.Console.Haskeline
+import System.IO.Unsafe
 import Paths_zepto
 
 keywords :: [String]
-keywords = ["apply", "define", "error", "help", "if", "lambda", "let", "display"]
+keywords = ["apply", "define", "help", "if", "lambda"]
 
 -- | searches all primitives for a possible completion
 completionSearch :: Env -> String -> [Completion]
-completionSearch {-env-}_ str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       map ("(" ++) keywords 
-                       ++ map extractString primitives 
-                       ++ map extractString ioPrimitives
-                       -- ++ getDefs env
-                where extractString tuple = "(" ++ firstEl tuple
-                      firstEl (x, _, _) = x
-                      {-getDefs env = do
-                        defs <- liftIO $ recExportsFromEnv env
-                        let x = map (getAtom) defs
-                        return x !! 0
-                      getAtom (Atom a) = a-}
+completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
+                       map ("(" ++) keywords ++ getDefs env
+                where getDefs e = map getAtom $ unsafePerformIO $ recExportsFromEnv e
+                      getAtom (Atom a) = "(" ++ a
+                      getAtom _ = ""
 
 -- | returns a fresh settings variable
 addSettings :: Env -> Settings IO
-addSettings env = Settings { historyFile = Nothing
-                       , complete = completeWord Nothing " \t" $ return . completionSearch env
-                       , autoAddHistory = True
-                       }
+addSettings env = Settings { historyFile = Just getDir
+                           , complete = completeWord Nothing " \t" $ 
+                                        return . completionSearch env
+                           , autoAddHistory = True
+                           }
             where 
-                  {-getDir :: Maybe FilePath
-                  getDir = liftIO ((getDataFileName ".zepto_history")::IO FilePath)
-
-                    case either_dir of
-                       {- Nothing -> Nothing
-                        Just home -> case home of-}
-                            Right val -> Just val
-                            _ -> Nothing
-                  tryIO :: IO a -> IO (Either IOException a)
-                  tryIO = try-}
+                  getDir :: FilePath
+                  getDir = (unsafePerformIO getHomeDirectory) ++ "/.zepto_history"
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env

@@ -110,6 +110,12 @@
          '()
          l))
 
+(define (foreach func l) "apply function to each element on the list"
+  (foldl (lambda (x y)
+           (cons (func x) y))
+         '()
+         l))
+
 (define (filter pred l) "filter list through preidcate"
   (foldr (lambda (x y)
            (if (pred x)
