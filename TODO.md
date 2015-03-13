@@ -31,7 +31,8 @@
 * Quasiquoting [x]
 
 **Features soon to be implemented:**
-* Profiling shows getting variables(especially namespaced vars) takes ages(~93% of execution time). Fix that.
+* CLI history
+* Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
 * Complex Numbers
 * Hashtables
 * call/cc
