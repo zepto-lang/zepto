@@ -19,7 +19,7 @@ printVersion = putStrLn "zepto Version 0.5.1"
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
 printCommands = putStrLn("Type 'quit' or press Ctrl-C to exit interpreter\n" ++
-                         "Type 'help' to get a simple help message")
+                         "Type 'help' to get a list of commands")
 
 -- |Prints the copyright notice
 printCopyright :: IO ()
