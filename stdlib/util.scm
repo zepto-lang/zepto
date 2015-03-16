@@ -152,4 +152,4 @@
 
 (define (iota n) 
     (let ((acc '()))
-      (do ((i 1 (+ i 1))) ((= i n)) (set! acc (append acc `(,i)))) acc))
+      (do ((i 1 (+ i 1))) ((= i n)) (set! acc (append acc (list i)))) acc))

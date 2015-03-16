@@ -503,6 +503,7 @@ eval _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm
                             ++ "its new value")
                             x
 eval _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
+--TODO: set-cdr and set-car are both unchecked right now!
 eval env (List [Atom "set-cdr!", Atom var, form]) = do
             resolved_var <- eval env (Atom var)
             resolved_form <- eval env form
