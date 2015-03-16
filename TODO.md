@@ -30,10 +30,10 @@
 * Numbers with e-notation [x]
 * Quasiquoting [x]
 * Completion and History [x]
+* Complex Numbers [x]
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
-* Complex Numbers
 * Hashtables
 * call/cc
 * Foreign Function Interface to C and Haskell
