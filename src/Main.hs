@@ -14,7 +14,7 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn "zepto Version 0.5.2"
+printVersion = putStrLn "zepto Version 0.5.3"
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()

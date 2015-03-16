@@ -365,7 +365,18 @@ stringAppend [badType] = throwError $ TypeMismatch "string" badType
 stringAppend badArgList = throwError $ NumArgs 1 badArgList
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
-stringToNumber [String s] = return $ Number $ NumI $ read s
+stringToNumber [String s] = do
+        result <- readExpr s
+        case result of
+            n@(Number _) -> return n
+            _ -> return $ Bool False
+stringToNumber [String s, Number base] = do
+    case base of
+        2 -> stringToNumber [String $ "#b" ++ s]
+        8 -> stringToNumber [String $ "#o" ++ s]
+        10 -> stringToNumber [String s]
+        16 -> stringToNumber [String $ "#x" ++ s]
+        _ -> throwError $ Default $ "Invalid base: " ++ show base
 stringToNumber [badType] = throwError $ TypeMismatch "string" badType
 stringToNumber badArgList = throwError $ NumArgs 1 badArgList
 
