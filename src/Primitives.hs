@@ -503,6 +503,20 @@ eval _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm
                             ++ "its new value")
                             x
 eval _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
+eval env (List [Atom "set-cdr!", Atom var, form]) = do
+            resolved_var <- eval env (Atom var)
+            resolved_form <- eval env form
+            x <- set_cdr resolved_var resolved_form
+            setVar env var x
+    where set_cdr (List old) (List new_cdr) = return $ List $ (head old) : new_cdr
+          set_cdr _ _ = return $ Nil "This should never happen"
+eval env (List [Atom "set-car!", Atom var, form]) = do
+            resolved_var <- eval env (Atom var)
+            resolved_form <- eval env form
+            x <- set_car resolved_var resolved_form
+            setVar env var x
+    where set_car (List old) new_car = return $ List $ new_car : (tail old)
+          set_car _ _ = return $ Nil "This should never happen"
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
                             makeDocFunc env p b doc >>= defineVar env var
