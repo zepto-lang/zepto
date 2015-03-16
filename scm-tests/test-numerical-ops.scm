@@ -3,6 +3,8 @@
 (assert-equal (lambda () (id 10e-1)) 1.0)
 (assert-equal (lambda () (id 14e1)) 140)
 
+(assert-equal (lambda () (complex? 3+4i)) #t)
+(assert-equal (lambda () (complex? 3)) #t)
 (assert-equal (lambda () (integer? 3)) #t)
 (assert-equal (lambda () (integer? 3.0)) #f)
 (assert-equal (lambda () (real? 10.0)) #t)

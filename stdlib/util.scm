@@ -27,13 +27,13 @@
   (lambda (arg)
     (f (apply g arg))))
 
-(define (zero?) "is variable zero?"
+(define zero?
   (curry = 0))
 
-(define (positive?) "is variable positive?"
+(define positive?
   (curry < 0))
 
-(define (negative?) "is variable negative?"
+(define negative?
   (curry > 0))
 
 (define (odd? num) "is the variable odd?"

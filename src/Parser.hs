@@ -2,6 +2,7 @@ module Parser(readExpr, readExprList) where
 import Types
 import Numeric
 import Data.Char
+import Data.Complex
 import Data.Array
 import Control.Monad
 import Control.Monad.Except
@@ -41,7 +42,8 @@ parseAtom = do first <- letter <|> symbol <|> oneOf "."
                    else return $ Atom atom
 
 parseNumber :: Parser LispVal
-parseNumber = try parseStandardNum
+parseNumber = try parseComplex
+              <|> try parseStandardNum
               <|> parseDigital2 
               <|> parseHex 
               <|> parseOct 
@@ -57,6 +59,22 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
                 where expt (Number x) (Number y) = Number $ x * convert y
                       expt _ _ = Nil "This will never happen"
                       convert x = NumF $ 10 ** fromIntegral x
+
+parseComplex :: Parser LispVal
+parseComplex = do
+    real_parse <- (try parseReal <|> parseDigital1)
+    let real_part = case real_parse of
+                        Number (NumI n) -> fromInteger n
+                        Number (NumF f) -> f
+                        _ -> 0
+    _ <- char '+'
+    imag_parse <- (try parseReal <|> parseDigital1)
+    let imag_part = case imag_parse of
+                        Number (NumI n) -> fromInteger n
+                        Number (NumF f) -> f
+                        _ -> 0
+    _ <- char 'i'
+    return $ Number $ NumC $ real_part :+ imag_part
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"

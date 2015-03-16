@@ -16,6 +16,7 @@ module Types (LispNum(..),
 import Data.Fixed
 import System.IO
 import Data.Array
+import Data.Complex
 import Data.IORef
 import qualified Data.Map
 import Control.Monad
@@ -31,50 +32,102 @@ instance Eq LispNum where
     (NumF x) == (NumI y) = x == fromIntegral y
     (NumI x) == (NumF y) = fromIntegral x == y
     (NumF x) == (NumF y) = x == y
+    (NumC x) == (NumC y) = x == y
+    (NumC x) == (NumF y) = x == (mkPolar y 0)
+    (NumF x) == (NumC y) = (mkPolar x 0) == y
+    (NumC x) == (NumI y) = x == (mkPolar (fromIntegral y) 0)
+    (NumI x) == (NumC y) = (mkPolar (fromIntegral x) 0) == y
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
     compare (NumF x) (NumI y) = compare x (fromIntegral y)
     compare (NumI x) (NumF y) = compare (fromIntegral x) y
     compare (NumF x) (NumF y) = compare x y
+    compare (NumC x) (NumC y) = do
+        let fx = compare (realPart x) (realPart y)
+        if fx == EQ
+            then compare (imagPart x) (imagPart y)
+            else fx
+    compare (NumC x) (NumF y) = do
+        let fx = compare (realPart x) y
+        if fx == EQ
+            then compare (imagPart x) 0
+            else fx
+    compare (NumF x) (NumC y) = do
+        let fx = compare (realPart y) x
+        if fx == EQ
+            then compare (imagPart y) 0
+            else fx
+    compare (NumC x) (NumI y) = do
+        let fx = compare (realPart x) (fromIntegral y)
+        if fx == EQ
+            then compare (imagPart x) 0
+            else fx
+    compare (NumI x) (NumC y) = do
+        let fx = compare (realPart y) (fromIntegral x)
+        if fx == EQ
+            then compare (imagPart y) 0
+            else fx
 instance Num LispNum where
     (NumI x) + (NumI y) = NumI $ x + y
     (NumF x) + (NumI y) = NumF $ x + fromIntegral y
     (NumI x) + (NumF y) = NumF $ fromIntegral x + y
     (NumF x) + (NumF y) = NumF $ x + y
+    (NumC x) + (NumC y) = NumC $ x + y
+    (NumC x) + (NumF y) = NumC $ x + (mkPolar y 0)
+    (NumF x) + (NumC y) = NumC $ (mkPolar x 0) + y
+    (NumC x) + (NumI y) = NumC $ x + (mkPolar (fromIntegral y) 0)
+    (NumI x) + (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) + y
     (NumI x) * (NumI y) = NumI $ x * y
     (NumF x) * (NumI y) = NumF $ x * fromIntegral y
     (NumI x) * (NumF y) = NumF $ fromIntegral x * y
     (NumF x) * (NumF y) = NumF $ x * y
+    (NumC x) * (NumC y) = NumC $ x * y
+    (NumC x) * (NumF y) = NumC $ x * (mkPolar y 0)
+    (NumF x) * (NumC y) = NumC $ (mkPolar x 0) * y
+    (NumC x) * (NumI y) = NumC $ x * (mkPolar (fromIntegral y) 0)
+    (NumI x) * (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) * y
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
     (NumF x) - (NumF y) = NumF $ x - y
+    (NumC x) - (NumC y) = NumC $ x - y
+    (NumC x) - (NumF y) = NumC $ x - (mkPolar y 0)
+    (NumF x) - (NumC y) = NumC $ (mkPolar x 0) - y
+    (NumC x) - (NumI y) = NumC $ x - (mkPolar (fromIntegral y) 0)
+    (NumI x) - (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) - y
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
+    negate (NumC x) = NumC $ negate x
     abs (NumI x) = NumI $ abs x
     abs (NumF x) = NumF $ abs x
+    abs (NumC x) = NumC $ abs x
     signum (NumI x) = NumI $ signum x
     signum (NumF x) = NumF $ signum x
+    signum (NumC x) = NumC $ signum x
     fromInteger x = NumI $ fromInteger x
 instance Integral LispNum where
     toInteger (NumI x) = x
     toInteger (NumF x) = round x
+    toInteger (NumC x) = round $ realPart x
     quotRem (NumI x) (NumI y) = (NumI $ quot x y, NumI $ rem x y)
     quotRem (NumF x) (NumI y) = (NumF $ x / fromIntegral y, NumF $ mod' x (fromIntegral y))
     quotRem (NumI x) (NumF y) = (NumF $ fromIntegral x / y, NumF $ mod' (fromIntegral x) y)
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
+    quotRem (NumC _) _ = (0, 0)
+    quotRem _ (NumC _) = (0, 0)
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
+    toRational (NumC _) = 0
 instance Enum LispNum where
     toEnum x = NumI $ toInteger x
     fromEnum (NumI x) = fromIntegral x
     fromEnum (NumF x) = round x
-{-instance Fractional LispNum where
-    fromRational x = NumF $ x-}
+    fromEnum (NumC _) = 0
 -- | a LispNum data type comprising a float and an integer
 data LispNum = NumI Integer
              | NumF Double
+             | NumC (Complex Double)
 
 instance Show LispVal where show = showVal
 -- | a LispVal data type comprising all Lisp data types
@@ -127,6 +180,7 @@ type IOThrowsError = ExceptT LispError IO
 showNum :: LispNum -> String
 showNum (NumF contents) = show contents
 showNum (NumI contents) = show contents
+showNum (NumC contents) = show (realPart contents) ++ "+" ++ show (imagPart contents) ++ "i"
 
 -- | a show function for all LispVals
 showVal :: LispVal -> String

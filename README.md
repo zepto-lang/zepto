@@ -1,7 +1,7 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.5.1-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.5.2-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
-![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Decent-yellow.svg)
+![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-yellow.svg)
 [![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 

@@ -5,7 +5,9 @@ import Variables
 import Macro
 import System.IO
 import Data.Char hiding(isNumber, isSymbol)
+import Data.Complex
 import Data.Array
+import Data.List
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -18,8 +20,8 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("-", numericMinop (-), "subtract two values/negate value"),
               ("*", numericBinop (*), "multiply two values"),
               ("/", numericBinop div, "divide two values"),
-              ("mod", numericBinop mod, "modulo of two values"),
-              ("modulo", numericBinop mod, "modulo of two values"),
+              ("mod", numericBinModop, "modulo of two values"),
+              ("modulo", numericBinModop, "modulo of two values"),
               ("quotient", numericBinop quot, "quotient of two values"),
               ("remainder", numericBinop rem, "remainder of two values"),
               ("round", numRound round, "rounds a number"),
@@ -28,7 +30,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("truncate", numRound truncate, "truncates a number"),
               ("expt", numPow, "power of function"),
               ("pow", numPow, "power of function"),
-              ("sqrt", numOp sqrt, "square root function"),
+              ("sqrt", numSqrt, "square root function"),
               ("log", numLog, "logarithm function"),
               ("abs", numOp abs, "get absolute value"),
               ("sin", numOp sin, "sine function"),
@@ -76,6 +78,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("string?", isString, "check whether variable is string"),
               ("char?", isChar, "check whether vairable is char"),
               ("boolean?", isBoolean, "check whether variable is boolean"),
+              ("complex?", isNumber, "check whether variable is complex"),
               ("vector", buildVector, "build a new vector"),
               ("string", buildString, "build a new string"),
               ("vector-length", vectorLength, "get length of vector"),
@@ -110,6 +113,15 @@ ioPrimitives = [("apply", applyProc, "apply function"),
 numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op p = liftM (Number . foldl1 op) (mapM unpackNum p)
+
+numericBinModop :: [LispVal] -> ThrowsError LispVal
+numericBinModop p = if length p == 2
+                        then case find _complex p of
+                           Just x -> throwError $ TypeMismatch "not complex numeric" x
+                           Nothing -> liftM (Number . foldl1 mod) (mapM unpackNum p)
+                        else throwError $ NumArgs 2 p
+                where _complex (Number (NumC _)) = True
+                      _complex _ = False
 
 numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericMinop _ [Number l] = return $ Number $ negate l
@@ -162,22 +174,27 @@ unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 numRound :: (Double -> Integer) -> [LispVal] -> ThrowsError LispVal
 numRound _ [n@(Number (NumI _))] = return n
 numRound op [Number (NumF n)] = return $ Number $ NumI $ fromInteger $ op n
+numRound op [Number (NumC n)] = return $ Number $ NumC $ (fromInteger $ op $ realPart n) :+ (fromInteger $ op $ imagPart n)
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [Number (NumI n)] = return $ Number $ NumF $ op $ fromInteger n
 numOp op [Number (NumF n)] = return $ Number $ NumF $ op n
+numOp op [Number (NumC n)] = return $ Number $ NumC $ (op $ realPart n) :+ (op $ imagPart n)
 numOp _ [x] = throwError $ TypeMismatch "number" x
 numOp _ badArgList = throwError $ NumArgs 1 badArgList
 
 numLog :: [LispVal] -> ThrowsError LispVal
 numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
 numLog [Number (NumF n)] = return $ Number $ NumF $ log n
+numLog [Number (NumC n)] = return $ Number $ NumC $ log n
 numLog [Number (NumI n), Number (NumI base)] = 
     return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
 numLog [Number (NumF n), Number (NumI base)] = 
     return $ Number $ NumF $ logBase (fromInteger base) n
+numLog [Number (NumC n), Number (NumI base)] = 
+    return $ Number $ NumC $ logBase (fromInteger base) n
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
@@ -192,8 +209,21 @@ numPow [Number (NumI n), Number (NumF base)] =
     return $ Number $ NumF $ fromIntegral n ** base
 numPow [Number (NumF n), Number (NumF base)] = 
     return $ Number $ NumF $ n ** base
+numPow [Number (NumC n), Number (NumI base)] =
+    return $ Number $ NumC $ n ** fromIntegral base
+numPow [Number (NumC n), Number (NumF base)] =
+    return $ Number $ NumC $ n ** (base :+ 0)
 numPow [x] = throwError $ TypeMismatch "number" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
+
+numSqrt :: [LispVal] -> ThrowsError LispVal
+numSqrt [Number (NumI n)] = if n >= 0 then return $ Number $ NumF $ sqrt $ fromInteger n
+                                      else return $ Number $ NumC $ sqrt ((fromInteger n) :+ 0)
+numSqrt [Number (NumF n)] = if n >= 0 then return $ Number $ NumF $ sqrt n
+                                      else return $ Number $ NumC $ sqrt (n :+ 0)
+numSqrt [Number (NumC n)] = return $ Number $ NumC $ sqrt n
+numSqrt [x] = throwError $ TypeMismatch "number" x
+numSqrt badArgList = throwError $ NumArgs 1 badArgList
 
 printNewline :: [LispVal] -> ThrowsError LispVal
 printNewline [] = return $ String $ unlines [""]
@@ -415,6 +445,7 @@ isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
+-- | evaluates a parsed line
 -- | evaluates a parsed line
 evalLine :: Env -> String -> IO String
 evalLine env expr = runIOThrows $ liftM show $ 
