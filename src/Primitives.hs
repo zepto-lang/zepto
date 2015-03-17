@@ -484,6 +484,7 @@ eval _ val@(Bool _) = return val
 eval _ val@(Character _) = return val
 eval _ val@(Vector _) = return val
 eval _ (List [Atom "quote", val]) = return val
+eval env (List [Atom "eval", List (Atom "quote" : val)]) = eval env (List val)
 eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
                                                  case result of
                                                     Bool False -> eval env alt
