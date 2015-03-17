@@ -27,21 +27,6 @@
   (lambda (arg)
     (f (apply g arg))))
 
-(define zero?
-  (curry = 0))
-
-(define positive?
-  (curry < 0))
-
-(define negative?
-  (curry > 0))
-
-(define (odd? num) "is the variable odd?"
-  (= (mod num 2) 1))
-
-(define (even? num) "is the variable even?"
-  (= (mod num 2) 0))
-
 (define (foldr func end l) "fold right"
   (if (null? l)
     end
