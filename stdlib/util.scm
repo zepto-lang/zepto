@@ -150,7 +150,7 @@
                 (cadar cs) 
                 (unpack case (join (list x) (cdr cs)))))
 
-(define (iota n) 
+(define (iota n) "makes a list from numbers from 0 to n"
     (let ((acc '()))
       (do ((i 0 (+ i 1))) ((= i n)) (set! acc (append acc (list i)))) acc))
 
@@ -167,7 +167,7 @@
      (append cars (list car1))
      (append cdrs (list cdr1))))))
 
-(define (for-each proc . lists)
+(define (for-each proc . lists) "applies a function to a bunch of arguments"
   (if (null? lists)
       (apply proc)
       (if (null? (car lists))

@@ -21,9 +21,10 @@ It is very small, so the name might or might not be appropriate.
 1. **[Maintainers](#maintainers)**
 2. **[Installation](#installation)**
 3. **[Introduction](#introduction)**
-4. **[Future](#future)**
-5. **[Contribute](#contribute)**
-6. **[License](#license)**
+4. **[Libraries](#libraries)**
+5. **[Future](#future)**
+6. **[Contribute](#contribute)**
+7. **[License](#license)**
 
 ## Maintainers
 
@@ -42,11 +43,15 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.5.0
-Type 'quit' or press Ctrl-C to exit interpreter
-Type 'help' to get a simple help message
+zepto Version 0.6.0
+Copyright (C) 2015 Veit Heller (GPL)
+This is free software; see the accompanying LICENSE for copying conditions.
+There is NO warranty whatsoever.
 
-zepto>
+Type 'quit' or press Ctrl-C to exit interpreter
+Type 'help' to get a list of commands
+
+zepto> 
 ```
 
 Now you can just fiddle, maybe try something like
