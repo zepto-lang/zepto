@@ -1,7 +1,7 @@
 ;; This code is taken from:
 ;; http://stackoverflow.com/questions/14674165/scheme-generate-random
 ;; It is not to be used in cryptography or related fields.
-(define (random) "generates a random number between 0 and 1"
+(define random
   (let ((a 69069) (c 1) (m (expt 2 32)) (seed 19380110.0))
     (lambda new-seed
       (if (pair? new-seed)
