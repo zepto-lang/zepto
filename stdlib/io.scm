@@ -1,4 +1,4 @@
-(define (call-with-input-file s p)
+(define (call-with-input-file s p) "open an input file s and apply a function to it, then close the file"
      (let ((inport (open-input-file s)))
           (if (eq? inport #f)
                #f
@@ -6,7 +6,7 @@
                     (close-input-port inport)
                     res))))
 
-(define (call-with-output-file s p)
+(define (call-with-output-file s p) "open an output file s and apply a function to it, then close the file"
      (let ((outport (open-output-file s)))
           (if (eq? outport #f)
                #f
@@ -14,7 +14,7 @@
                     (close-output-port outport)
                     res))))
 
-(define (with-input-from-file s p)
+(define (with-input-from-file s p) "open an input file s and run a function while it's open"
      (let ((inport (open-input-file s)))
           (if (eq? inport #f)
                #f
@@ -25,7 +25,7 @@
                          (set-input-port prev-inport)
                          res)))))
 
-(define (with-output-to-file s p)
+(define (with-output-to-file s p) "open an output file s and run a function while it's open"
      (let ((outport (open-output-file s)))
           (if (eq? outport #f)
                #f

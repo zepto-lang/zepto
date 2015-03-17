@@ -15,7 +15,7 @@
 ;;; such that for all 1 <= i <= m,
 ;;;	(not (less? (list-ref list i) (list-ref list (- i 1)))).
 ;@
-(define (cl:sorted? seq less?)
+(define (cl:sorted? seq less?) "returns whether a sequence is sorted"
   (cond ((null? seq) #t)
 	(else (let loop ((last (car seq)) (next (cdr seq)))
 	   (or (null? next)
@@ -28,7 +28,7 @@
 ;;; interleaved so that (sorted? (merge a b less?) less?).
 ;;; Note:  this does _not_ accept arrays.  See below.
 ;@
-(define (cl:merge a b less?)
+(define (cl:merge a b less?) "merges two sorted lists"
   (cond ((null? a) b)
 	((null? b) a)
 	(else (let loop ((x (car a)) (a (cdr a)) (y (car b)) (b (cdr b)))
@@ -48,7 +48,7 @@
 ;;; single sorted list including the elements of both.
 ;;; Note:  this does _not_ accept arrays.
 ;@
-(define (cl:merge! a b less?)
+(define (cl:merge! a b less?) "merges two sorted lists"
   (define (loop r a b)
     (if (less? (car b) (car a))
 	(begin (set-cdr! r b)
@@ -78,7 +78,7 @@
 ;;; David H. D.  Warren, and first used in the DEC-10 Prolog system.
 ;;; R. A. O'Keefe adapted it to work destructively in Scheme.
 ;@
-(define (cl:sort! seq less?)
+(define (cl:sort! seq less?) "sorts a sequence destructively; merge-sort"
   (define (step n)
     (cond ((> n 2)
 	   (let* ((j (quotient n 2))
@@ -111,7 +111,7 @@
 ;;; allocated" except for sharing structure with "the last argument",
 ;;; so (append x '()) ought to be a standard way of copying a list x.
 ;@
-(define (cl:sort seq less?)
+(define (cl:sort seq less?) "sorts a sequence non-destructively; merge-sort"
   (cond ((vector? seq)
 	 (list->vector (cl:sort! (vector->list seq) less?)))
 	((string? seq)

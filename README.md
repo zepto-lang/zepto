@@ -1,8 +1,8 @@
 # zepto
 ![general version](http://img.shields.io/badge/version-0.6.0-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
-![MIT Licensed](http://img.shields.io/badge/GHC_Version-7.6--7.8-blue.svg)
-![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-yellow.svg)
+![MIT Licensed](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
+![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
 [![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
@@ -99,6 +99,19 @@ And you're back to your regular shell.
 
 If you want to see examples of real programs, look in the `examples`
 directory.
+
+## Libraries
+
+There are many libraries already imported at startup, such as
+two random number generators(one of which is cryptographically
+secure) and most of the functions you know from your ordinary
+Scheme. There are also a few opt-ins, namely a port of standard
+Common Lisp functions (importable via `(load "stdlib/comlist.scm)`)
+and a few sort functions (importable via `(load "stdlib/sort.scm")`).
+
+There is currently no complete, comprehensive documentation for those
+modules, but you can find out about single commands via aforementioned
+`help` primitive.
 
 ## Future
 
