@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.5.3-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.0-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-yellow.svg)
 [![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)

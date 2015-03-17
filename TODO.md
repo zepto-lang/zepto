@@ -33,6 +33,7 @@
 * Complex Numbers [x]
 
 **Features soon to be implemented:**
+* More tests for stdlib
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
 * Hashtables
 * call/cc

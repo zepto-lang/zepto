@@ -81,10 +81,12 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("complex?", isNumber, "check whether variable is complex"),
               ("vector", buildVector, "build a new vector"),
               ("string", buildString, "build a new string"),
+              ("char-downcase", charDowncase, "downcases a char"),
               ("vector-length", vectorLength, "get length of vector"),
               ("string-length", stringLength, "get length of string"),
               ("make-string", makeString, "make a new string"),
               ("make-vector", makeVector, "create a vector"),
+              ("char->integer", charToInteger, "makes integer from char"),
               ("vector->list", vectorToList, "makes list from vector"),
               ("list->vector", listToVector, "makes vector from list"),
               ("symbol->string", symbol2String, "makes string from symbol"),
@@ -394,7 +396,12 @@ listToString badArgList = throwError $ NumArgs 1 badArgList
 stringCopy :: [LispVal] -> ThrowsError LispVal
 stringCopy [String s] = return $ String s
 stringCopy [badType] = throwError $ TypeMismatch "string" badType
-stringCopy badArgList = throwError $ NumArgs 2 badArgList
+stringCopy badArgList = throwError $ NumArgs 1 badArgList
+
+charDowncase :: [LispVal] -> ThrowsError LispVal
+charDowncase [Character c] = return $ Character $ toLower c
+charDowncase [badType] = throwError $ TypeMismatch "character" badType
+charDowncase badArgList = throwError $ NumArgs 1 badArgList
 
 isNumber :: [LispVal] -> ThrowsError LispVal
 isNumber ([Number _]) = return $ Bool True
@@ -443,6 +450,12 @@ string2Symbol [] = return $ Bool False
 string2Symbol ([String s]) = return $ Atom s
 string2Symbol [notString] = throwError $ TypeMismatch "string" notString
 string2Symbol args@(_ : _) = throwError $ NumArgs 1 args
+
+charToInteger :: [LispVal] -> ThrowsError LispVal
+charToInteger [] = return $ Bool False
+charToInteger ([Character c]) = return $ Number $ NumI $ toInteger $ ord c
+charToInteger [notChar] = throwError $ TypeMismatch "character" notChar
+charToInteger args@(_ : _) = throwError $ NumArgs 1 args
 
 isString :: [LispVal] -> ThrowsError LispVal
 isString ([String _]) = return $ Bool True

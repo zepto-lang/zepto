@@ -153,3 +153,27 @@
 (define (iota n) 
     (let ((acc '()))
       (do ((i 0 (+ i 1))) ((= i n)) (set! acc (append acc (list i)))) acc))
+
+(define (unzip1-with-cdr . lists)
+  (unzip1-with-cdr-iterative lists '() '()))
+
+(define (unzip1-with-cdr-iterative lists cars cdrs)
+  (if (null? lists)
+      (cons cars cdrs)
+      (let ((car1 (caar lists))
+        (cdr1 (cdar lists)))
+    (unzip1-with-cdr-iterative 
+     (cdr lists) 
+     (append cars (list car1))
+     (append cdrs (list cdr1))))))
+
+(define (for-each proc . lists)
+  (if (null? lists)
+      (apply proc)
+      (if (null? (car lists))
+      #t
+      (let* ((unz (apply unzip1-with-cdr lists))
+         (cars (car unz))
+         (cdrs (cdr unz)))
+        (apply proc cars) (apply map (cons proc cdrs))))))
+
