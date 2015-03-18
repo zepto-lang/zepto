@@ -31,13 +31,14 @@
 * Quasiquoting [x]
 * Completion and History [x]
 * Complex Numbers [x]
+* call/cc [x]
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
 * Make cl libraries work
 * Hashtables
-* call/cc
 * Foreign Function Interface to C and Haskell
+* Wrap OpenGL
 * A Compiler
 
 **Miscellaneous enhancements:**

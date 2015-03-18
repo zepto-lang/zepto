@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.1-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![MIT Licensed](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -7,7 +7,7 @@
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
-extended massively).
+extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
 It implements a good enough subset of R5RS to make real programming possible.
 Features implemented include Macros, lazy evaluation, a minimal stdlib, many
 native primitives and help for those or for functions provided via docstrings 
@@ -22,9 +22,10 @@ It is very small, so the name might or might not be appropriate.
 2. **[Installation](#installation)**
 3. **[Introduction](#introduction)**
 4. **[Libraries](#libraries)**
-5. **[Future](#future)**
-6. **[Contribute](#contribute)**
-7. **[License](#license)**
+5. **[Why](#why)**
+6. **[Future](#future)**
+7. **[Contribute](#contribute)**
+8. **[License](#license)**
 
 ## Maintainers
 
@@ -117,6 +118,16 @@ and a few sort functions (importable via `(load "stdlib/sort.scm")`).
 There is currently no complete, comprehensive documentation for those
 modules, but you can find out about single commands via aforementioned
 `help` primitive.
+
+## Why
+
+Up until now, zepto is nothin too fancy. When everything will go according
+to my plans, however, it will evolve into a dialect of Scheme tailored towards
+Multimedia (Audio, Video), seperately optimizing functions concerned with
+audio and video programming through special primitives.
+
+Until I can do that, however, I want to implement a good set of R5RS and
+Lisp.
 
 ## Future
 
