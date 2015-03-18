@@ -500,7 +500,7 @@ eval _ (List [Atom "quote", val]) = return val
 eval _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
 eval _ (List [Atom "eval"]) = throwError $ NumArgs 1 []
 eval env (List [Atom "eval", List (Atom "quote" : val)]) = eval env (List val)
-eval env (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
+eval _ (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
 eval _ (List (Atom "eval" : x)) = throwError $ NumArgs 1 x
 eval _ (List [Atom "if"]) = throwError $ NumArgs 3 []
 eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
@@ -531,7 +531,7 @@ eval env (List [Atom "set-cdr!", Atom var, form]) = do
             setVar env var x
     where set_cdr (List old) (List new_cdr) = return $ List $ (head old) : new_cdr
           set_cdr _ _ = return $ Nil "This should never happen"
-eval _ (List (Atom "set-cdr!" : x)) = throwError $ numArgs 2 x
+eval _ (List (Atom "set-cdr!" : x)) = throwError $ NumArgs 2 x
 eval _ (List [Atom "set-car!"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "set-car!", Atom var, form]) = do
             resolved_var <- eval env (Atom var)
@@ -540,7 +540,7 @@ eval env (List [Atom "set-car!", Atom var, form]) = do
             setVar env var x
     where set_car (List old) new_car = return $ List $ new_car : (tail old)
           set_car _ _ = return $ Nil "This should never happen"
-eval _ (List (Atom "set-car!" : x)) = throwError $ numArgs 2 x
+eval _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
 eval _ (List [Atom "define"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
@@ -662,7 +662,6 @@ eval env (List [Atom "vector-fill!", Atom var, object]) = do
         fillVector _ _ = Nil "This should never happen"
         lenVector v = length (elems v)
 eval _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "begin"]) = throwError $ NumArgs 1 x
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
