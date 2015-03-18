@@ -1,4 +1,4 @@
-module Primitives(primitives, ioPrimitives, eval, evalLine) where
+module Primitives(primitives, ioPrimitives, eval, evalString) where
 import Types
 import Parser
 import Variables
@@ -100,8 +100,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
 
 -- | a list of all io-bound primitives
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-ioPrimitives = [("apply", applyProc, "apply function"),
-                ("open-input-file", makePort ReadMode, "open a file for reading"),
+ioPrimitives = [("open-input-file", makePort ReadMode, "open a file for reading"),
                 ("open-output-file", makePort WriteMode, "open a file for writing"),
                 ("close-input-file", closePort, "close a file opened for reading"),
                 ("close-output-file", closePort, "close a file opened for writing"),
@@ -422,6 +421,7 @@ isProcedure :: [LispVal] -> ThrowsError LispVal
 isProcedure ([PrimitiveFunc _]) = return $ Bool True
 isProcedure ([Func _]) = return $ Bool True
 isProcedure ([IOFunc _]) = return $ Bool True
+isProcedure ([Cont _]) = return $ Bool True
 isProcedure _ = return $ Bool False
 
 isVector, isList :: LispVal -> ThrowsError LispVal
@@ -468,11 +468,22 @@ isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
--- | evaluates a parsed line
--- | evaluates a parsed line
-evalLine :: Env -> String -> IO String
-evalLine env expr = runIOThrows $ liftM show $ 
-                    liftThrows (readExpr expr) >>= macroEval env >>= eval env
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ liftM show $ 
+                    (liftThrows $ readExpr expr) >>= 
+                    macroEval env >>=
+                    (eval env (nullCont env))
+
+contEval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
+contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val = do
+    case cBody of 
+        [] -> do
+            case cCont of
+                Cont (Continuation nEnv _ _ _ _) -> contEval nEnv cCont val
+                _ -> return val
+        [lval] -> eval cEnv (Cont (Continuation cEnv [] cCont Nothing Nothing)) lval
+        (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing)) lval
+contEval _ _ _ = throwError $ InternalError "This should never happen"
 
 findFile :: String -> ExceptT LispError IO String
 findFile filename = do
@@ -488,88 +499,102 @@ findFile filename = do
 
 
 -- | evaluates a parsed expression
-eval :: Env -> LispVal -> IOThrowsError LispVal
-eval _ val@(Nil _) = return val
-eval _ val@(String _) = return val
-eval _ val@(Number _) = return val
-eval _ val@(Bool _) = return val
-eval _ val@(Character _) = return val
-eval _ val@(Vector _) = return val
-eval _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
-eval _ (List [Atom "quote", val]) = return val
-eval _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
-eval _ (List [Atom "eval"]) = throwError $ NumArgs 1 []
-eval env (List [Atom "eval", List (Atom "quote" : val)]) = eval env (List val)
-eval _ (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
-eval _ (List (Atom "eval" : x)) = throwError $ NumArgs 1 x
-eval _ (List [Atom "if"]) = throwError $ NumArgs 3 []
-eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
-                                                 case result of
-                                                    Bool False -> eval env alt
-                                                    _          -> eval env conseq
-eval env (List [Atom "if", predicate, conseq]) = do result <- eval env predicate
-                                                    case result of
-                                                        Bool True -> eval env conseq
-                                                        _         -> eval env $ List []
-eval _ (List [Atom "if", x]) = throwError $ BadSpecialForm 
+eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
+eval env conti val@(Nil _) = contEval env conti val
+eval env conti val@(String _) = contEval env conti val
+eval env conti val@(Number _) = contEval env conti val
+eval env conti val@(Bool _) = contEval env conti val
+eval env conti val@(Character _) = contEval env conti val
+eval env conti val@(Vector _) = contEval env conti val
+eval env conti (Atom a) = contEval env conti =<< getVar env a
+eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
+eval env conti (List [Atom "quote", val]) = contEval env conti val
+eval _ _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [Atom "eval"]) = throwError $ NumArgs 1 []
+eval env conti (List [Atom "eval", List (Atom "quote" : val)]) = contEval env conti (List val)
+eval _ _ (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
+eval _ _ (List (Atom "eval" : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [Atom "if"]) = throwError $ NumArgs 3 []
+eval env conti (List [Atom "if", p, conseq, alt]) = do 
+        result <- eval env conti p
+        case result of
+            Bool False -> eval env conti alt
+            _          -> eval env conti conseq
+eval env conti (List [Atom "if", predicate, conseq]) = do 
+        result <- eval env conti predicate
+        case result of
+            Bool True -> eval env conti conseq
+            _         -> eval env conti $ List []
+eval _ _ (List [Atom "if", x]) = throwError $ BadSpecialForm 
                             ("if needs a predicate and a consequence "
                             ++ "plus an optional alternative clause")
                             x
-eval _ (List (Atom "if" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "set!"]) = throwError $ NumArgs 2 []
-eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
-eval _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm 
+eval _ _ (List (Atom "if" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "set!"]) = throwError $ NumArgs 2 []
+eval env conti (List [Atom "set!", Atom var, form]) = do
+        result <- eval env (nullCont env) form >>= setVar env var
+        contEval env conti result
+eval _ _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm 
                             ("set takes a previously defined variable and "
                             ++ "its new value")
                             x
-eval _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "set-cdr!"]) = throwError $ NumArgs 2 []
-eval env (List [Atom "set-cdr!", Atom var, form]) = do
-            resolved_var <- eval env (Atom var)
-            resolved_form <- eval env form
+eval _ _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "set-cdr!"]) = throwError $ NumArgs 2 []
+eval env conti (List [Atom "set-cdr!", Atom var, form]) = do
+            resolved_var <- eval env (nullCont env) (Atom var)
+            resolved_form <- eval env (nullCont env) form
             x <- set_cdr resolved_var resolved_form
-            setVar env var x
+            contEval env conti =<< (setVar env var x)
     where set_cdr (List old) (List new_cdr) = return $ List $ (head old) : new_cdr
           set_cdr _ _ = return $ Nil "This should never happen"
-eval _ (List (Atom "set-cdr!" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "set-car!"]) = throwError $ NumArgs 2 []
-eval env (List [Atom "set-car!", Atom var, form]) = do
-            resolved_var <- eval env (Atom var)
-            resolved_form <- eval env form
+eval _ _ (List (Atom "set-cdr!" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "set-car!"]) = throwError $ NumArgs 2 []
+eval env conti (List [Atom "set-car!", Atom var, form]) = do
+            resolved_var <- eval env (nullCont env) (Atom var)
+            resolved_form <- eval env (nullCont env) form
             x <- set_car resolved_var resolved_form
-            setVar env var x
+            contEval env conti =<< (setVar env var x)
     where set_car (List old) new_car = return $ List $ new_car : (tail old)
           set_car _ _ = return $ Nil "This should never happen"
-eval _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "define"]) = throwError $ NumArgs 2 []
-eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
-eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
-                            makeDocFunc env p b doc >>= defineVar env var
-eval env (List (Atom "define" : List (Atom var : p) : b)) = 
-                            makeNormalFunc env p b >>= defineVar env var
-eval env (List (Atom "define" : DottedList (Atom var : p) varargs : String doc : b)) =
-                            makeVarargs varargs env p b doc >>= defineVar env var
-eval env (List (Atom "define" : DottedList (Atom var : p) varargs : b)) =
-                            makeVarargs varargs env p b "No documentation" >>= defineVar env var
-eval _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
-eval env (List (Atom "lambda" : List p : b)) = 
-                            makeNormalFunc env p b
-eval env (List (Atom "lambda" : DottedList p varargs : b)) = 
-                            makeVarargs varargs env p b "lambda"
-eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
-                            makeVarargs varargs env [] b "lambda"
-eval _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "load"]) = throwError $ NumArgs 1 []
-eval env (List [Atom "load", String file]) = do
-                            filename <- findFile file
-                            load filename >>= liftM last . mapM (parse env)
-                            where parse en val = macroEval env val >>= eval en
-eval _ (List [Atom "load", x]) = throwError $ 
-                            TypeMismatch "string" x
-eval _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
-eval _ (List [Atom "help"]) = throwError $ NumArgs 1 []
-eval _ (List [Atom "help", String val]) =
+eval _ _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "define"]) = throwError $ NumArgs 2 []
+eval env conti (List [Atom "define", Atom var, form]) = do
+        result <- eval env (nullCont env) form >>= defineVar env var
+        contEval env conti result
+eval env conti (List (Atom "define" : List (Atom var : p) : String doc : b)) =  do
+        result <- (makeDocFunc env p b doc >>= defineVar env var)
+        contEval env conti result
+eval env conti (List (Atom "define" : List (Atom var : p) : b)) = do
+        result <- (makeNormalFunc env p b >>= defineVar env var)
+        contEval env conti result
+eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : String doc : b)) = do
+        result <- (makeVarargs varargs env p b doc >>= defineVar env var)
+        contEval env conti result
+eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : b)) = do
+        result <- (makeVarargs varargs env p b "No documentation" >>= defineVar env var)
+        contEval env conti result
+eval _ _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
+eval env conti (List (Atom "lambda" : List p : b)) =  do
+        result <- (makeNormalFunc env p b)
+        contEval env conti result
+eval env conti (List (Atom "lambda" : DottedList p varargs : b)) = do
+        result <- (makeVarargs varargs env p b "lambda")
+        contEval env conti result
+eval env conti (List (Atom "lambda" : varargs@(Atom _) : b)) = do
+        result <- (makeVarargs varargs env [] b "lambda")
+        contEval env conti result
+eval _ _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [Atom "load"]) = throwError $ NumArgs 1 []
+eval env conti (List [Atom "load", String file]) = do
+        filename <- findFile file
+        result <- load filename >>= liftM last . mapM (evl env (nullCont env))
+        contEval env conti result
+    where evl env2 cont2 val = macroEval env2 val >>= eval env2 cont2
+eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
+eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
+eval _ _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
         map thirdElem (filter filterTuple primitives) ++
         map thirdElem (filter filterTuple ioPrimitives)
@@ -577,7 +602,7 @@ eval _ (List [Atom "help", String val]) =
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval env (List [Atom "help", Atom val]) = do
+eval env _ (List [Atom "help", Atom val]) = do
         let x = concat $ 
                 map thirdElem (filter filterTuple primitives) ++
                 map thirdElem (filter filterTuple ioPrimitives)
@@ -588,14 +613,14 @@ eval env (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
-eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
-eval _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
-eval env (List [Atom "quasiquote", val]) = doUnQuote env val
+eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
+eval _ _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
+eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote env val
     where doUnQuote :: Env -> LispVal -> IOThrowsError LispVal
           doUnQuote e v = do
             case v of
-                List [Atom "unquote", s] -> eval e s
+                List [Atom "unquote", s] -> eval e (nullCont e) s
                 List (x : xs) -> unquoteListM e (x:xs) >>= return . List
                 DottedList xs x -> do
                     rxs <- unquoteListM e xs >>= return
@@ -609,12 +634,12 @@ eval env (List [Atom "quasiquote", val]) = doUnQuote env val
                     let len = length (elems vec)
                     vList <- unquoteListM env $ elems vec >>= return
                     return $ Vector $ listArray (0, len) vList
-                _ -> eval env (List [Atom "quote", v])
+                _ -> eval e (nullCont e) (List [Atom "quote", v])
           unquoteListM e lst = foldlM (unquoteListFld e) ([]) lst
           unquoteListFld e (acc) v = do
             case v of
                 List [Atom "unquote-splicing", x] -> do
-                    value <- eval e x
+                    value <- eval e (nullCont e) x
                     case value of
                         List t -> return $ (acc ++ t)
                         _ -> throwError $ TypeMismatch "proper list" value
@@ -623,10 +648,11 @@ eval env (List [Atom "quasiquote", val]) = doUnQuote env val
           foldlM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
           foldlM f v (x : xs) = (f v x) >>= \ a -> foldlM f a xs
           foldlM _ v [] = return v
-eval env (List [Atom "string-fill!", Atom var, character]) = do 
-  str <- eval env =<< getVar env var
-  ch <- eval env character
-  (eval env $ fillStr(str, ch)) >>= setVar env var
+eval env conti (List [Atom "string-fill!", Atom var, character]) = do 
+    str <- eval env (nullCont env) =<< getVar env var
+    ch <- eval env (nullCont env) character
+    result <- (eval env (nullCont env) $ fillStr(str, ch)) >>= setVar env var
+    contEval env conti result
   where fillStr (String str, Character ch) = 
             doFillStr (String "", Character ch, length str)
         fillStr (_, _) = Nil "This should never happen"
@@ -635,46 +661,69 @@ eval env (List [Atom "string-fill!", Atom var, character]) = do
                 then String str
                 else doFillStr(String $ ch : str, Character ch, left - 1)
         doFillStr (_, _, _) = Nil "This should never happen"
-eval env (List [Atom "string-set!", Atom var, i, character]) = do 
-  idx <- eval env i
-  str <- eval env =<< getVar env var
-  (eval env $ substr(str, character, idx)) >>= setVar env var
+eval env conti (List [Atom "string-set!", Atom var, i, character]) = do 
+    idx <- eval env (nullCont env) i
+    str <- eval env (nullCont env) =<< getVar env var
+    result <- (eval env (nullCont env) $ substr(str, character, idx)) >>= setVar env var
+    contEval env conti result
   where substr (String str, Character ch, Number (NumI j)) = do
                               String $ (take (fromInteger j) . drop 0) str ++ 
                                        [ch] ++
                                        (take (length str) . drop (fromInteger j + 1)) str
         substr (_, _, _) = Nil "This should never happen"
-eval env (List [Atom "vector-set!", Atom var, i, object]) = do 
-  idx <- eval env i
-  obj <- eval env object
-  vec <- eval env =<< getVar env var
-  (eval env $ (updateVector vec idx obj)) >>= setVar env var
+eval env conti (List [Atom "vector-set!", Atom var, i, object]) = do 
+    idx <- eval env (nullCont env) i
+    obj <- eval env (nullCont env) object
+    vec <- eval env (nullCont env) =<< getVar env var
+    result <- (eval env (nullCont env) $ (updateVector vec idx obj)) >>= setVar env var
+    contEval env conti result
   where updateVector (Vector vec) (Number (NumI idx)) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = Nil "This should never happen"
-eval _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
-eval env (List [Atom "vector-fill!", Atom var, object]) = do 
-  obj <- eval env object
-  vec <- eval env =<< getVar env var
-  (eval env $ (fillVector vec obj)) >>= setVar env var
+eval _ _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
+eval env conti (List [Atom "vector-fill!", Atom var, object]) = do 
+    obj <- eval env (nullCont env) object
+    vec <- eval env (nullCont env) =<< getVar env var
+    result <- (eval env (nullCont env) $ (fillVector vec obj)) >>= setVar env var
+    contEval env conti result
   where fillVector (Vector vec) obj = do
           let l = replicate (lenVector vec) obj
           Vector $ (listArray (0, length l - 1)) l
         fillVector _ _ = Nil "This should never happen"
         lenVector v = length (elems v)
-eval _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
-eval env (List (Atom "begin" : funs)) 
-                        | null funs = eval env $ Nil ""
-                        | length funs == 1 = eval env (head funs)
+eval _ _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
+eval env conti (List (Atom "begin" : funs)) 
+                        | null funs = eval env conti $ Nil ""
+                        | length funs == 1 = eval env conti (head funs)
                         | otherwise = do
                                     let fs = tail funs
-                                    _ <- eval env (head funs)
-                                    eval env (List (Atom "begin" : fs))
-eval env (Atom ident) = getVar env ident
-eval env (List (function : args)) = do
-                                        func <- eval env function
-                                        argVals <- mapM (eval env) args
-                                        apply func argVals
-eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+                                    _ <- eval env conti (head funs)
+                                    eval env conti (List (Atom "begin" : fs))
+eval env conti (List (Atom "call-with-current-continuation" : args)) =
+        eval env conti (List (Atom "call/cc" : args))
+eval _ _ (List [Atom "call/cc"]) = throwError $ Default "Procedure not specified"
+eval env conti (List [Atom "call/cc", proc]) = do
+        func <- eval env (nullCont env) proc
+        case func of
+            PrimitiveFunc fun -> liftThrows $ fun [conti]
+            Func (LispFun aparams _ _ _ _) ->
+                if (toInteger $ length aparams) == 1
+                    then apply conti func [conti]
+                    else throwError $ NumArgs (toInteger $ length aparams) [conti]
+            other -> throwError $ TypeMismatch "procedure" other
+eval _ _ (List [Atom "apply"]) = throwError $ NumArgs 2 []
+eval _ _ (List [Atom "apply", proc]) = throwError $ NumArgs 2 [proc]
+eval env conti (List (Atom "apply" : fparams)) = do
+        proc <- eval env (nullCont env) $ head $ fparams
+        args <- eval env (nullCont env) $ head $ reverse fparams
+        argVals <- mapM (eval env (nullCont env)) $ tail $ reverse $ tail (reverse fparams)
+        case args of
+            List l -> apply conti proc (argVals ++ l)
+            other -> throwError $ TypeMismatch "list" other
+eval env conti (List (function : args)) = do
+        func <- eval env (nullCont env) function
+        argVals <- mapM (eval env (nullCont env)) args
+        apply conti func argVals
+eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
@@ -714,31 +763,31 @@ readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename
 readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
-apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
-apply (IOFunc func) args = func args
-apply (PrimitiveFunc func) args = liftThrows $ func args
-apply (Func (LispFun fparams varargs fbody fclosure _)) args =
-    if num fparams /= num args && isNothing varargs
-        then throwError $ NumArgs (num fparams) args
-        else liftIO (extendEnv fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
+apply :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
+apply _ c@(Cont (Continuation env _ _ _ _)) args = do
+        if(toInteger $ length args) /= 1
+            then throwError $ NumArgs 1 args
+            else contEval env c $ head args
+apply _ (IOFunc func) args = func args
+apply _ (PrimitiveFunc func) args = liftThrows $ func args
+apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
+        if num fparams /= num args && isNothing varargs
+            then throwError $ NumArgs (num fparams) args
+            else liftIO (extendEnv fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
     where 
         remainingArgs = drop (length fparams) args
         num = toInteger . length
-        evalBody ebody env = case ebody of
-                                [lv] -> eval env lv
-                                (lv : lvs) -> do
-                                    _ <- eval env lv
-                                    evalBody lvs env
-                                _ -> throwError $ InternalError "Internal state error"
+        evalBody ebody env = case conti of
+                                Cont (Continuation _ cBody cCont _ _) -> if length cBody == 0
+                                    then continueWithContinuation env ebody cCont
+                                    else continueWithContinuation env ebody conti
+                                _ -> continueWithContinuation env ebody conti
+        continueWithContinuation env cebody continuation =
+            contEval env (Cont (Continuation env cebody continuation Nothing Nothing)) $ Nil ""
         bindVarArgs arg env = case arg of
             Just argName -> liftIO $ extendEnv env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env
-apply func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
-
-applyProc :: [LispVal] -> IOThrowsError LispVal
-applyProc [func, List args] = apply func args
-applyProc (func : args) = apply func args
-applyProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> String -> m LispVal
 makeFunc varargs env p b doc = return $ Func $ LispFun (map showVal p) varargs b env doc

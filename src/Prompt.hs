@@ -86,7 +86,7 @@ readPrompt prompt env = runInputT (addSettings env) $ poll prompt
 
 -- | evaluate a line of code and print it
 evalAndPrint :: Env -> String -> IO ()
-evalAndPrint env expr = evalLine env expr >>= putStrLn
+evalAndPrint env expr = evalString env expr >>= putStrLn
 
 -- | run a single statement
 runSingleStatement :: [String] -> IO ()
@@ -95,9 +95,9 @@ runSingleStatement args = do
                                                     List $ map String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
-        runIOThrows (liftM show $ eval env (List [Atom "load", String $ head args]))
+        runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
             >>= hPutStrLn stderr
-    where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
+    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 
 -- | run the REPL
@@ -107,5 +107,5 @@ runRepl = do
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
         until_ (readPrompt "zepto> " env) (evalAndPrint env)
-    where loadFile env file = evalLine env $ "(load \"" ++ file ++ "\")"
+    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
                           

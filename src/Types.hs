@@ -1,5 +1,6 @@
 module Types (LispNum(..),
               LispVal(..), 
+              Continuation(..),
               LispFun(..), 
               LispError(..), 
               Unpacker(AnyUnpacker), 
@@ -11,6 +12,7 @@ module Types (LispNum(..),
               trapError, 
               extractValue,
               nullEnv,
+              nullCont,
               liftThrows,
               runIOThrows) where
 import Data.Fixed
@@ -144,12 +146,23 @@ data LispVal = Atom String
              | Port Handle
              | Func LispFun
              | Nil String
-             | Pointer { pointerVar :: String, pointerEnv :: Env } 
-             
+             | Pointer { pointerVar :: String, pointerEnv :: Env }
+             | Cont Continuation
+
+data Continuation = Continuation { contClosure :: Env
+                                 , cbody :: [LispVal]
+                                 , cont :: LispVal
+                                 , frameFunc :: (Maybe LispVal)
+                                 , frameEvaledArgs :: (Maybe [LispVal])
+                                 }
              
 -- | a LispFun data type 
-data LispFun = LispFun { params :: [String], vararg :: Maybe String,
-                         body :: [LispVal], closure :: Env, docstring :: String}
+data LispFun = LispFun { params :: [String]
+                       , vararg :: Maybe String
+                       , body :: [LispVal]
+                       , closure :: Env
+                       , docstring :: String
+                       }
 
 instance Show LispError where show = showError
 -- | a LispError data type comprising all errors that
@@ -205,6 +218,7 @@ showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
 showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer p _) = "<pointer " ++ p ++ ">"
 showVal (Nil _) = ""
+showVal (Cont _) = "<continuation>"
 
 -- | a show function for all LispErrors
 showError :: LispError -> String
@@ -239,6 +253,9 @@ nullEnv = do
     nullb <- newIORef $ Data.Map.fromList []
     nullp <- newIORef $ Data.Map.fromList []
     return $ Environment Nothing nullb nullp
+
+nullCont :: Env -> LispVal
+nullCont env = Cont $ Continuation env [] (Nil "") Nothing Nothing
 
 -- | lift a ThrowsError to an IOThrowsError
 liftThrows :: ThrowsError a -> IOThrowsError a
