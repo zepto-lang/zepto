@@ -35,6 +35,7 @@
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
+* Make macros more robust
 * Make cl libraries work
 * Hashtables (SRFI 69)
 * Foreign Function Interface to C and Haskell
