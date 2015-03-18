@@ -495,8 +495,14 @@ eval _ val@(Number _) = return val
 eval _ val@(Bool _) = return val
 eval _ val@(Character _) = return val
 eval _ val@(Vector _) = return val
+eval _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval _ (List [Atom "quote", val]) = return val
+eval _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
+eval _ (List [Atom "eval"]) = throwError $ NumArgs 1 []
 eval env (List [Atom "eval", List (Atom "quote" : val)]) = eval env (List val)
+eval env (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
+eval _ (List (Atom "eval" : x)) = throwError $ NumArgs 1 x
+eval _ (List [Atom "if"]) = throwError $ NumArgs 3 []
 eval env (List [Atom "if", p, conseq, alt]) = do result <- eval env p
                                                  case result of
                                                     Bool False -> eval env alt
@@ -510,13 +516,14 @@ eval _ (List [Atom "if", x]) = throwError $ BadSpecialForm
                             ++ "plus an optional alternative clause")
                             x
 eval _ (List (Atom "if" : x)) = throwError $ NumArgs 2 x
+eval _ (List [Atom "set!"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
 eval _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm 
                             ("set takes a previously defined variable and "
                             ++ "its new value")
                             x
 eval _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
---TODO: set-cdr and set-car are both unchecked right now!
+eval _ (List [Atom "set-cdr!"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "set-cdr!", Atom var, form]) = do
             resolved_var <- eval env (Atom var)
             resolved_form <- eval env form
@@ -524,6 +531,8 @@ eval env (List [Atom "set-cdr!", Atom var, form]) = do
             setVar env var x
     where set_cdr (List old) (List new_cdr) = return $ List $ (head old) : new_cdr
           set_cdr _ _ = return $ Nil "This should never happen"
+eval _ (List (Atom "set-cdr!" : x)) = throwError $ numArgs 2 x
+eval _ (List [Atom "set-car!"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "set-car!", Atom var, form]) = do
             resolved_var <- eval env (Atom var)
             resolved_form <- eval env form
@@ -531,6 +540,8 @@ eval env (List [Atom "set-car!", Atom var, form]) = do
             setVar env var x
     where set_car (List old) new_car = return $ List $ new_car : (tail old)
           set_car _ _ = return $ Nil "This should never happen"
+eval _ (List (Atom "set-car!" : x)) = throwError $ numArgs 2 x
+eval _ (List [Atom "define"]) = throwError $ NumArgs 2 []
 eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
 eval env (List (Atom "define" : List (Atom var : p) : String doc : b)) = 
                             makeDocFunc env p b doc >>= defineVar env var
@@ -541,6 +552,7 @@ eval env (List (Atom "define" : DottedList (Atom var : p) varargs : String doc :
 eval env (List (Atom "define" : DottedList (Atom var : p) varargs : b)) =
                             makeVarargs varargs env p b "No documentation" >>= defineVar env var
 eval _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
+eval _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
 eval env (List (Atom "lambda" : List p : b)) = 
                             makeNormalFunc env p b
 eval env (List (Atom "lambda" : DottedList p varargs : b)) = 
@@ -548,6 +560,7 @@ eval env (List (Atom "lambda" : DottedList p varargs : b)) =
 eval env (List (Atom "lambda" : varargs@(Atom _) : b)) = 
                             makeVarargs varargs env [] b "lambda"
 eval _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
+eval _ (List [Atom "load"]) = throwError $ NumArgs 1 []
 eval env (List [Atom "load", String file]) = do
                             filename <- findFile file
                             load filename >>= liftM last . mapM (parse env)
@@ -555,6 +568,7 @@ eval env (List [Atom "load", String file]) = do
 eval _ (List [Atom "load", x]) = throwError $ 
                             TypeMismatch "string" x
 eval _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
+eval _ (List [Atom "help"]) = throwError $ NumArgs 1 []
 eval _ (List [Atom "help", String val]) =
         return $ String $ concat $ 
         map thirdElem (filter filterTuple primitives) ++
@@ -574,6 +588,9 @@ eval env (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
+eval _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
+eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
+eval _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
 eval env (List [Atom "quasiquote", val]) = doUnQuote env val
     where doUnQuote :: Env -> LispVal -> IOThrowsError LispVal
           doUnQuote e v = do
@@ -645,8 +662,7 @@ eval env (List [Atom "vector-fill!", Atom var, object]) = do
         fillVector _ _ = Nil "This should never happen"
         lenVector v = length (elems v)
 eval _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
-eval _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
-eval _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
+eval _ (List [Atom "begin"]) = throwError $ NumArgs 1 x
 eval env (List (Atom "begin" : funs)) 
                         | null funs = eval env $ Nil ""
                         | length funs == 1 = eval env (head funs)
