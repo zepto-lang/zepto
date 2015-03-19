@@ -39,7 +39,7 @@
 * Make cl libraries work
 * Hashtables (SRFI 69)
 * Foreign Function Interface to C and Haskell
-* Wrap OpenGL
+* Wrap OpenGL (https://github.com/haskell-opengl/OpenGL)
 * A Compiler
 
 **Miscellaneous enhancements:**
