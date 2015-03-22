@@ -9,7 +9,7 @@
 * Lambdas
 * Value printing via `display` [x]
 * `help` statement within REPL providing information to all native primitives [x]
-* Many native primitives for type conversion and checking
+* Many native primitives for type conversion and checking [x]
 * Tail call elimination
 * REPL
   * Loading libraries

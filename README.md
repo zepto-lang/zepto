@@ -121,13 +121,17 @@ modules, but you can find out about single commands via aforementioned
 
 ## Why
 
-Up until now, zepto is nothin too fancy. When everything will go according
+Nowadays you need a good excuse to build another implementation of Lisp;
+everyone has one up their sleeve and except for learning, there is not 
+much you can gain from it - or is there?
+
+Up until now, zepto is nothing too fancy. When everything will go according
 to my plans, however, it will evolve into a dialect of Scheme tailored towards
-Multimedia (Audio, Video), seperately optimizing functions concerned with
+Multimedia (Audio, Video), separately optimizing functions concerned with
 audio and video programming through special primitives.
 
 Until I can do that, however, I want to implement a good set of R5RS and
-Lisp.
+Common Lisp.
 
 ## Future
 
