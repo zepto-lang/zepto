@@ -33,10 +33,11 @@ It is very small, so the name might or might not be appropriate.
 
 ## Installation
 
-You will need cabal for using zepto. A plain old Makefile is included, too.
-Run `make test` to check your installation.
+You will need cabal for using zepto.
 
-After cloning via git, building via cabal is done via invoking `cabal install`.
+After cloning via git, building is done via invoking `cabal install`.
+Or `make`, because a plain old Makefile is included, too. After building you can
+run `make test` to check your installation.
 
 ## Introduction
 
@@ -44,7 +45,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.6.0
+zepto Version 0.6.2
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
