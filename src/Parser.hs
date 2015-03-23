@@ -39,7 +39,7 @@ parseAtom = do first <- letter <|> symbol <|> oneOf "."
                rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
                if atom == "."
-                   then return $ Nil ""
+                   then pzero
                    else return $ Atom atom
 
 parseNumber :: Parser LispVal
@@ -87,13 +87,13 @@ parseRational = do
             sign <- many (oneOf "-")
             num <- many1 digit
             if length sign > 1
-                then return $ Nil ""
+                then pzero
                 else do
                     let denominatorParse = read $ sign ++ num
                     if denominatorParse == 0
                         then return $ Number $ NumI 0
                         else return $ Number $ NumR $ n % denominatorParse
-        _ -> return $ Nil ""
+        _ -> pzero
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"
@@ -208,7 +208,7 @@ parseChar = do
         ('x' : hexs) -> do
             rv <- parseHexScalar hexs
             return $ Character rv
-        _ -> return $ Nil ""
+        _ -> pzero
 
 parseHexScalar :: Monad m => String -> m Char
 parseHexScalar num = do
