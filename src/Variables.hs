@@ -22,7 +22,7 @@ vnamespace = 'v'
 
 extendEnv :: Env -> [((Char, String), LispVal)] -> IO Env
 extendEnv envRef abindings = do
-        bindinglistT <- (mapM addBinding abindings)
+        bindinglistT <- mapM addBinding abindings
         bindinglist <- newIORef $ Data.Map.fromList bindinglistT
         nullPointers <- newIORef $ Data.Map.fromList []
         return $ Environment (Just envRef) bindinglist nullPointers
@@ -55,11 +55,11 @@ isBound envRef = isNamespacedBound envRef vnamespace
 
 -- | checks whether a variable is bound to a namespace
 isNamespacedBound :: Env -> Char -> String -> IO Bool
-isNamespacedBound envRef namespace var = readIORef (bindings envRef) >>= 
-        return . Data.Map.member (getVarName namespace var)
+isNamespacedBound envRef namespace var = liftM (Data.Map.member 
+        (getVarName namespace var)) (readIORef (bindings envRef))
 
 getVarName :: Char -> String -> String
-getVarName namespace name = (namespace : ('_' : name))
+getVarName namespace name = namespace : ('_' : name)
 
 -- | gets a variable from an environment
 getVar :: Env -> String -> IOThrowsError LispVal
@@ -95,9 +95,9 @@ defineVar envRef = defineNamespacedVar envRef vnamespace
 
 -- | sets a variable to an environment in a specific namespace
 setNamespacedVar :: Env -> Char -> String -> LispVal -> IOThrowsError LispVal
-setNamespacedVar envRef namespace var value = do 
+setNamespacedVar envRef namespace var value =
         case value of
-            Pointer p _ -> do
+            Pointer p _ ->
                 if p == var
                     then return value
                     else next

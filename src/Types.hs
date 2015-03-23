@@ -35,10 +35,10 @@ instance Eq LispNum where
     (NumI x) == (NumF y) = fromIntegral x == y
     (NumF x) == (NumF y) = x == y
     (NumC x) == (NumC y) = x == y
-    (NumC x) == (NumF y) = x == (mkPolar y 0)
-    (NumF x) == (NumC y) = (mkPolar x 0) == y
-    (NumC x) == (NumI y) = x == (mkPolar (fromIntegral y) 0)
-    (NumI x) == (NumC y) = (mkPolar (fromIntegral x) 0) == y
+    (NumC x) == (NumF y) = x == mkPolar y 0
+    (NumF x) == (NumC y) = mkPolar x 0 == y
+    (NumC x) == (NumI y) = x == mkPolar (fromIntegral y) 0
+    (NumI x) == (NumC y) = mkPolar (fromIntegral x) 0 == y
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
     compare (NumF x) (NumI y) = compare x (fromIntegral y)
@@ -75,28 +75,28 @@ instance Num LispNum where
     (NumI x) + (NumF y) = NumF $ fromIntegral x + y
     (NumF x) + (NumF y) = NumF $ x + y
     (NumC x) + (NumC y) = NumC $ x + y
-    (NumC x) + (NumF y) = NumC $ x + (mkPolar y 0)
-    (NumF x) + (NumC y) = NumC $ (mkPolar x 0) + y
-    (NumC x) + (NumI y) = NumC $ x + (mkPolar (fromIntegral y) 0)
-    (NumI x) + (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) + y
+    (NumC x) + (NumF y) = NumC $ x + mkPolar y 0
+    (NumF x) + (NumC y) = NumC $ mkPolar x 0 + y
+    (NumC x) + (NumI y) = NumC $ x + mkPolar (fromIntegral y) 0
+    (NumI x) + (NumC y) = NumC $ mkPolar (fromIntegral x) 0 + y
     (NumI x) * (NumI y) = NumI $ x * y
     (NumF x) * (NumI y) = NumF $ x * fromIntegral y
     (NumI x) * (NumF y) = NumF $ fromIntegral x * y
     (NumF x) * (NumF y) = NumF $ x * y
     (NumC x) * (NumC y) = NumC $ x * y
-    (NumC x) * (NumF y) = NumC $ x * (mkPolar y 0)
-    (NumF x) * (NumC y) = NumC $ (mkPolar x 0) * y
-    (NumC x) * (NumI y) = NumC $ x * (mkPolar (fromIntegral y) 0)
-    (NumI x) * (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) * y
+    (NumC x) * (NumF y) = NumC $ x * mkPolar y 0
+    (NumF x) * (NumC y) = NumC $ mkPolar x 0 * y
+    (NumC x) * (NumI y) = NumC $ x * mkPolar (fromIntegral y) 0
+    (NumI x) * (NumC y) = NumC $ mkPolar (fromIntegral x) 0 * y
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
     (NumF x) - (NumF y) = NumF $ x - y
     (NumC x) - (NumC y) = NumC $ x - y
-    (NumC x) - (NumF y) = NumC $ x - (mkPolar y 0)
-    (NumF x) - (NumC y) = NumC $ (mkPolar x 0) - y
-    (NumC x) - (NumI y) = NumC $ x - (mkPolar (fromIntegral y) 0)
-    (NumI x) - (NumC y) = NumC $ (mkPolar (fromIntegral x) 0) - y
+    (NumC x) - (NumF y) = NumC $ x - mkPolar y 0
+    (NumF x) - (NumC y) = NumC $ mkPolar x 0 - y
+    (NumC x) - (NumI y) = NumC $ x - mkPolar (fromIntegral y) 0
+    (NumI x) - (NumC y) = NumC $ mkPolar (fromIntegral x) 0 - y
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
     negate (NumC x) = NumC $ negate x
@@ -152,8 +152,8 @@ data LispVal = Atom String
 data Continuation = Continuation { contClosure :: Env
                                  , cbody :: [LispVal]
                                  , cont :: LispVal
-                                 , frameFunc :: (Maybe LispVal)
-                                 , frameEvaledArgs :: (Maybe [LispVal])
+                                 , frameFunc :: Maybe LispVal
+                                 , frameEvaledArgs :: Maybe [LispVal]
                                  }
              
 -- | a LispFun data type 
@@ -180,9 +180,9 @@ instance Eq Env where
     (Environment _ xb xp) == (Environment _ yb yp) = (xb == yb) && (xp == yp)
 -- | an Environment type where all variables are stored
 data Env = Environment {
-        parentEnv :: (Maybe Env)
-      , bindings :: (IORef (Data.Map.Map String (IORef LispVal)))
-      , pointers :: (IORef (Data.Map.Map String (IORef [LispVal])))
+        parentEnv :: Maybe Env
+      , bindings :: IORef (Data.Map.Map String (IORef LispVal))
+      , pointers :: IORef (Data.Map.Map String (IORef [LispVal]))
 }
 
 -- | a ThrowsError type containing either an error or a value

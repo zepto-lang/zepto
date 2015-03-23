@@ -30,7 +30,7 @@ addSettings env = Settings { historyFile = Just getDir
                            }
             where 
                   getDir :: FilePath
-                  getDir = (unsafePerformIO getHomeDirectory) ++ "/.zepto_history"
+                  getDir = unsafePerformIO getHomeDirectory ++ "/.zepto_history"
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env

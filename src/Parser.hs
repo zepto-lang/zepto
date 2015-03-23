@@ -62,13 +62,13 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
 
 parseComplex :: Parser LispVal
 parseComplex = do
-    real_parse <- (try parseReal <|> parseDigital1)
+    real_parse <- try parseReal <|> parseDigital1
     let real_part = case real_parse of
                         Number (NumI n) -> fromInteger n
                         Number (NumF f) -> f
                         _ -> 0
     _ <- char '+'
-    imag_parse <- (try parseReal <|> parseDigital1)
+    imag_parse <- try parseReal <|> parseDigital1
     let imag_part = case imag_parse of
                         Number (NumI n) -> fromInteger n
                         Number (NumF f) -> f
