@@ -70,6 +70,7 @@ primitives = [("+", numericPlusop (+), "add two values"),
               ("procedure?", isProcedure, "check whether variable is a procedure"),
               ("number?", isNumber, "check whether variable is a number"),
               ("integer?", isInteger, "check whether variable is an integer"),
+              ("rational?", isRational, "check whether variable is an integer"),
               ("real?", isReal, "check whether variable is a real number"),
               ("list?", unaryOp isList, "check whether variable is list"),
               ("null?", isNull, "check whether variable is null"),
@@ -175,6 +176,7 @@ numRound :: (Double -> Integer) -> [LispVal] -> ThrowsError LispVal
 numRound _ [n@(Number (NumI _))] = return n
 numRound op [Number (NumF n)] = return $ Number $ NumI $ fromInteger $ op n
 numRound op [Number (NumC n)] = return $ Number $ NumC $ fromInteger (op $ realPart n) :+ fromInteger (op $ imagPart n)
+numRound op [Number (NumR n)] = return $ Number $ NumI $ op $ fromRational n
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
@@ -406,12 +408,22 @@ isNumber ([Number _]) = return $ Bool True
 isNumber _ = return $ Bool False
 
 isReal :: [LispVal] -> ThrowsError LispVal
+isReal ([Number (NumC x)]) = return $ Bool $ imagPart x == 0
 isReal ([Number _]) = return $ Bool True
 isReal _ = return $ Bool False
 
 isInteger :: [LispVal] -> ThrowsError LispVal
 isInteger ([Number (NumI _)]) = return $ Bool True
 isInteger _ = return $ Bool False
+
+isRational :: [LispVal] -> ThrowsError LispVal
+isRational ([Number (NumR _)]) = return $ Bool True
+isRational ([Number (NumI _)]) = return $ Bool True
+isRational ([Number (NumF x)]) = 
+        if x == fromInteger (round x)
+            then return $ Bool True
+            else return $ Bool False
+isRational _ = return $ Bool False
 
 isDottedList :: [LispVal] -> ThrowsError LispVal
 isDottedList ([DottedList _ _]) = return $ Bool True
@@ -470,9 +482,9 @@ isBoolean _ = return $ Bool False
 
 evalString :: Env -> String -> IO String
 evalString env expr = runIOThrows $ liftM show $ 
-                    liftThrows $ readExpr expr >>= 
-                    macroEval env >>=
-                    eval env (nullCont env)
+        liftThrows (readExpr expr) >>= 
+        macroEval env >>= 
+        eval env (nullCont env)
 
 contEval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =

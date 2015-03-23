@@ -3,6 +3,7 @@ import Types
 import Numeric
 import Data.Char
 import Data.Complex
+import Data.Ratio
 import Data.Array
 import Control.Monad
 import Control.Monad.Except
@@ -38,11 +39,12 @@ parseAtom = do first <- letter <|> symbol <|> oneOf "."
                rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
                if atom == "."
-                   then pzero
+                   then return $ Nil ""
                    else return $ Atom atom
 
 parseNumber :: Parser LispVal
 parseNumber = try parseComplex
+              <|> try parseRational
               <|> try parseStandardNum
               <|> parseDigital2 
               <|> parseHex 
@@ -57,24 +59,41 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
                                         return $ expt num base
                            Nothing -> return num
                 where expt (Number x) (Number y) = Number $ x * convert y
-                      expt _ _ = Nil "This will never happen"
+                      expt _ _ = Nil ""
                       convert x = NumF $ 10 ** fromIntegral x
 
 parseComplex :: Parser LispVal
 parseComplex = do
-    real_parse <- try parseReal <|> parseDigital1
-    let real_part = case real_parse of
+    realParse <- try parseReal <|> parseDigital1
+    let realPrt = case realParse of
                         Number (NumI n) -> fromInteger n
                         Number (NumF f) -> f
                         _ -> 0
     _ <- char '+'
-    imag_parse <- try parseReal <|> parseDigital1
-    let imag_part = case imag_parse of
+    imagParse <- try parseReal <|> parseDigital1
+    let imagPrt = case imagParse of
                         Number (NumI n) -> fromInteger n
                         Number (NumF f) -> f
                         _ -> 0
     _ <- char 'i'
-    return $ Number $ NumC $ real_part :+ imag_part
+    return $ Number $ NumC $ realPrt :+ imagPrt
+
+parseRational :: Parser LispVal
+parseRational = do
+    numeratorParse <- parseDigital1
+    case numeratorParse of
+        Number (NumI n) -> do
+            _ <- char '/'
+            sign <- many (oneOf "-")
+            num <- many1 digit
+            if length sign > 1
+                then return $ Nil ""
+                else do
+                    let denominatorParse = read $ sign ++ num
+                    if denominatorParse == 0
+                        then return $ Number $ NumI 0
+                        else return $ Number $ NumR $ n % denominatorParse
+        _ -> return $ Nil ""
 
 parseReal :: Parser LispVal
 parseReal = do neg <- optionMaybe $ string "-"
@@ -189,7 +208,7 @@ parseChar = do
         ('x' : hexs) -> do
             rv <- parseHexScalar hexs
             return $ Character rv
-        _ -> pzero
+        _ -> return $ Nil ""
 
 parseHexScalar :: Monad m => String -> m Char
 parseHexScalar num = do
