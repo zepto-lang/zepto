@@ -94,7 +94,8 @@ runSingleStatement args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"), 
                                                     List $ map String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
-        _ <- loadFile env lib
+        x <- loadFile env lib
+        putStrLn x
         runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
             >>= hPutStrLn stderr
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
@@ -105,7 +106,8 @@ runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "stdlib/module.scm"
-        _ <- loadFile env lib
+        x <- loadFile env lib
+        putStrLn x
         until_ (readPrompt "zepto> " env) (evalAndPrint env)
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
                           
