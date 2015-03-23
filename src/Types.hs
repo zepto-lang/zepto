@@ -165,8 +165,11 @@ instance Integral LispNum where
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
     quotRem (NumC _) _ = (0, 0)
     quotRem _ (NumC _) = (0, 0)
-    quotRem (NumR _) _ = (0, 0)
-    quotRem _ (NumR _) = (0, 0)
+    quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
+    quotRem (NumI x) (NumR y) = (NumR $ (toRational x) / y, NumR $ mod' (toRational x) y)
+    quotRem (NumR x) (NumI y) = (NumR $ x / (toRational y), NumR $ mod' x (toRational y))
+    quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
+    quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x

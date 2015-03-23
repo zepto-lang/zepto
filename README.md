@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.1-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.2-yellow.svg)
 ![MIT Licensed](http://img.shields.io/badge/license-MIT-blue.svg)
 ![MIT Licensed](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -9,10 +9,10 @@ A simple Scheme(R5RS) interpreter in Haskell(based on
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
 It implements a good enough subset of R5RS to make real programming possible.
-Features implemented include Macros, lazy evaluation, a minimal stdlib, many
-native primitives and help for those or for functions provided via docstrings 
-included in the function definition. And it actually has a decent shell with
-completion and history.
+Features implemented include the full numeric tower, macros, lazy evaluation, 
+a minimal stdlib, many native primitives and help for those or for functions 
+provided via docstrings included in the function definition. And it actually 
+has a decent shell with completion and history.
 
 It is very small, so the name might or might not be appropriate.
 

@@ -32,9 +32,11 @@
 * Completion and History [x]
 * Complex Numbers [x]
 * call/cc [x]
+* rationals [x]
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
+* Make fractional of Complex work
 * Make macros more robust
 * Make cl libraries work
 * Hashtables (SRFI 69)
