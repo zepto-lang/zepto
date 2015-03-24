@@ -36,6 +36,8 @@
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
+* Add EvalFuncs
+* Make division by zero not error
 * Make fractional of Complex work
 * Make macros more robust
 * Make cl libraries work

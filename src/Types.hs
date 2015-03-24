@@ -163,6 +163,7 @@ instance Integral LispNum where
     quotRem (NumF x) (NumI y) = (NumF $ x / fromIntegral y, NumF $ mod' x (fromIntegral y))
     quotRem (NumI x) (NumF y) = (NumF $ fromIntegral x / y, NumF $ mod' (fromIntegral x) y)
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
+    --implement for Complex
     quotRem (NumC _) _ = (0, 0)
     quotRem _ (NumC _) = (0, 0)
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
@@ -201,6 +202,7 @@ data LispVal = Atom String
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
              | Func LispFun
+             | EvalFunc ([LispVal] -> IOThrowsError LispVal)
              | Nil String
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Cont Continuation
@@ -229,6 +231,7 @@ data LispError = NumArgs Integer [LispVal]
                | BadSpecialForm String LispVal
                | NotFunction String String
                | UnboundVar String String
+               | DivideByZero
                | InternalError String
                | Default String
 
@@ -264,6 +267,7 @@ showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
+showVal (EvalFunc _) = "<eval primitive>"
 showVal (Port _) = "<IO port>"
 showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
                        docstring = doc}) = 
@@ -289,6 +293,7 @@ showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected 
                                           ", found " ++ show found
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
+showError (DivideByZero) = "Division by zero"
 showError (Default err) = err
 
 unwordsList :: [LispVal] -> String

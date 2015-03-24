@@ -35,7 +35,8 @@ addSettings env = Settings { historyFile = Just getDir
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= flip extendEnv (map (makeFunc IOFunc) ioPrimitives ++
-                                map (makeFunc PrimitiveFunc) primitives)
+                                map (makeFunc PrimitiveFunc) primitives ++
+                                map (makeFunc EvalFunc) evalPrimitives)
                 where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
 
 -- | prints help for all primitives

@@ -1,4 +1,8 @@
-module Primitives(primitives, ioPrimitives, eval, evalString) where
+module Primitives(primitives
+                , ioPrimitives
+                , evalPrimitives
+                , eval
+                , evalString) where
 import Types
 import Parser
 import Variables
@@ -16,100 +20,111 @@ import Paths_zepto
 
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
-primitives = [("+", numericPlusop (+), "add two values"),
-              ("-", numericMinop (-), "subtract two values/negate value"),
-              ("*", numericBinop (*), "multiply two values"),
-              ("/", numericBinop div, "divide two values"),
-              ("mod", numericBinModop, "modulo of two values"),
-              ("modulo", numericBinModop, "modulo of two values"),
-              ("quotient", numericBinop quot, "quotient of two values"),
-              ("remainder", numericBinop rem, "remainder of two values"),
-              ("round", numRound round, "rounds a number"),
-              ("floor", numRound floor, "floors a number"),
-              ("ceiling", numRound ceiling, "ceils a number"),
-              ("truncate", numRound truncate, "truncates a number"),
-              ("expt", numPow, "power of function"),
-              ("pow", numPow, "power of function"),
-              ("sqrt", numSqrt, "square root function"),
-              ("log", numLog, "logarithm function"),
-              ("abs", numOp abs, "get absolute value"),
-              ("sin", numOp sin, "sine function"),
-              ("cos", numOp cos, "cosine function"),
-              ("tan", numOp tan, "tangens function"),
-              ("asin", numOp asin, "asine function"),
-              ("acos", numOp acos, "acosine function"),
-              ("atan", numOp atan, "atangens function"),
-              ("=", numBoolBinop (==), "compare equality of two values"),
-              ("<", numBoolBinop (<), "compare equality of two values"),
-              (">", numBoolBinop (>), "compare equality of two values"),
-              ("/=", numBoolBinop (/=), "compare equality of two values"),
-              (">=", numBoolBinop (>=), "compare equality of two values"),
-              ("<=", numBoolBinop (<=), "compare equality of two values"),
-              ("&&", boolMulop (&&), "and operation"),
-              ("||", boolMulop (||), "or operation"),
+primitives = [ ("+", numericPlusop (+), "add two values")
+             , ("-", numericMinop (-), "subtract two values/negate value")
+             , ("*", numericBinop (*), "multiply two values")
+             , ("/", numericBinop div, "divide two values")
+             , ("mod", numericBinModop, "modulo of two values")
+             , ("modulo", numericBinModop, "modulo of two values")
+             , ("quotient", numericBinop quot, "quotient of two values")
+             , ("remainder", numericBinop rem, "remainder of two values")
+             , ("round", numRound round, "rounds a number")
+             , ("floor", numRound floor, "floors a number")
+             , ("ceiling", numRound ceiling, "ceils a number")
+             , ("truncate", numRound truncate, "truncates a number")
+             , ("expt", numPow, "power of function")
+             , ("pow", numPow, "power of function")
+             , ("sqrt", numSqrt, "square root function")
+             , ("log", numLog, "logarithm function")
+             , ("abs", numOp abs, "get absolute value")
+             , ("sin", numOp sin, "sine function")
+             , ("cos", numOp cos, "cosine function")
+             , ("tan", numOp tan, "tangens function")
+             , ("asin", numOp asin, "asine function")
+             , ("acos", numOp acos, "acosine function")
+             , ("atan", numOp atan, "atangens function")
+             , ("=", numBoolBinop (==), "compare equality of two values")
+             , ("<", numBoolBinop (<), "compare equality of two values")
+             , (">", numBoolBinop (>), "compare equality of two values")
+             , ("/=", numBoolBinop (/=), "compare equality of two values")
+             , (">=", numBoolBinop (>=), "compare equality of two values")
+             , ("<=", numBoolBinop (<=), "compare equality of two values")
+             , ("&&", boolMulop (&&), "and operation")
+             , ("||", boolMulop (||), "or operation")
 
-              ("string=?", strBoolBinop (==), "compare equality of two strings"),
-              ("string>?", strBoolBinop (>), "compare equality of two strings"),
-              ("string<?", strBoolBinop (<), "compare equality of two strings"),
-              ("string<=?", strBoolBinop (<=), "compare equality of two strings"),
-              ("string>=?", strBoolBinop (>=), "compare equality of two strings"),
-              ("string-ci=?", strCIBoolBinop (==), "compare equality of two strings(case insensitive)"),
-              ("string-ci>?", strCIBoolBinop (>), "compare equality of two strings(case insensitive)"),
-              ("string-ci<?", strCIBoolBinop (<), "compare equality of two strings(case insensitive)"),
-              ("string-ci<=?", strCIBoolBinop (<=), "compare equality of two strings(case insensitive)"),
-              ("string-ci>=?", strBoolBinop (>=), "compare equality of two strings"),
-              ("newline", printNewline, "print a newline"),
-              ("car", car, "take head of list"),
-              ("cdr", cdr, "take tail of list"),
-              ("cons", cons, "construct list"),
-              ("eq?", eqv, "check equality"),
-              ("eqv?", eqv, "check equality"),
-              ("equal?", equal, "check equality"),
-              
-              ("pair?", isDottedList, "check whether variable is a pair"),
-              ("procedure?", isProcedure, "check whether variable is a procedure"),
-              ("number?", isNumber, "check whether variable is a number"),
-              ("integer?", isInteger, "check whether variable is an integer"),
-              ("rational?", isRational, "check whether variable is an integer"),
-              ("real?", isReal, "check whether variable is a real number"),
-              ("list?", unaryOp isList, "check whether variable is list"),
-              ("null?", isNull, "check whether variable is null"),
-              ("symbol?", isSymbol, "check whether variable is symbol"),
-              ("vector?", unaryOp isVector, "check whether variable is vector"),
-              ("string?", isString, "check whether variable is string"),
-              ("char?", isChar, "check whether vairable is char"),
-              ("boolean?", isBoolean, "check whether variable is boolean"),
-              ("vector", buildVector, "build a new vector"),
-              ("string", buildString, "build a new string"),
-              ("char-downcase", charDowncase, "downcases a char"),
-              ("vector-length", vectorLength, "get length of vector"),
-              ("string-length", stringLength, "get length of string"),
-              ("make-string", makeString, "make a new string"),
-              ("make-vector", makeVector, "create a vector"),
-              ("char->integer", charToInteger, "makes integer from char"),
-              ("vector->list", vectorToList, "makes list from vector"),
-              ("list->vector", listToVector, "makes vector from list"),
-              ("symbol->string", symbol2String, "makes string from symbol"),
-              ("string->symbol", string2Symbol, "makes symbol from string"),
-              ("string->number", stringToNumber, "makes number from string"),
-              ("string->list", stringToList, "makes list from string"),
-              ("list->string", listToString, "makes string from list"),
-              ("string-copy", stringCopy, "copy string"),
-              ("substring", substring, "makes substring from string"),
-              ("vector-ref", vectorRef, "get element from vector"),
-              ("string-append", stringAppend, "append to string")]
+             , ("string=?", strBoolBinop (==), "compare equality of two strings")
+             , ("string>?", strBoolBinop (>), "compare equality of two strings")
+             , ("string<?", strBoolBinop (<), "compare equality of two strings")
+             , ("string<=?", strBoolBinop (<=), "compare equality of two strings")
+             , ("string>=?", strBoolBinop (>=), "compare equality of two strings")
+             , ("string-ci=?", strCIBoolBinop (==), "compare equality of two strings(case insensitive)")
+             , ("string-ci>?", strCIBoolBinop (>), "compare equality of two strings(case insensitive)")
+             , ("string-ci<?", strCIBoolBinop (<), "compare equality of two strings(case insensitive)")
+             , ("string-ci<=?", strCIBoolBinop (<=), "compare equality of two strings(case insensitive)")
+             , ("string-ci>=?", strBoolBinop (>=), "compare equality of two strings")
+             , ("newline", printNewline, "print a newline")
+             , ("car", car, "take head of list")
+             , ("cdr", cdr, "take tail of list")
+             , ("cons", cons, "construct list")
+             , ("eq?", eqv, "check equality")
+             , ("eqv?", eqv, "check equality")
+             , ("equal?", equal, "check equality")
+
+             , ("pair?", isDottedList, "check whether variable is a pair")
+             , ("procedure?", isProcedure, "check whether variable is a procedure")
+             , ("number?", isNumber, "check whether variable is a number")
+             , ("integer?", isInteger, "check whether variable is an integer")
+             , ("rational?", isRational, "check whether variable is an integer")
+             , ("real?", isReal, "check whether variable is a real number")
+             , ("list?", unaryOp isList, "check whether variable is list")
+             , ("null?", isNull, "check whether variable is null")
+             , ("symbol?", isSymbol, "check whether variable is symbol")
+             , ("vector?", unaryOp isVector, "check whether variable is vector")
+             , ("string?", isString, "check whether variable is string")
+             , ("char?", isChar, "check whether vairable is char")
+             , ("boolean?", isBoolean, "check whether variable is boolean")
+             , ("vector", buildVector, "build a new vector")
+             , ("string", buildString, "build a new string")
+             , ("char-downcase", charDowncase, "downcases a char")
+             , ("vector-length", vectorLength, "get length of vector")
+             , ("string-length", stringLength, "get length of string")
+             , ("make-string", makeString, "make a new string")
+             , ("make-vector", makeVector, "create a vector")
+             , ("char->integer", charToInteger, "makes integer from char")
+             , ("vector->list", vectorToList, "makes list from vector")
+             , ("list->vector", listToVector, "makes vector from list")
+             , ("symbol->string", symbol2String, "makes string from symbol")
+             , ("string->symbol", string2Symbol, "makes symbol from string")
+             , ("string->number", stringToNumber, "makes number from string")
+             , ("string->list", stringToList, "makes list from string")
+             , ("list->string", listToString, "makes string from list")
+             , ("string-copy", stringCopy, "copy string")
+             , ("substring", substring, "makes substring from string")
+             , ("vector-ref", vectorRef, "get element from vector")
+             , ("string-append", stringAppend, "append to string")
+             ]
 
 -- | a list of all io-bound primitives
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-ioPrimitives = [("open-input-file", makePort ReadMode, "open a file for reading"),
-                ("open-output-file", makePort WriteMode, "open a file for writing"),
-                ("close-input-file", closePort, "close a file opened for reading"),
-                ("close-output-file", closePort, "close a file opened for writing"),
-                ("read", readProc, "read from file"),
-                ("write", writeProc, "write to file"),
-                ("error", errorProc, "write to stderr"),
-                ("read-contents", readContents, "read contents of file"),
-                ("read-all", readAll, "read and parse file")]
+ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading")
+               , ("open-output-file", makePort WriteMode, "open a file for writing")
+               , ("close-input-file", closePort, "close a file opened for reading")
+               , ("close-output-file", closePort, "close a file opened for writing")
+               , ("read", readProc, "read from file")
+               , ("write", writeProc, "write to file")
+               , ("error", errorProc, "write to stderr")
+               , ("read-contents", readContents, "read contents of file")
+               , ("read-all", readAll, "read and parse file")
+               ]
+
+evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
+evalPrimitives = [ ("eval", evalFun, "evaluate list")
+                 , ("apply", evalApply, "apply function to values")
+                 , ("call-with-current-continuation", evalCallCC, "call with current continuation")
+                 , ("call/cc", evalCallCC, "call with current continuation")
+                 --, ("call-with-values", evalCallWValues, "call with values"),
+                 --, ("load-ffi", evalFFI, "load foreign function")
+                 ]
 
 numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
@@ -257,6 +272,9 @@ eqv [Number arg1, Number arg2] = return $ Bool $ arg1 == arg2
 eqv [String arg1, String arg2] = return $ Bool $ arg1 == arg2
 eqv [Atom arg1, Atom arg2] = return $ Bool $ arg1 == arg2
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ Bool $ (show x) == (show y)
+eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ Bool $ (show x) == (show y)
+eqv [x@(IOFunc _), y@(IOFunc _)] = return $ Bool $ (show x) == (show y)
 eqv [List arg1, List arg2] = return $ Bool $ (length arg1 == length arg2) &&
                                   and (zipWith (curry eqvPair) arg1 arg2)
                                   where eqvPair (x, y) = case eqv[x, y] of
@@ -497,6 +515,34 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =
         (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing)) lval
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
+evalFun :: [LispVal] -> IOThrowsError LispVal
+evalFun [(Cont (Continuation env _ _ _ _)), val] = macroEval env val
+evalFun (_ : args) = throwError $ NumArgs 1 args
+evalFun _ = throwError $ NumArgs 1 []
+
+evalApply :: [LispVal] -> IOThrowsError LispVal
+evalApply [conti@(Cont _), fun, List args] = apply conti fun args
+evalApply (_ : args) = throwError $ NumArgs 2 args
+evalApply _ = throwError $ NumArgs 2 []
+
+evalCallCC :: [LispVal] -> IOThrowsError LispVal
+evalCallCC [conti@(Cont _), fun] =
+        case fun of
+            Cont _ -> apply conti fun [conti]
+            PrimitiveFunc f -> do
+                result <- liftThrows $ f [conti]
+                case conti of
+                    Cont (Continuation cEnv _ _ _ _) -> contEval cEnv conti result
+                    _ -> return result
+            Func (LispFun _ (Just _) _ _ _) -> apply conti fun [conti]
+            Func (LispFun aparams _ _ _ _) ->
+                if length aparams == 1
+                    then apply conti fun [conti]
+                    else throwError $ NumArgs (toInteger $ length aparams) [conti]
+            other -> throwError $ TypeMismatch "procedure" other
+evalCallCC (_ : args) = throwError $ NumArgs 1 args
+evalCallCC _ = throwError $ NumArgs 1 []
+
 findFile :: String -> ExceptT LispError IO String
 findFile filename = do
         fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
@@ -522,10 +568,6 @@ eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quote", val]) = contEval env conti val
 eval _ _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "eval"]) = throwError $ NumArgs 1 []
-eval env conti (List [Atom "eval", List (Atom "quote" : val)]) = contEval env conti (List val)
-eval _ _ (List [Atom "eval", x]) = throwError $ TypeMismatch "list" x
-eval _ _ (List (Atom "eval" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "if"]) = throwError $ NumArgs 3 []
 eval env conti (List [Atom "if", p, conseq, alt]) = do 
         result <- eval env conti p
@@ -710,27 +752,6 @@ eval env conti (List (Atom "begin" : funs))
                                     let fs = tail funs
                                     _ <- eval env conti (head funs)
                                     eval env conti (List (Atom "begin" : fs))
-eval env conti (List (Atom "call-with-current-continuation" : args)) =
-        eval env conti (List (Atom "call/cc" : args))
-eval _ _ (List [Atom "call/cc"]) = throwError $ Default "Procedure not specified"
-eval env conti (List [Atom "call/cc", proc]) = do
-        func <- eval env (nullCont env) proc
-        case func of
-            PrimitiveFunc fun -> liftThrows $ fun [conti]
-            Func (LispFun aparams _ _ _ _) ->
-                if toInteger (length aparams) == 1
-                    then apply conti func [conti]
-                    else throwError $ NumArgs (toInteger $ length aparams) [conti]
-            other -> throwError $ TypeMismatch "procedure" other
-eval _ _ (List [Atom "apply"]) = throwError $ NumArgs 2 []
-eval _ _ (List [Atom "apply", proc]) = throwError $ NumArgs 2 [proc]
-eval env conti (List (Atom "apply" : fparams)) = do
-        proc <- eval env (nullCont env) $ head fparams
-        args <- eval env (nullCont env) $ last fparams
-        argVals <- mapM (eval env (nullCont env)) $ init $ init fparams
-        case args of
-            List l -> apply conti proc (argVals ++ l)
-            other -> throwError $ TypeMismatch "list" other
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
@@ -782,6 +803,7 @@ apply _ c@(Cont (Continuation env _ _ _ _)) args =
             else contEval env c $ head args
 apply _ (IOFunc func) args = func args
 apply _ (PrimitiveFunc func) args = liftThrows $ func args
+apply conti (EvalFunc fun) args = fun (conti : args)
 apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
         if num fparams /= num args && isNothing varargs
             then throwError $ NumArgs (num fparams) args
