@@ -79,7 +79,8 @@ until_ prompt action = do result <- prompt
                                 return ()
                             _ -> action result >> until_ prompt action
         where printFileContents file = do
-                    fhandle <- openFile file ReadMode
+                    filename <- getDataFileName file
+                    fhandle <- openFile filename ReadMode
                     contents <- hGetContents fhandle
                     putStrLn contents
                     hClose fhandle

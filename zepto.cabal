@@ -21,7 +21,9 @@ Tested-with:         GHC == 7.8.4, GHC == 7.2.2
 
 Extra-Source-Files:  README.md
                      LICENSE
-Data-Files:          stdlib/*
+Data-Files:          stdlib/*.scm
+                     stdlib/license_interactive
+                     stdlib/complete_license
 Cabal-Version:       >= 1.2 
 
 Source-Repository head
