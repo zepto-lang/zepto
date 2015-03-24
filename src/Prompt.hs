@@ -16,9 +16,9 @@ keywords = ["apply", "define", "help", "if", "lambda"]
 -- | searches all primitives for a possible completion
 completionSearch :: Env -> String -> [Completion]
 completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       map ("(" ++) keywords ++ getDefs env
+                       map ("(" ++) (keywords ++ getDefs env)
                 where getDefs e = map getAtom $ unsafePerformIO $ recExportsFromEnv e
-                      getAtom (Atom a) = "(" ++ a
+                      getAtom (Atom a) = a
                       getAtom _ = ""
 
 -- | returns a fresh settings variable
@@ -68,10 +68,21 @@ until_ prompt action = do result <- prompt
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action
+                            ":license" -> do
+                                printFileContents "stdlib/license_interactive"
+                                until_ prompt action
+                            ":complete-license" -> do
+                                printFileContents "stdlib/complete_license"
+                                until_ prompt action
                             ":quit"  -> do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                             _ -> action result >> until_ prompt action
+        where printFileContents file = do
+                    fhandle <- openFile file ReadMode
+                    contents <- hGetContents fhandle
+                    putStrLn contents
+                    hClose fhandle
 
 -- | reads from the prompt
 readPrompt :: String -> Env -> IO String

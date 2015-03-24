@@ -21,7 +21,7 @@ Tested-with:         GHC == 7.8.4, GHC == 7.2.2
 
 Extra-Source-Files:  README.md
                      LICENSE
-Data-Files:          stdlib/*.scm
+Data-Files:          stdlib/*
 Cabal-Version:       >= 1.2 
 
 Source-Repository head
