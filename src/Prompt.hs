@@ -52,7 +52,7 @@ printKeywords = putStrLn("Keywords:\n" ++
                            "apply   - apply function to value\n" ++
                            "define  - define global variable\n" ++
                            "error   - print value to stderr\n" ++
-                           "help    - display this help message(use without s-expression)\n" ++
+                           ":help    - display this help message(use without s-expression)\n" ++
                            "help    - display help for function" ++
                            "if      - branch on condition\n" ++
                            "lambda  - create unnamed function\n" ++
@@ -64,11 +64,11 @@ printKeywords = putStrLn("Keywords:\n" ++
 until_ :: IO String -> (String -> IO a) -> IO ()
 until_ prompt action = do result <- prompt
                           case result of
-                            "help"  -> do
+                            ":help"  -> do
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action
-                            "quit"  -> do
+                            ":quit"  -> do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                             _ -> action result >> until_ prompt action

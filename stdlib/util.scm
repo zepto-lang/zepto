@@ -161,6 +161,3 @@
          (cars (car unz))
          (cdrs (cdr unz)))
         (apply proc cars) (apply map (cons proc cdrs))))))
-
-(define license (read-contents "stdlib/license_interactive"))
-(define complete-license (read-contents "stdlib/complete_license"))

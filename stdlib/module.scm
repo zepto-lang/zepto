@@ -4,6 +4,7 @@
 (load "extra.scm")
 (load "delay.scm")
 (load "io.scm")
+(load "license.scm")
 (load "logical.scm")
 (load "marsaglia.scm")
 (load "math.scm")
