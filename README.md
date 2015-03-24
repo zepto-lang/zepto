@@ -50,8 +50,8 @@ Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
 
-Type 'quit' or press Ctrl-C to exit interpreter
-Type 'help' to get a list of commands
+Type ':quit' or press Ctrl-C to exit interpreter,
+':help' to get a list of commands or ':license' to get the license text
 
 zepto> 
 ```
@@ -97,7 +97,7 @@ And it autocompletes your newly created function, too!
 Once you're done with the fiddling, just do:
 
 ```
-zepto> quit
+zepto> :quit
 
 Moriturus te saluto.
 ```
