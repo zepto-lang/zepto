@@ -64,22 +64,22 @@ printKeywords = putStrLn("Keywords:\n" ++
 -- | the main interpreter loop; gets input and hands everything except help and quit over
 until_ :: IO String -> (String -> IO a) -> IO ()
 until_ prompt action = do result <- prompt
-                          case result of
-                            ":help"  -> do
+                          repl_ result
+        where repl_ x | x == ":help" = do
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action
-                            ":license" -> do
+                      | x == ":license" = do
                                 printFileContents "stdlib/license_interactive"
                                 until_ prompt action
-                            ":complete-license" -> do
+                      | x == ":complete-license" = do
                                 printFileContents "stdlib/complete_license"
                                 until_ prompt action
-                            ":quit"  -> do
+                      | x `elem` [":quit", ":exit"] = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
-                            _ -> action result >> until_ prompt action
-        where printFileContents file = do
+                      | otherwise = action x >> until_ prompt action
+              printFileContents file = do
                     filename <- getDataFileName file
                     fhandle <- openFile filename ReadMode
                     contents <- hGetContents fhandle
