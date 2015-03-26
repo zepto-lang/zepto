@@ -230,7 +230,8 @@ numPow [Number (NumC n), Number (NumI base)] =
     return $ Number $ NumC $ n ** fromIntegral base
 numPow [Number (NumC n), Number (NumF base)] =
     return $ Number $ NumC $ n ** (base :+ 0)
-numPow [x] = throwError $ TypeMismatch "number" x
+numPow [x, Number _] = throwError $ TypeMismatch "number" x
+numPow [Number _, x] = throwError $ TypeMismatch "number" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
 
 numSqrt :: [LispVal] -> ThrowsError LispVal
