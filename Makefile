@@ -1,6 +1,7 @@
 #Installs
 all:
 	cabal install
+	rm -r dist
 
 #Runs all tests
 test:
