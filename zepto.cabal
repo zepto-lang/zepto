@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.6.2
+Version:             0.6.3
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
   zeoto is an implementation of the R5RS standard.
@@ -22,8 +22,7 @@ Tested-with:         GHC == 7.8.4, GHC == 7.2.2
 Extra-Source-Files:  README.md
                      LICENSE
 Data-Files:          stdlib/*.scm
-                     stdlib/license_interactive
-                     stdlib/complete_license
+                     assets/*.as
 Cabal-Version:       >= 1.2 
 
 Source-Repository head

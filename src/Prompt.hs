@@ -69,22 +69,23 @@ until_ prompt action = do result <- prompt
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action
-                      | x == ":license" = do
-                                printFileContents "stdlib/license_interactive"
-                                until_ prompt action
+                      | x == ":license" =
+                                printFileContents "license_interactive"
                       | x == ":complete-license" = do
-                                printFileContents "stdlib/complete_license"
-                                until_ prompt action
+                                printFileContents "complete_license"
+                      | x == ":easteregg" =
+                                printFileContents "grandeur"
                       | x `elem` [":quit", ":exit"] = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                       | otherwise = action x >> until_ prompt action
               printFileContents file = do
-                    filename <- getDataFileName file
+                    filename <- getDataFileName ("assets/" ++ file ++ ".as")
                     fhandle <- openFile filename ReadMode
                     contents <- hGetContents fhandle
                     putStrLn contents
                     hClose fhandle
+                    until_ prompt action
 
 -- | reads from the prompt
 readPrompt :: String -> Env -> IO String
