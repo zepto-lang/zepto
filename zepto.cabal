@@ -17,7 +17,7 @@ Maintainer:          Veit Heller <github.com/hellerve>
 Bug-Reports:         http://github.com/hellerve/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
-Tested-with:         GHC == 7.8.4, GHC == 7.2.2
+Tested-with:         GHC == 7.8.4, GHC == 7.6.3
 
 Extra-Source-Files:  README.md
                      LICENSE
