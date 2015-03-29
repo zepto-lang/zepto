@@ -1,4 +1,3 @@
-(define display write)
 (define len length)
 (define nil '())
 (define ok '())

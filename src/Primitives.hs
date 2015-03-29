@@ -8,6 +8,7 @@ import Parser
 import Variables
 import Macro
 import System.IO
+import System.IO.Error
 import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
 import Data.Array
@@ -111,7 +112,11 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-input-file", closePort, "close a file opened for reading")
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
-               , ("write", writeProc, "write to file")
+               , ("write", writeProc hPrint, "write to file")
+               , ("display", writeProc (\ port obj -> do
+                        case obj of
+                            String str -> hPutStr port str
+                            _ -> hPutStr port $ show obj), "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
                , ("read-all", readAll, "read and parse file")
@@ -773,10 +778,14 @@ readProc [] = readProc [Port stdin]
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
-writeProc :: [LispVal] -> IOThrowsError LispVal
-writeProc [obj] = writeProc [obj, Port stdout]
-writeProc [obj, Port port] = liftIO $ hPrint port obj >> return (Bool True)
-writeProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
+writeProc fun [obj] = writeProc fun [obj, Port stdout]
+writeProc fun [obj, Port port] = do
+        out <- liftIO $ tryIOError (liftIO $ fun port obj) 
+        case out of
+            Left _ -> throwError $ Default "IO Error writing to port"
+            Right _ -> return $ Nil ""
+writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 errorProc :: [LispVal] -> IOThrowsError LispVal
 errorProc [obj] = liftIO $ hPrint stderr obj >> return (Bool True)
