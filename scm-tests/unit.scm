@@ -1,3 +1,4 @@
+;; These tests are largely taken from husk-scheme; so is this library
 (define pass-count 0)
 (define fail-count 0)
 
