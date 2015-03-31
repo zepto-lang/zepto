@@ -6,6 +6,7 @@ import Data.List
 import System.IO
 import System.Directory
 import Control.Monad
+import qualified Control.Exception
 import System.Console.Haskeline
 import System.IO.Unsafe
 import Paths_zepto
@@ -120,6 +121,9 @@ runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
-        until_ (readPrompt "zepto> " env) (evalAndPrint env)
+        until_ (readPrompt "zepto> " env) (evaluation env)
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
+          evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
+          handler msg@(Control.Exception.SomeException _) = putStrLn $ 
+                "Caught error: " ++ show (msg::Control.Exception.SomeException)
                           
