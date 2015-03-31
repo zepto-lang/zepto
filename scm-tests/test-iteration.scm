@@ -1,4 +1,4 @@
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 
 (assert-equal
     (lambda () (do ((vec (make-vector 5))

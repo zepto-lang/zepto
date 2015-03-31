@@ -9,7 +9,7 @@
 ;; Test cases for SRFI-9 (Record Types)
 ;;
 
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 (load "stdlib/srfi/srfi-9.scm")
 
 (define-record-type :pare

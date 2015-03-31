@@ -1,4 +1,4 @@
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 
 (assert-equal (lambda () (id `(list ,(+ 1 2) 4)))
     '(list 3 4))

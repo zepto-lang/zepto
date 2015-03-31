@@ -1,4 +1,4 @@
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 
 (assert-equal (lambda () (procedure? car)) #t)
 (assert-equal (lambda () (procedure? 1)) #f)

@@ -1,4 +1,4 @@
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 
 (assert-equal (lambda () (vector? '#(1 2 3 4 5))) #t)
 (assert-equal (lambda () (vector? '(1 2 3 4 5))) #f)

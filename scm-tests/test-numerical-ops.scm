@@ -1,4 +1,4 @@
-(load "scm-tests/skim-unit.scm")
+(load "scm-tests/unit.scm")
 
 (assert-equal (lambda () (id 10e-1)) 1.0)
 (assert-equal (lambda () (id 14e1)) 140)
