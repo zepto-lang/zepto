@@ -2,6 +2,7 @@ module Zepto.Primitives(primitives
                        , ioPrimitives
                        , evalPrimitives
                        , eval
+                       , versionStr
                        , evalString) where
 import Zepto.Types
 import Zepto.Parser
@@ -13,6 +14,7 @@ import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
 import Data.Array
 import Data.List
+import Data.Version
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -103,6 +105,11 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("substring", substring, "makes substring from string")
              , ("vector-ref", vectorRef, "get element from vector")
              , ("string-append", stringAppend, "append to string")
+             , ("zepto-version", getVersion, "gets the version as a list")
+             , ("zepto-version-str", getVersionStr, "gets the version as a string")
+             , ("zepto-major-version", getMajVersion, "gets the major version number")
+             , ("zepto-minor-version", getMinVersion, "gets the minor version number")
+             , ("zepto-patch-version", getPatchVersion, "gets the patch version number")
              ]
 
 -- | a list of all io-bound primitives
@@ -504,6 +511,42 @@ isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
+version' :: [Int]
+version' = [0, 6, 4]
+
+versionStr :: String
+versionStr = intercalate "." $ map show version'
+
+majorVersion :: Int
+majorVersion = version' !! 0
+
+minorVersion :: Int
+minorVersion = version' !! 1
+
+patchVersion :: Int
+patchVersion = version' !! 2
+
+getVersion :: [LispVal] -> ThrowsError LispVal
+getVersion [] = return $ List $ map (String . show) version'
+getVersion badList = throwError $ NumArgs 0 badList
+
+getVersionStr :: [LispVal] -> ThrowsError LispVal
+getVersionStr [] = return $ String $ showVersion version
+getVersionStr badList = throwError $ NumArgs 0 badList
+
+getMajVersion :: [LispVal] -> ThrowsError LispVal
+getMajVersion [] = return $ Number $ NumI $ toInteger majorVersion
+getMajVersion badList = throwError $ NumArgs 0 badList
+
+getMinVersion :: [LispVal] -> ThrowsError LispVal
+getMinVersion [] = return $ Number $ NumI $ toInteger minorVersion
+getMinVersion badList = throwError $ NumArgs 0 badList
+
+getPatchVersion :: [LispVal] -> ThrowsError LispVal
+getPatchVersion [] = return $ Number $ NumI $ toInteger patchVersion
+getPatchVersion badList = throwError $ NumArgs 0 badList
+
+-- | searches all primitives for a possible completion
 evalString :: Env -> String -> IO String
 evalString env expr = runIOThrows $ liftM show $ 
         liftThrows (readExpr expr) >>= 

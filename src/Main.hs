@@ -1,5 +1,6 @@
 module Main where
 import Zepto.Prompt
+import Zepto.Primitives
 import System.Environment
 
 -- |Prints the usage
@@ -14,7 +15,7 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn "zepto Version 0.6.4"
+printVersion = putStrLn ("zepto Version " ++ versionStr)
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()

@@ -1,4 +1,6 @@
-module Zepto.Prompt(runRepl, runSingleStatement) where
+module Zepto.Prompt( runRepl
+                    , runSingleStatement
+                    ) where
 import Zepto.Libraries.DDate
 import Zepto.Types
 import Zepto.Primitives
@@ -15,7 +17,6 @@ import Paths_zepto
 keywords :: [String]
 keywords = ["apply", "define", "help", "if", "lambda"]
 
--- | searches all primitives for a possible completion
 completionSearch :: Env -> String -> [Completion]
 completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
                        map ("(" ++) (keywords ++ getDefs)
