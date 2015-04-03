@@ -1,5 +1,5 @@
 module Main where
-import Prompt
+import Zepto.Prompt
 import System.Environment
 
 -- |Prints the usage
@@ -27,7 +27,8 @@ printCopyright = putStrLn("Copyright (C) 2015 Veit Heller (GPL)\n" ++
                           "This is free software; " ++
                           "see the accompanying LICENSE " ++
                           "for copying conditions.\n" ++ 
-                          "There is NO warranty whatsoever.\n")
+                          "There is NO warranty whatsoever.\n" ++
+                          "Hail Eris, all rites reversed.\n")
 
 -- |Parses arguments and runs the REPL
 main :: IO ()

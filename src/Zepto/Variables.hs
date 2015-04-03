@@ -1,5 +1,5 @@
-module Variables where
-import Types
+module Zepto.Variables where
+import Zepto.Types
 import Control.Monad.Except
 import Data.IORef
 import qualified Data.Map

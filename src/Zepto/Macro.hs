@@ -1,6 +1,6 @@
-module Macro(macroEval) where
-import Types
-import Variables
+module Zepto.Macro(macroEval) where
+import Zepto.Types
+import Zepto.Variables
 import Control.Monad.Except
 
 -- | evaluates a macro 

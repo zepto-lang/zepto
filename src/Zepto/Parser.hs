@@ -1,5 +1,5 @@
-module Parser(readExpr, readExprList) where
-import Types
+module Zepto.Parser(readExpr, readExprList) where
+import Zepto.Types
 import Numeric
 import Data.Char
 import Data.Complex

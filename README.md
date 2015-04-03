@@ -49,6 +49,7 @@ zepto Version 0.6.3
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
+Hail Eris, all rites reversed.
 
 Type ':quit' or press Ctrl-C to exit interpreter,
 ':help' to get a list of commands or ':license' to get the license text

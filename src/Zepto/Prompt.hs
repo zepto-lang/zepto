@@ -1,7 +1,8 @@
-module Prompt(runRepl, runSingleStatement) where
-import Types
-import Primitives
-import Variables
+module Zepto.Prompt(runRepl, runSingleStatement) where
+import Zepto.Libraries.DDate
+import Zepto.Types
+import Zepto.Primitives
+import Zepto.Variables
 import Data.List
 import System.IO
 import System.Directory
@@ -17,8 +18,8 @@ keywords = ["apply", "define", "help", "if", "lambda"]
 -- | searches all primitives for a possible completion
 completionSearch :: Env -> String -> [Completion]
 completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       map ("(" ++) (keywords ++ getDefs env)
-                where getDefs e = map getAtom $ unsafePerformIO $ recExportsFromEnv e
+                       map ("(" ++) (keywords ++ getDefs)
+                where getDefs = map getAtom $ unsafePerformIO $ recExportsFromEnv env
                       getAtom (Atom a) = a
                       getAtom _ = ""
 
@@ -31,7 +32,7 @@ addSettings env = Settings { historyFile = Just getDir
                            }
             where 
                   getDir :: FilePath
-                  getDir = unsafePerformIO getHomeDirectory ++ "/.zepto_history"
+                  getDir = (unsafePerformIO getHomeDirectory) ++ "/.zepto_history"
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
@@ -76,6 +77,9 @@ until_ prompt action = do result <- prompt
                                 printFileContents "complete_license"
                       | x == ":easteregg" =
                                 printFileContents "grandeur"
+                      | x == ":ddate" = do
+                                ddate >>= putStrLn
+                                until_ prompt action
                       | x `elem` [":quit", ":exit"] = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()

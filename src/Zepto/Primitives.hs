@@ -1,12 +1,12 @@
-module Primitives(primitives
-                , ioPrimitives
-                , evalPrimitives
-                , eval
-                , evalString) where
-import Types
-import Parser
-import Variables
-import Macro
+module Zepto.Primitives(primitives
+                       , ioPrimitives
+                       , evalPrimitives
+                       , eval
+                       , evalString) where
+import Zepto.Types
+import Zepto.Parser
+import Zepto.Variables
+import Zepto.Macro
 import System.IO
 import System.IO.Error
 import Data.Char hiding(isNumber, isSymbol)
