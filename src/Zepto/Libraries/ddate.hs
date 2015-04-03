@@ -2,7 +2,6 @@ module Zepto.Libraries.DDate where
 import Data.Time.Clock
 import Data.Time.Calendar
 import Data.Time.Calendar.OrdinalDate (toOrdinalDate)
-import System.Random
 
 weekdays :: [String]
 weekdays = [ "Setting Orange"
