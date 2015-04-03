@@ -79,7 +79,7 @@ date (year, day) =
             else printDDate (weekday day) (monthday day) (season day) 
                             (yold year) (holyday day)
     where printDDate weekstr monthstr seasonstr yearstr holydaystr =
-            "Today is " ++ weekstr ++ ", " ++ monthstr ++ " the day of " ++  
+            "Today is " ++ weekstr ++ ", the " ++ monthstr ++ " day of " ++  
             seasonstr ++ " in the YOLD " ++ yearstr ++ holydaystr
 
 ddate :: IO (String)
