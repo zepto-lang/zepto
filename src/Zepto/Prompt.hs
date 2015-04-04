@@ -12,6 +12,7 @@ import Control.Monad
 import qualified Control.Exception
 import System.Console.Haskeline
 import System.IO.Unsafe
+import Text.Regex
 import Paths_zepto
 
 keywords :: [String]
@@ -68,20 +69,20 @@ printKeywords = putStrLn("Keywords:\n" ++
 until_ :: IO String -> (String -> IO a) -> IO ()
 until_ prompt action = do result <- prompt
                           repl_ result
-        where repl_ x | x == ":help" = do
+        where repl_ x | matches x ":help" = do
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action
-                      | x == ":license" =
+                      | matches x ":license" =
                                 printFileContents "license_interactive"
-                      | x == ":complete-license" = do
+                      | matches x ":complete-license" = do
                                 printFileContents "complete_license"
-                      | x == ":easteregg" =
+                      | matches x ":easteregg" =
                                 printFileContents "grandeur"
-                      | x == ":ddate" = do
+                      | matches x ":ddate" = do
                                 ddate >>= putStrLn
                                 until_ prompt action
-                      | x `elem` [":quit", ":exit"] = do
+                      | matches x ":quit" || matches x ":exit" = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                       | otherwise = action x >> until_ prompt action
@@ -92,6 +93,11 @@ until_ prompt action = do result <- prompt
                     putStrLn contents
                     hClose fhandle
                     until_ prompt action
+              matches :: String -> String -> Bool
+              matches el matcher = do
+                    case matchRegex (mkRegex $ matcher ++ "\\s*") el of
+                        Just _ -> True
+                        _ -> False
 
 -- | reads from the prompt
 readPrompt :: String -> Env -> IO String
