@@ -18,10 +18,14 @@ import Paths_zepto
 keywords :: [String]
 keywords = ["apply", "define", "help", "if", "lambda"]
 
+metaKeywords :: [String]
+metaKeywords = [":quit", ":exit", ":help", ":license", ":complete-license"]
+
 completionSearch :: Env -> String -> [Completion]
 completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       map ("(" ++) (keywords ++ getDefs)
-                where getDefs = map getAtom $ unsafePerformIO $ recExportsFromEnv env
+                       (map ("(" ++) keywords) ++ getDefs ++ metaKeywords
+                where getDefs :: [String]
+                      getDefs = map (\x -> "(" ++ getAtom x) $ unsafePerformIO $ recExportsFromEnv env
                       getAtom (Atom a) = a
                       getAtom _ = ""
 
