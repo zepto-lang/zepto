@@ -123,8 +123,8 @@ instance Num LispNum where
     (NumR x) * (NumI y) = NumR $ x * fromIntegral y
     (NumF x) * (NumR y) = NumF $ x * fromRational y
     (NumR x) * (NumF y) = NumF $ fromRational x * y
-    (NumR x) * (NumC y) = NumC $ mkPolar fromRational x 0 * y
-    (NumC x) * (NumR y) = NumC $ x * mkPolar fromRational y 0
+    (NumR x) * (NumC y) = NumC $ mkPolar (fromRational x) 0 * y
+    (NumC x) * (NumR y) = NumC $ x * mkPolar (fromRational y) 0
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
@@ -168,7 +168,7 @@ instance Integral LispNum where
     quotRem (NumC _) _ = error "modulo/div not yet defined between complex and other number types"
     quotRem _ (NumC _) = error "modulo/div not yet defined between complex and other number types"
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
-    quotRem (NumI x) (NumR y) = (NumR $ toRational x / y, NumR $ mod' toRational x y)
+    quotRem (NumI x) (NumR y) = (NumR $ toRational x / y, NumR $ mod' (toRational x) y)
     quotRem (NumR x) (NumI y) = (NumR $ x / toRational y, NumR $ mod' x (toRational y))
     quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
     quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
