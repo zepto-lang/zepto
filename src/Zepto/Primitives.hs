@@ -10,6 +10,7 @@ import Zepto.Variables
 import Zepto.Macro
 import System.IO
 import System.IO.Error
+import System.IO.Unsafe
 import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
 import Data.Array
@@ -19,6 +20,7 @@ import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
 import System.Directory
+import System.Exit
 import Paths_zepto
 
 -- | a list of all regular primitives
@@ -127,6 +129,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
                , ("read-all", readAll, "read and parse file")
+               , ("exit", exitProc, "exit program")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
@@ -797,6 +800,14 @@ eval env conti (List (function : args)) = do
         argVals <- mapM (eval env (nullCont env)) args
         apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+
+exitProc :: [LispVal] -> IOThrowsError LispVal
+exitProc [] = do _ <- unsafePerformIO $ exitSuccess
+                 return $ Nil ""
+exitProc [Number (NumI x)] = do _ <- unsafePerformIO $ exitWith $ ExitFailure $ fromInteger x
+                                return $ Nil ""
+exitProc [x] = throwError $ TypeMismatch "integer" x
+exitProc badArg = throwError $ NumArgs 1 badArg
 
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
