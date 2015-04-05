@@ -1,6 +1,7 @@
+override CARGS+=-j2
 #Installs
 all:
-	cabal install
+	cabal install $(CARGS)
 	rm -r dist
 
 #Runs all tests
