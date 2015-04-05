@@ -15,6 +15,9 @@ import System.IO.Unsafe
 import Text.Regex
 import Paths_zepto
 
+defaultPrompt :: String
+defaultPrompt = "zepto> "
+
 keywords :: [String]
 keywords = ["apply", "define", "help", "if", "lambda"]
 
@@ -104,8 +107,8 @@ until_ prompt action = do result <- prompt
                         _ -> False
 
 -- | reads from the prompt
-readPrompt :: String -> Env -> IO String
-readPrompt prompt env = runInputT (addSettings env) $ poll prompt
+readPrompt :: Env -> IO String
+readPrompt env = runInputT (addSettings env) $ poll defaultPrompt
                 where
                     poll :: String -> InputT IO String
                     poll p = do
@@ -136,9 +139,8 @@ runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
-        until_ (readPrompt "zepto> " env) (evaluation env)
+        until_ (readPrompt env) (evaluation env)
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
           evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
           handler msg@(Control.Exception.SomeException _) = putStrLn $ 
                 "Caught error: " ++ show (msg::Control.Exception.SomeException)
-                          
