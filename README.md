@@ -3,7 +3,7 @@
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
-<!--[![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)-->
+[![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
 A simple Scheme(R5RS) interpreter in Haskell(based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
