@@ -164,8 +164,9 @@ instance Integral LispNum where
     quotRem (NumI x) (NumF y) = (NumF $ fromIntegral x / y, NumF $ mod' (fromIntegral x) y)
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
     --implement for Complex
-    quotRem (NumC _) _ = (0, 0)
-    quotRem _ (NumC _) = (0, 0)
+    quotRem (NumC x) (NumC y) = (NumC $ x / y, NumF $ 1/0)
+    quotRem (NumC _) _ = error "modulo/div not yet defined between complex and other number types"
+    quotRem _ (NumC _) = error "modulo/div not yet defined between complex and other number types"
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
     quotRem (NumI x) (NumR y) = (NumR $ (toRational x) / y, NumR $ mod' (toRational x) y)
     quotRem (NumR x) (NumI y) = (NumR $ x / (toRational y), NumR $ mod' x (toRational y))

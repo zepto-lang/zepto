@@ -27,8 +27,8 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("-", numericMinop (-), "subtract two values/negate value")
              , ("*", numericBinop (*), "multiply two values")
              , ("/", numericBinop div, "divide two values")
-             , ("mod", numericBinModop, "modulo of two values")
-             , ("modulo", numericBinModop, "modulo of two values")
+             , ("mod", numericBinop mod, "modulo of two values")
+             , ("modulo", numericBinop mod, "modulo of two values")
              , ("quotient", numericBinop quot, "quotient of two values")
              , ("remainder", numericBinop rem, "remainder of two values")
              , ("round", numRound round, "rounds a number")
@@ -141,15 +141,6 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
 numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op p = liftM (Number . foldl1 op) (mapM unpackNum p)
-
-numericBinModop :: [LispVal] -> ThrowsError LispVal
-numericBinModop p = if length p == 2
-                        then case find _complex p of
-                           Just x -> throwError $ TypeMismatch "not complex numeric" x
-                           Nothing -> liftM (Number . foldl1 mod) (mapM unpackNum p)
-                        else throwError $ NumArgs 2 p
-                where _complex (Number (NumC _)) = True
-                      _complex _ = False
 
 numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericMinop _ [Number l] = return $ Number $ negate l
