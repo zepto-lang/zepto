@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.6.4
+Version:             0.6.5
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
   zepto is an implementation of the R5RS standard.
@@ -30,7 +30,7 @@ Source-Repository head
     Location:        git://github.com/hellerve/zepto.git
 
 Executable           zepto
-    Build-Depends:   base, haskeline, parsec, mtl >= 2.2.1, array, directory, filepath, containers, transformers >= 0.4.2, time, regex-compat
+    Build-Depends:   base, haskeline, parsec, mtl >= 2.2.1, array, directory, filepath, containers, transformers >= 0.4.2, time, regex-compat, split
     Extensions:      ExistentialQuantification CPP
     ghc-options:     -Wall -Werror -O2
     Main-is:         Main.hs

@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.4-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.5-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
