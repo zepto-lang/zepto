@@ -120,7 +120,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
                , ("write", writeProc hPrint, "write to file")
-               , ("display", writeProc (\ port obj -> do
+               , ("display", writeProc (\ port obj ->
                         case obj of
                             String str -> hPutStr port str
                             _ -> hPutStr port $ show obj), "print to stdout")
@@ -209,25 +209,25 @@ numLog :: [LispVal] -> ThrowsError LispVal
 numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
 numLog [Number (NumF n)] = return $ Number $ NumF $ log n
 numLog [Number (NumC n)] = return $ Number $ NumC $ log n
-numLog [Number (NumI n), Number (NumI base)] = 
+numLog [Number (NumI n), Number (NumI base)] =
     return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
-numLog [Number (NumF n), Number (NumI base)] = 
+numLog [Number (NumF n), Number (NumI base)] =
     return $ Number $ NumF $ logBase (fromInteger base) n
-numLog [Number (NumC n), Number (NumI base)] = 
+numLog [Number (NumC n), Number (NumI base)] =
     return $ Number $ NumC $ logBase (fromInteger base) n
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
 numPow :: [LispVal] -> ThrowsError LispVal
-numPow [Number (NumI n), wrong@(Number (NumI base))] = 
+numPow [Number (NumI n), wrong@(Number (NumI base))] =
     if base > -1
         then return $ Number $ NumI $ n ^ base
         else throwError $ TypeMismatch "positive" wrong
-numPow [Number (NumF n), Number (NumI base)] = 
+numPow [Number (NumF n), Number (NumI base)] =
     return $ Number $ NumF $ n ** fromIntegral base
-numPow [Number (NumI n), Number (NumF base)] = 
+numPow [Number (NumI n), Number (NumF base)] =
     return $ Number $ NumF $ fromIntegral n ** base
-numPow [Number (NumF n), Number (NumF base)] = 
+numPow [Number (NumF n), Number (NumF base)] =
     return $ Number $ NumF $ n ** base
 numPow [Number (NumC n), Number (NumI base)] =
     return $ Number $ NumC $ n ** fromIntegral base
@@ -276,16 +276,16 @@ eqv [Number arg1, Number arg2] = return $ Bool $ arg1 == arg2
 eqv [String arg1, String arg2] = return $ Bool $ arg1 == arg2
 eqv [Atom arg1, Atom arg2] = return $ Bool $ arg1 == arg2
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
-eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ Bool $ (show x) == (show y)
-eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ Bool $ (show x) == (show y)
-eqv [x@(IOFunc _), y@(IOFunc _)] = return $ Bool $ (show x) == (show y)
+eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ Bool $ show x == show y
+eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ Bool $ show x == show y
+eqv [x@(IOFunc _), y@(IOFunc _)] = return $ Bool $ show x == show y
 eqv [List arg1, List arg2] = return $ Bool $ (length arg1 == length arg2) &&
                                   and (zipWith (curry eqvPair) arg1 arg2)
                                   where eqvPair (x, y) = case eqv[x, y] of
                                                             Left _ -> False
                                                             Right (Bool val) -> val
                                                             _ -> False
-eqv [Vector arg1, Vector arg2] = eqv [List (elems arg1), List (elems arg2)] 
+eqv [Vector arg1, Vector arg2] = eqv [List (elems arg1), List (elems arg2)]
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
@@ -308,10 +308,10 @@ unpackEquals x y (AnyUnpacker unpacker) =
 equal :: [LispVal] ->ThrowsError LispVal
 equal [lx@(List _), ly@(List _)] = eqvList equal [lx, ly]
 equal [DottedList xs x, DottedList ys y] = equal [List $ xs ++ [x], List $ ys ++ [y]]
-equal [Vector arg1, Vector arg2] = eqvList equal [List (elems arg1), List (elems arg2)] 
-equal [x, y] = do 
+equal [Vector arg1, Vector arg2] = eqvList equal [List (elems arg1), List (elems arg2)]
+equal [x, y] = do
            primitiveEquals <- liftM or $ mapM (unpackEquals x y)
-                              [AnyUnpacker unpackNum, AnyUnpacker unpackStr, 
+                              [AnyUnpacker unpackNum, AnyUnpacker unpackStr,
                                AnyUnpacker unpackBool]
            eqvEquals <- eqv [x, y]
            return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
@@ -371,7 +371,7 @@ stringLength [badType] = throwError $ TypeMismatch "string" badType
 stringLength badArgList = throwError $ NumArgs 1 badArgList
 
 substring :: [LispVal] -> ThrowsError LispVal
-substring [String s, Number (NumI start), Number (NumI end)] = do 
+substring [String s, Number (NumI start), Number (NumI end)] = do
     let len = fromInteger $ end - start
     let begin = fromInteger start
     return $ String $ (take len . drop begin) s
@@ -441,7 +441,7 @@ isInteger _ = return $ Bool False
 isRational :: [LispVal] -> ThrowsError LispVal
 isRational ([Number (NumR _)]) = return $ Bool True
 isRational ([Number (NumI _)]) = return $ Bool True
-isRational ([Number (NumF x)]) = 
+isRational ([Number (NumF x)]) =
         if x == fromInteger (round x)
             then return $ Bool True
             else return $ Bool False
@@ -509,7 +509,7 @@ versionStr :: String
 versionStr = intercalate "." $ map show version'
 
 majorVersion :: Int
-majorVersion = version' !! 0
+majorVersion = head version'
 
 minorVersion :: Int
 minorVersion = version' !! 1
@@ -539,14 +539,14 @@ getPatchVersion badList = throwError $ NumArgs 0 badList
 
 -- | searches all primitives for a possible completion
 evalString :: Env -> String -> IO String
-evalString env expr = runIOThrows $ liftM show $ 
-        liftThrows (readExpr expr) >>= 
-        macroEval env >>= 
+evalString env expr = runIOThrows $ liftM show $
+        liftThrows (readExpr expr) >>=
+        macroEval env >>=
         eval env (nullCont env)
 
 contEval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =
-    case cBody of 
+    case cBody of
         [] ->
             case cCont of
                 Cont (Continuation nEnv _ _ _ _) -> contEval nEnv cCont val
@@ -556,7 +556,7 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
-evalFun [(Cont (Continuation env _ _ _ _)), val] = macroEval env val
+evalFun [Cont (Continuation env _ _ _ _), val] = macroEval env val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
 
@@ -609,17 +609,17 @@ eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quote", val]) = contEval env conti val
 eval _ _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "if"]) = throwError $ NumArgs 3 []
-eval env conti (List [Atom "if", p, conseq, alt]) = do 
+eval env conti (List [Atom "if", p, conseq, alt]) = do
         result <- eval env conti p
         case result of
             Bool False -> eval env conti alt
             _          -> eval env conti conseq
-eval env conti (List [Atom "if", predicate, conseq]) = do 
+eval env conti (List [Atom "if", predicate, conseq]) = do
         result <- eval env conti predicate
         case result of
             Bool True -> eval env conti conseq
             _         -> eval env conti $ List []
-eval _ _ (List [Atom "if", x]) = throwError $ BadSpecialForm 
+eval _ _ (List [Atom "if", x]) = throwError $ BadSpecialForm
                             ("if needs a predicate and a consequence "
                             ++ "plus an optional alternative clause")
                             x
@@ -628,7 +628,7 @@ eval _ _ (List [Atom "set!"]) = throwError $ NumArgs 2 []
 eval env conti (List [Atom "set!", Atom var, form]) = do
         result <- eval env (nullCont env) form >>= setVar env var
         contEval env conti result
-eval _ _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm 
+eval _ _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm
                             ("set takes a previously defined variable and "
                             ++ "its new value")
                             x
@@ -689,21 +689,21 @@ eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
 eval _ _ (List [Atom "help", String val]) =
-        return $ String $ concat $ 
+        return $ String $ concat $
         map thirdElem (filter filterTuple primitives) ++
         map thirdElem (filter filterTuple ioPrimitives)
-    where 
+    where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
 eval env _ (List [Atom "help", Atom val]) = do
-        let x = concat $ 
+        let x = concat $
                 map thirdElem (filter filterTuple primitives) ++
                 map thirdElem (filter filterTuple ioPrimitives)
         if x == ""
             then getVar env val
             else return $ String x
-    where 
+    where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
@@ -742,12 +742,12 @@ eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote
           foldlM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
           foldlM f v (x : xs) = f v x >>= \ a -> foldlM f a xs
           foldlM _ v [] = return v
-eval env conti (List [Atom "string-fill!", Atom var, character]) = do 
+eval env conti (List [Atom "string-fill!", Atom var, character]) = do
     str <- eval env (nullCont env) =<< getVar env var
     ch <- eval env (nullCont env) character
     result <- eval env (nullCont env) (fillStr(str, ch)) >>= setVar env var
     contEval env conti result
-  where fillStr (String str, Character ch) = 
+  where fillStr (String str, Character ch) =
             doFillStr (String "", Character ch, length str)
         fillStr (_, _) = Nil "This should never happen"
         doFillStr (String str, Character ch, left) =
@@ -755,17 +755,17 @@ eval env conti (List [Atom "string-fill!", Atom var, character]) = do
                 then String str
                 else doFillStr(String $ ch : str, Character ch, left - 1)
         doFillStr (_, _, _) = Nil "This should never happen"
-eval env conti (List [Atom "string-set!", Atom var, i, character]) = do 
+eval env conti (List [Atom "string-set!", Atom var, i, character]) = do
     idx <- eval env (nullCont env) i
     str <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (substr(str, character, idx)) >>= setVar env var
     contEval env conti result
   where substr (String str, Character ch, Number (NumI j)) =
-                              String $ (take (fromInteger j) . drop 0) str ++ 
+                              String $ (take (fromInteger j) . drop 0) str ++
                                        [ch] ++
                                        (take (length str) . drop (fromInteger j + 1)) str
         substr (_, _, _) = Nil "This should never happen"
-eval env conti (List [Atom "vector-set!", Atom var, i, object]) = do 
+eval env conti (List [Atom "vector-set!", Atom var, i, object]) = do
     idx <- eval env (nullCont env) i
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
@@ -774,7 +774,7 @@ eval env conti (List [Atom "vector-set!", Atom var, i, object]) = do
   where updateVector (Vector vec) (Number (NumI idx)) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = Nil "This should never happen"
 eval _ _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
-eval env conti (List [Atom "vector-fill!", Atom var, object]) = do 
+eval env conti (List [Atom "vector-fill!", Atom var, object]) = do
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (fillVector vec obj) >>= setVar env var
@@ -785,7 +785,7 @@ eval env conti (List [Atom "vector-fill!", Atom var, object]) = do
         fillVector _ _ = Nil "This should never happen"
         lenVector v = length (elems v)
 eval _ _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
-eval env conti (List (Atom "begin" : funs)) 
+eval env conti (List (Atom "begin" : funs))
                         | null funs = eval env conti $ Nil ""
                         | length funs == 1 = eval env conti (head funs)
                         | otherwise = do
@@ -815,7 +815,7 @@ readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, Port port] = do
-        out <- liftIO $ tryIOError (liftIO $ fun port obj) 
+        out <- liftIO $ tryIOError (liftIO $ fun port obj)
         case out of
             Left _ -> throwError $ Default "IO Error writing to port"
             Right _ -> return $ Nil ""
@@ -827,12 +827,12 @@ errorProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArg
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [String filename] = liftM String $ liftIO $ readFile filename
-readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs 
+readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 load :: String -> IOThrowsError [LispVal]
 load filename = do
     res <- liftIO $ doesFileExist filename
-    if res 
+    if res
         then liftIO (readFile filename) >>= liftThrows . readExprList
         else throwError $ Default $ "File does not exist: " ++ filename
 
@@ -852,7 +852,7 @@ apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
         if num fparams /= num args && isNothing varargs
             then throwError $ NumArgs (num fparams) args
             else liftIO (extendEnv fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
-    where 
+    where
         remainingArgs = drop (length fparams) args
         num = toInteger . length
         evalBody ebody env = case conti of

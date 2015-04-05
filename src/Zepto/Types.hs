@@ -1,15 +1,15 @@
 module Zepto.Types (LispNum(..),
-                    LispVal(..), 
+                    LispVal(..),
                     Continuation(..),
-                    LispFun(..), 
-                    LispError(..), 
-                    Unpacker(AnyUnpacker), 
-                    ThrowsError, 
+                    LispFun(..),
+                    LispError(..),
+                    Unpacker(AnyUnpacker),
+                    ThrowsError,
                     Env(..),
                     IOThrowsError,
-                    showVal, 
-                    showError, 
-                    trapError, 
+                    showVal,
+                    showError,
+                    trapError,
                     extractValue,
                     nullEnv,
                     nullCont,
@@ -41,12 +41,12 @@ instance Eq LispNum where
     (NumC x) == (NumI y) = x == mkPolar (fromIntegral y) 0
     (NumI x) == (NumC y) = mkPolar (fromIntegral x) 0 == y
     (NumR x) == (NumR y) = x == y
-    (NumR x) == (NumI y) = x == (toRational y)
-    (NumI x) == (NumR y) = (toRational x) == y
-    (NumR x) == (NumF y) = (fromRational x) == y
-    (NumF x) == (NumR y) = x == (fromRational y)
-    (NumR x) == (NumC y) = (mkPolar (fromRational x) 0) == y
-    (NumC x) == (NumR y) = x == (mkPolar (fromRational y) 0)
+    (NumR x) == (NumI y) = x == toRational y
+    (NumI x) == (NumR y) = toRational x == y
+    (NumR x) == (NumF y) = fromRational x == y
+    (NumF x) == (NumR y) = x == fromRational y
+    (NumR x) == (NumC y) = mkPolar (fromRational x) 0 == y
+    (NumC x) == (NumR y) = x == mkPolar (fromRational y) 0
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
     compare (NumF x) (NumI y) = compare x (fromIntegral y)
@@ -103,12 +103,12 @@ instance Num LispNum where
     (NumC x) + (NumI y) = NumC $ x + mkPolar (fromIntegral y) 0
     (NumI x) + (NumC y) = NumC $ mkPolar (fromIntegral x) 0 + y
     (NumR x) + (NumR y) = NumR $ x + y
-    (NumR x) + (NumI y) = NumR $ x + (fromIntegral y)
-    (NumI x) + (NumR y) = NumR $ (fromIntegral x) + y
+    (NumR x) + (NumI y) = NumR $ x + fromIntegral y
+    (NumI x) + (NumR y) = NumR $ fromIntegral x + y
     (NumR x) + (NumF y) = NumF $ fromRational x + y
-    (NumF x) + (NumR y) = NumF $ x + (fromRational y)
-    (NumR x) + (NumC y) = NumC $ (mkPolar (fromRational x) 0) + y
-    (NumC x) + (NumR y) = NumC $ (mkPolar (fromRational y) 0) + x
+    (NumF x) + (NumR y) = NumF $ x + fromRational y
+    (NumR x) + (NumC y) = NumC $ mkPolar (fromRational x) 0 + y
+    (NumC x) + (NumR y) = NumC $ mkPolar (fromRational y) 0 + x
     (NumI x) * (NumI y) = NumI $ x * y
     (NumF x) * (NumI y) = NumF $ x * fromIntegral y
     (NumI x) * (NumF y) = NumF $ fromIntegral x * y
@@ -119,12 +119,12 @@ instance Num LispNum where
     (NumC x) * (NumI y) = NumC $ x * mkPolar (fromIntegral y) 0
     (NumI x) * (NumC y) = NumC $ mkPolar (fromIntegral x) 0 * y
     (NumR x) * (NumR y) = NumR $ x * y
-    (NumI x) * (NumR y) = NumR $ (fromIntegral x) * y
-    (NumR x) * (NumI y) = NumR $ x * (fromIntegral y)
-    (NumF x) * (NumR y) = NumF $ x * (fromRational y)
-    (NumR x) * (NumF y) = NumF $ (fromRational x) * y
-    (NumR x) * (NumC y) = NumC $ mkPolar (fromRational x) 0 * y
-    (NumC x) * (NumR y) = NumC $ x * mkPolar (fromRational y) 0
+    (NumI x) * (NumR y) = NumR $ fromIntegral x * y
+    (NumR x) * (NumI y) = NumR $ x * fromIntegral y
+    (NumF x) * (NumR y) = NumF $ x * fromRational y
+    (NumR x) * (NumF y) = NumF $ fromRational x * y
+    (NumR x) * (NumC y) = NumC $ mkPolar fromRational x 0 * y
+    (NumC x) * (NumR y) = NumC $ x * mkPolar fromRational y 0
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
@@ -135,10 +135,10 @@ instance Num LispNum where
     (NumC x) - (NumI y) = NumC $ x - mkPolar (fromIntegral y) 0
     (NumI x) - (NumC y) = NumC $ mkPolar (fromIntegral x) 0 - y
     (NumR x) - (NumR y) = NumR $ x - y
-    (NumI x) - (NumR y) = NumR $ (fromIntegral x) - y
-    (NumR x) - (NumI y) = NumR $ x - (fromIntegral y)
-    (NumF x) - (NumR y) = NumF $ x - (fromRational y)
-    (NumR x) - (NumF y) = NumF $ (fromRational x) - y
+    (NumI x) - (NumR y) = NumR $ fromIntegral x - y
+    (NumR x) - (NumI y) = NumR $ x - fromIntegral y
+    (NumF x) - (NumR y) = NumF $ x - fromRational y
+    (NumR x) - (NumF y) = NumF $ fromRational x - y
     (NumR x) - (NumC y) = NumC $ mkPolar (fromRational x) 0 - y
     (NumC x) - (NumR y) = NumC $ x - mkPolar (fromRational y) 0
     negate (NumI x) = NumI $ negate x
@@ -168,8 +168,8 @@ instance Integral LispNum where
     quotRem (NumC _) _ = error "modulo/div not yet defined between complex and other number types"
     quotRem _ (NumC _) = error "modulo/div not yet defined between complex and other number types"
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
-    quotRem (NumI x) (NumR y) = (NumR $ (toRational x) / y, NumR $ mod' (toRational x) y)
-    quotRem (NumR x) (NumI y) = (NumR $ x / (toRational y), NumR $ mod' x (toRational y))
+    quotRem (NumI x) (NumR y) = (NumR $ toRational x / y, NumR $ mod' toRational x y)
+    quotRem (NumR x) (NumI y) = (NumR $ x / toRational y, NumR $ mod' x (toRational y))
     quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
     quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
 instance Real LispNum where
@@ -214,8 +214,8 @@ data Continuation = Continuation { contClosure :: Env
                                  , frameFunc :: Maybe LispVal
                                  , frameEvaledArgs :: Maybe [LispVal]
                                  }
-             
--- | a LispFun data type 
+
+-- | a LispFun data type
 data LispFun = LispFun { params :: [String]
                        , vararg :: Maybe String
                        , body :: [LispVal]
@@ -254,7 +254,7 @@ showNum :: LispNum -> String
 showNum (NumF contents) = show contents
 showNum (NumI contents) = show contents
 showNum (NumC contents) = show (realPart contents) ++ "+" ++ show (imagPart contents) ++ "i"
-showNum (NumR contents) = (show (numerator contents)) ++ "/" ++ (show (denominator contents))
+showNum (NumR contents) = show (numerator contents) ++ "/" ++ show (denominator contents)
 
 -- | a show function for all LispVals
 showVal :: LispVal -> String
@@ -271,7 +271,7 @@ showVal (IOFunc _) = "<IO primitive>"
 showVal (EvalFunc _) = "<eval primitive>"
 showVal (Port _) = "<IO port>"
 showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
-                       docstring = doc}) = 
+                       docstring = doc}) =
     doc ++ "; source: " ++
     "(lambda (" ++ unwords (map show args) ++
         (case varargs of
@@ -288,7 +288,7 @@ showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form
 showError (NotFunction message func) = message ++ ": " ++ show func
 showError (NumArgs expected found) = "Expected " ++ show expected ++
-                                    " args; found " ++ show (length found) 
+                                    " args; found " ++ show (length found)
                                     ++ "; values are " ++ unwordsList found
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found

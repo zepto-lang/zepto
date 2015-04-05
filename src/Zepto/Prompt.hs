@@ -38,8 +38,8 @@ metaKeywords = [ ":quit"
                ]
 
 completionSearch :: Env -> String -> [Completion]
-completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $ 
-                       (map ("(" ++) keywords) ++ getDefs ++ metaKeywords
+completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $
+                       map ("(" ++) keywords ++ getDefs ++ metaKeywords
                 where getDefs :: [String]
                       getDefs = map (\x -> "(" ++ getAtom x) $ unsafePerformIO $ recExportsFromEnv env
                       getAtom (Atom a) = a
@@ -48,13 +48,13 @@ completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $
 -- | returns a fresh settings variable
 addSettings :: Env -> Settings IO
 addSettings env = Settings { historyFile = Just getDir
-                           , complete = completeWord Nothing " \t" $ 
+                           , complete = completeWord Nothing " \t" $
                                         return . completionSearch env
                            , autoAddHistory = True
                            }
-            where 
+            where
                   getDir :: FilePath
-                  getDir = (unsafePerformIO getHomeDirectory) ++ "/.zepto_history"
+                  getDir = unsafePerformIO getHomeDirectory ++ "/.zepto_history"
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
@@ -65,7 +65,7 @@ primitiveBindings = nullEnv >>= flip extendEnv (map (makeFunc IOFunc) ioPrimitiv
 
 -- | prints help for all primitives
 printHelp :: IO [()]
-printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++ 
+printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++
                              ["", "IO Primitives:"] ++ map getHelp ioPrimitives ++ [""]
                 where getHelp tuple = firstEl tuple ++ " - " ++ thirdEl tuple
                       firstEl (x, _, _) = x
@@ -93,15 +93,15 @@ until_ prompt action text = do result <- prompt text
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action text
-                      | setter x ":prompt" = do
+                      | setter x ":prompt" =
                                 until_ prompt action (getOpt x)
-                      | matches x ":prompt-toggle-space" = 
+                      | matches x ":prompt-toggle-space" =
                                 if last text == ' '
                                     then until_ prompt action (init text)
                                     else until_ prompt action (text ++ " ")
                       | matches x ":license" =
                                 printFileContents "license_interactive"
-                      | matches x ":complete-license" = do
+                      | matches x ":complete-license" =
                                 printFileContents "complete_license"
                       | matches x ":easteregg" =
                                 printFileContents "grandeur"
@@ -120,13 +120,13 @@ until_ prompt action text = do result <- prompt text
                     hClose fhandle
                     until_ prompt action text
               matches :: String -> String -> Bool
-              matches el matcher = 
+              matches el matcher =
                     let x = wordsBy isSpace el
-                    in length x == 1 && (x !! 0) == matcher
+                    in length x == 1 && head x == matcher
               setter :: String -> String -> Bool
-              setter el opt = 
+              setter el opt =
                     let x = wordsBy isSpace el
-                    in length x == 2 && (x !! 0) == opt
+                    in length x == 2 && head x == opt
               getOpt :: String -> String
               getOpt el =
                     let x = wordsBy isSpace el
@@ -149,7 +149,7 @@ evalAndPrint env expr = evalString env expr >>= putStrLn
 -- | run a single statement
 runSingleStatement :: [String] -> IO ()
 runSingleStatement args = do
-        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"), 
+        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
                                                     List $ map String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
@@ -167,5 +167,5 @@ runRepl = do
         until_ (readPrompt env) (evaluation env) defaultPrompt
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
           evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
-          handler msg@(Control.Exception.SomeException _) = putStrLn $ 
+          handler msg@(Control.Exception.SomeException _) = putStrLn $
                 "Caught error: " ++ show (msg::Control.Exception.SomeException)
