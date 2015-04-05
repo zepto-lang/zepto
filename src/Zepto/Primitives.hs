@@ -18,7 +18,7 @@ import Data.Version
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
-import System.Directory hiding (findFile)
+import System.Directory
 import Paths_zepto
 
 -- | a list of all regular primitives
@@ -592,8 +592,8 @@ evalCallCC [conti@(Cont _), fun] =
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
 evalCallCC _ = throwError $ NumArgs 1 []
 
-findFile :: String -> ExceptT LispError IO String
-findFile filename = do
+findFile' :: String -> ExceptT LispError IO String
+findFile' filename = do
         fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
         exists <- fex filename
         existsLib <- fex fileAsLib
@@ -690,7 +690,7 @@ eval env conti (List (Atom "lambda" : varargs@(Atom _) : b)) = do
 eval _ _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [Atom "load"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "load", String file]) = do
-        filename <- findFile file
+        filename <- findFile' file
         result <- load filename >>= liftM last . mapM (evl env (nullCont env))
         contEval env conti result
     where evl env2 cont2 val = macroEval env2 val >>= eval env2 cont2
