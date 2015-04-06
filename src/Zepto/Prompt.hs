@@ -1,5 +1,7 @@
 module Zepto.Prompt( runRepl
                     , runSingleStatement
+                    , evalAndPrint
+                    , runFile
                     ) where
 import Control.Monad
 import Data.Char
@@ -173,8 +175,17 @@ evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn
 
 -- | run a single statement
-runSingleStatement :: [String] -> IO ()
-runSingleStatement args = do
+runSingleStatement :: String -> IO ()
+runSingleStatement statement = do
+        env <- primitiveBindings
+        lib <- getDataFileName "stdlib/module.scm"
+        _ <- loadFile env lib
+        evalAndPrint env statement
+    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
+
+-- | run a file
+runFile :: [String] -> IO ()
+runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
                                                     List $ map String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"

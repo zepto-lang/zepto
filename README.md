@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.5-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.6-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.6--7.8-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -46,7 +46,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.6.5
+zepto Version 0.6.6
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
@@ -105,6 +105,25 @@ Moriturus te saluto.
 ```
 
 And you're back to your regular shell.
+
+You can also run files  or strings by handing them to the program 
+like that:
+
+```
+$ cat test.scm
+(display "hi")
+$ zepto test.scm
+hi
+$ zepto --single "(display \"bye\")"
+bye
+$ cat test_args.scm
+(display args)
+$ zepto test_args.scm hi and bye
+(hi and bye)
+```
+
+As you can see in the last two lines, command line arguments are 
+available to Scheme via the `args` variable. It is a list of strings.
 
 If you want to see examples of real programs, look in the `examples`
 directory.

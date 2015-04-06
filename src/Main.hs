@@ -1,4 +1,5 @@
 module Main where
+import Data.List
 import System.Environment
 
 import Zepto.Prompt
@@ -10,7 +11,8 @@ printUsage = do printVersion
                 putStrLn("\nUsage: " ++
                          "\n\twithout arguments  - runs REPL" ++
                          "\n\t-h/--help          - display this help message" ++
-                         "\n\t-s/--silent        - runs REPL without displaying header" ++
+                         "\n\t-S/--silent        - runs REPL without displaying header" ++
+                         "\n\t-s/--single        - runs single statement passed in as string" ++
                          "\n\t<some scheme file> - run file" ++
                          "\n\nMore information can be found on " ++
                          "https://github.com/hellerve/zepto")
@@ -47,12 +49,19 @@ main = do args <- getArgs
               runRepl
             | hasIn arg (makeArg "h" "help") =
               printUsage
-            | hasIn arg (makeArg "s" "silent") =
+            | hasIn arg (makeArg "S" "silent") =
               runRepl
-            | length arg == 1 = runSingleStatement arg
-            | otherwise =
-              printUsage
+            | hasIn arg (makeArg "s" "single") =
+              runSingleStatement (getOpt arg (makeArg "s" "single"))
+            | otherwise = runFile arg
           hasIn :: [String] -> [String] -> Bool
-          hasIn x l = any (\t -> elem t x) l
+          hasIn x l = any (\t -> elem t l) x
           makeArg :: String -> String -> [String]
           makeArg short long = ['-' : short, "--" ++ long]
+          getOpt :: [String] -> [String] -> String
+          getOpt x l = case findIndex (\t -> elem t l) x of
+                              Just i -> if length x > i + 1
+                                        then x !! (i + 1)
+                                        else "(display \"Malformed input: option " ++
+                                             x !! i ++ " takes additional argument\")"
+                              _      -> "Internal error"

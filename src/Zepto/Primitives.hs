@@ -507,7 +507,7 @@ isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
 version' :: [Int]
-version' = [0, 6, 5]
+version' = [0, 6, 6]
 
 versionStr :: String
 versionStr = intercalate "." $ map show version'
