@@ -20,6 +20,9 @@ import Zepto.Variables
 defaultPrompt :: String
 defaultPrompt = "zepto> "
 
+metaPrefix :: Char
+metaPrefix = ':'
+
 keywords :: [String]
 keywords = [ "apply"
            , "define"
@@ -29,15 +32,19 @@ keywords = [ "apply"
            ]
 
 metaKeywords :: [String]
-metaKeywords = [ ":quit"
-               , ":exit"
-               , ":help"
-               , ":meta-help"
-               , ":license"
-               , ":complete-license"
-               , ":prompt"
-               , ":prompt-toggle-space"
+metaKeywords = map metaize
+               [ "quit"
+               , "exit"
+               , "help"
+               , "meta-help"
+               , "license"
+               , "complete-license"
+               , "prompt"
+               , "prompt-toggle-space"
                ]
+
+metaize :: String -> String
+metaize cmd = metaPrefix : cmd
 
 completionSearch :: Env -> String -> [Completion]
 completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $
@@ -96,32 +103,32 @@ printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
 until_ :: (String -> IO String) -> (String -> IO a) -> String -> IO ()
 until_ prompt action text = do result <- prompt text
                                repl_ result
-        where repl_ x | matches x ":help" = do
+        where repl_ x | matches x "help" = do
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action text
-                      | matches x ":meta-help" = do
+                      | matches x "meta-help" = do
                                 printMetaKeywords
                                 until_ prompt action text
-                      | setter x ":prompt" =
+                      | setter x "prompt" =
                                 until_ prompt action (getOpt x)
-                      | matches x ":prompt" = do
+                      | matches x "prompt" = do
                                 putStrLn "Error: the prompt meta command takes one additional argument"
                                 until_ prompt action text
-                      | matches x ":prompt-toggle-space" =
+                      | matches x "prompt-toggle-space" =
                                 if last text == ' '
                                     then until_ prompt action (init text)
                                     else until_ prompt action (text ++ " ")
-                      | matches x ":license" =
+                      | matches x "license" =
                                 printFileContents "license_interactive"
-                      | matches x ":complete-license" =
+                      | matches x "complete-license" =
                                 printFileContents "complete_license"
-                      | matches x ":easteregg" =
+                      | matches x "easteregg" =
                                 printFileContents "grandeur"
-                      | matches x ":ddate" = do
+                      | matches x "ddate" = do
                                 ddate >>= putStrLn
                                 until_ prompt action text
-                      | matches x ":quit" || matches x ":exit" = do
+                      | matches x "quit" || matches x "exit" = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                       | otherwise = action x >> until_ prompt action text
@@ -135,11 +142,11 @@ until_ prompt action text = do result <- prompt text
               matches :: String -> String -> Bool
               matches el matcher =
                     let x = wordsBy isSpace el
-                    in length x == 1 && head x == matcher
+                    in length x == 1 && head x == meta matcher
               setter :: String -> String -> Bool
               setter el opt =
                     let x = wordsBy isSpace el
-                    in length x == 2 && head x == opt
+                    in length x == 2 && head x == meta opt
               getOpt :: String -> String
               getOpt el =
                     let x = wordsBy isSpace el

@@ -803,7 +803,7 @@ eval env conti (List (function : args)) = do
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 exitProc :: [LispVal] -> IOThrowsError LispVal
-exitProc [] = do _ <- unsafePerformIO $ exitSuccess
+exitProc [] = do _ <- unsafePerformIO exitSuccess
                  return $ Nil ""
 exitProc [Number (NumI x)] = do _ <- unsafePerformIO $ exitWith $ ExitFailure $ fromInteger x
                                 return $ Nil ""
