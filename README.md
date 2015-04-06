@@ -21,11 +21,12 @@ It is very small, so the name might or might not be appropriate.
 1. **[Maintainers](#maintainers)**
 2. **[Installation](#installation)**
 3. **[Introduction](#introduction)**
-4. **[Libraries](#libraries)**
-5. **[Why](#why)**
-6. **[Future](#future)**
-7. **[Contribute](#contribute)**
-8. **[License](#license)**
+4. **[Customizing the REPL](#customizing-the-repl)**
+5. **[Libraries](#libraries)**
+6. **[Why](#why)**
+7. **[Future](#future)**
+8. **[Contribute](#contribute)**
+9. **[License](#license)**
 
 ## Maintainers
 
@@ -107,6 +108,23 @@ And you're back to your regular shell.
 
 If you want to see examples of real programs, look in the `examples`
 directory.
+
+## Customizing the REPL
+
+If you are like me, you want to make your Interpreter your own.
+Well, you can, sort of. There are exactly two meta commands as of right
+now, namely `:prompt` and `:prompt-toggle-space`, which let you customize
+your prompt. A quick demo:
+
+```
+zepto> :prompt-toggle-space
+zepto>:prompt doge>
+doge>:prompt-toggle-space
+doge> doge
+wow such fancy
+```
+
+I will implement other features and config file support as we go along.
 
 ## Libraries
 
