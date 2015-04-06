@@ -103,7 +103,9 @@ printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
 until_ :: (String -> IO String) -> (String -> IO a) -> String -> IO ()
 until_ prompt action text = do result <- prompt text
                                repl_ result
-        where repl_ x | matches x "help" = do
+        where repl_ x | emptyInput x =
+                                until_ prompt action text
+                      | matches x "help" = do
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action text
@@ -139,14 +141,18 @@ until_ prompt action text = do result <- prompt text
                     putStrLn contents
                     hClose fhandle
                     until_ prompt action text
+              emptyInput :: String -> Bool
+              emptyInput el =
+                    let x = wordsBy isSpace el
+                    in length x == 0
               matches :: String -> String -> Bool
               matches el matcher =
                     let x = wordsBy isSpace el
-                    in length x == 1 && head x == meta matcher
+                    in length x == 1 && head x == metaize matcher
               setter :: String -> String -> Bool
               setter el opt =
                     let x = wordsBy isSpace el
-                    in length x == 2 && head x == meta opt
+                    in length x == 2 && head x == metaize opt
               getOpt :: String -> String
               getOpt el =
                     let x = wordsBy isSpace el
