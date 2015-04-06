@@ -4,16 +4,9 @@ module Zepto.Primitives(primitives
                        , eval
                        , versionStr
                        , evalString) where
-import Zepto.Types
-import Zepto.Parser
-import Zepto.Variables
-import Zepto.Macro
-import System.IO
-import System.IO.Error
-import System.IO.Unsafe
+import Data.Array
 import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
-import Data.Array
 import Data.List
 import Data.Version
 import Data.Maybe
@@ -21,7 +14,15 @@ import Control.Monad
 import Control.Monad.Except
 import System.Directory
 import System.Exit
+import System.IO
+import System.IO.Error
+import System.IO.Unsafe
+
 import Paths_zepto
+import Zepto.Types
+import Zepto.Parser
+import Zepto.Variables
+import Zepto.Macro
 
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]

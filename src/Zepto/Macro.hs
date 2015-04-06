@@ -1,9 +1,10 @@
 module Zepto.Macro(macroEval) where
-import Zepto.Types
-import Zepto.Variables
 import Control.Monad.Except
 
--- | evaluates a macro 
+import Zepto.Types
+import Zepto.Variables
+
+-- | evaluates a macro
 macroEval :: Env -> LispVal -> IOThrowsError LispVal
 macroEval env (List [Atom "define-syntax", Atom keyword, syntaxRules@(List (Atom "syntax-rules" : (List _ : _)))]) = do
   _ <- defineNamespacedVar env mnamespace keyword syntaxRules
@@ -55,8 +56,8 @@ matchRule _ identifiers localEnv (List [pattern, template]) (List inputVar) = do
            _ -> transformRule localEnv 0 (List []) template (List [])
       _ -> throwError $ BadSpecialForm "Malformed rule in syntax-rules" p
 
-matchRule _ _ _ rule input = throwError $ 
-                              BadSpecialForm "Malformed rule in syntax-rules" $ 
+matchRule _ _ _ rule input = throwError $
+                              BadSpecialForm "Malformed rule in syntax-rules" $
                               List [Atom "rule: ", rule, Atom "input: ", input]
 
 loadLocal :: Env -> LispVal -> LispVal -> LispVal -> Bool -> Bool -> IOThrowsError LispVal
@@ -72,7 +73,7 @@ loadLocal localEnv identifiers pattern input hasEllipsis outerHasEllipsis =
          status <- checkLocal localEnv identifiers (localHasEllipsis || outerHasEllipsis) p i
          case status of
               Bool False -> if localHasEllipsis
-                                then 
+                                then
                                     loadLocal localEnv identifiers (List $ tail ps) (List (i : is)) False outerHasEllipsis
                                 else return $ Bool False
               _ -> if localHasEllipsis
@@ -92,14 +93,14 @@ checkLocal _ _ _ (Bool pattern) (Bool input) = return $ Bool $ pattern == input
 checkLocal _ _ _ (Number pattern) (Number input) = return $ Bool $ pattern == input
 checkLocal _ _ _ (String pattern) (String input) = return $ Bool $ pattern == input
 checkLocal _ _ _ (Character pattern) (Character input) = return $ Bool $ pattern == input
-checkLocal localEnv identifiers hasEllipsis (Atom pattern) input = 
+checkLocal localEnv identifiers hasEllipsis (Atom pattern) input =
   if hasEllipsis
      then do isDefined <- liftIO $ isBound localEnv pattern
              isIdent <- findAtom (Atom pattern) identifiers
              case isIdent of
-                Bool True -> 
+                Bool True ->
                     case input of
-                        Atom inpt -> 
+                        Atom inpt ->
                             if pattern == inpt
                                then do
                                  _ <- addPatternVar isDefined $ Atom pattern
@@ -111,7 +112,7 @@ checkLocal localEnv identifiers hasEllipsis (Atom pattern) input =
      else do
          isIdent <- findAtom (Atom pattern) identifiers
          case isIdent of
-            Bool True -> 
+            Bool True ->
                 case input of
                     Atom inpt ->
                         if pattern == inpt
@@ -122,7 +123,7 @@ checkLocal localEnv identifiers hasEllipsis (Atom pattern) input =
             _ -> do _ <- defineVar localEnv pattern input
                     return $ Bool True
     where
-      addPatternVar isDefined val = 
+      addPatternVar isDefined val =
              if isDefined
                 then do v <- getVar localEnv pattern
                         case v of
@@ -140,7 +141,7 @@ checkLocal localEnv identifiers hasEllipsis pattern@(List _) input@(List _) =
 checkLocal _ _ _ _ _ = return $ Bool False
 
 transformRule :: Env -> Int -> LispVal -> LispVal -> LispVal -> IOThrowsError LispVal
-transformRule localEnv ellipsisIndex (List result) transform@(List (List l : ts)) (List ellipsisList) = 
+transformRule localEnv ellipsisIndex (List result) transform@(List (List l : ts)) (List ellipsisList) =
   if macroElementMatchesMany transform
      then do
              curT <- transformRule localEnv (ellipsisIndex + 1) (List []) (List l) (List result)
@@ -158,7 +159,7 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (List l : ts)
                   List _ -> transformRule localEnv ellipsisIndex (List $ result ++ [lst]) (List ts) (List ellipsisList)
                   Nil _ -> return lst
                   _ -> throwError $ BadSpecialForm "Macro transform error" $ List [lst, List l, Number $ NumI $ toInteger ellipsisIndex]
-transformRule localEnv ellipsisIndex (List result) transform@(List (dl@(DottedList _ _) : ts)) (List ellipsisList) = 
+transformRule localEnv ellipsisIndex (List result) transform@(List (dl@(DottedList _ _) : ts)) (List ellipsisList) =
   if macroElementMatchesMany transform
      then do
              curT <- transformDottedList localEnv (ellipsisIndex + 1) (List []) (List [dl]) (List result)
@@ -174,8 +175,8 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (dl@(DottedLi
                   List [Nil _, List _] -> return lst
                   List l -> transformRule localEnv ellipsisIndex (List $ result ++ l) (List ts) (List ellipsisList)
                   Nil _ -> return lst
-                  _ -> throwError $ 
-                        BadSpecialForm "transformRule: Macro transform error" $ 
+                  _ -> throwError $
+                        BadSpecialForm "transformRule: Macro transform error" $
                         List [List ellipsisList, lst, List [dl], Number $ NumI $ toInteger ellipsisIndex]
 transformRule localEnv ellipsisIndex (List result) transform@(List (Atom a : ts)) unused = do
   let hasEllipsis = macroElementMatchesMany transform
@@ -205,8 +206,8 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (Atom a : ts)
 transformRule localEnv ellipsisIndex (List result) (List (t : ts)) (List ellipsisList) =
   transformRule localEnv ellipsisIndex (List $ result ++ [t]) (List ts) (List ellipsisList)
 transformRule _ _ result@(List _) (List []) _ = return result
-transformRule _ ellipsisIndex result transform unused = 
-  throwError $ BadSpecialForm "An error occurred during macro transform" $ 
+transformRule _ ellipsisIndex result transform unused =
+  throwError $ BadSpecialForm "An error occurred during macro transform" $
    List [Number $ NumI $ toInteger ellipsisIndex, result, transform, unused]
 
 transformDottedList :: Env -> Int -> LispVal -> LispVal -> LispVal -> IOThrowsError LispVal

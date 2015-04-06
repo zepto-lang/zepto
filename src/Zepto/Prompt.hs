@@ -1,20 +1,21 @@
 module Zepto.Prompt( runRepl
                     , runSingleStatement
                     ) where
+import Control.Monad
+import Data.Char
+import Data.List
+import Data.List.Split
+import System.Console.Haskeline
+import System.Directory
+import System.IO
+import System.IO.Unsafe
+import qualified Control.Exception
+
+import Paths_zepto
 import Zepto.Libraries.DDate
 import Zepto.Types
 import Zepto.Primitives
 import Zepto.Variables
-import Data.Char
-import Data.List
-import Data.List.Split
-import System.IO
-import System.Directory
-import Control.Monad
-import qualified Control.Exception
-import System.Console.Haskeline
-import System.IO.Unsafe
-import Paths_zepto
 
 defaultPrompt :: String
 defaultPrompt = "zepto> "

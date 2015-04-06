@@ -1,8 +1,9 @@
 module Zepto.Variables where
-import Zepto.Types
 import Control.Monad.Except
 import Data.IORef
 import qualified Data.Map
+
+import Zepto.Types
 
 isObject :: LispVal -> Bool
 isObject (List _) = True
@@ -26,7 +27,7 @@ extendEnv envRef abindings = do
         bindinglist <- newIORef $ Data.Map.fromList bindinglistT
         nullPointers <- newIORef $ Data.Map.fromList []
         return $ Environment (Just envRef) bindinglist nullPointers
-    where addBinding ((namespace, name), val) = do 
+    where addBinding ((namespace, name), val) = do
                 ref <- newIORef val
                 return (getVarName namespace name, ref)
 
@@ -55,7 +56,7 @@ isBound envRef = isNamespacedBound envRef vnamespace
 
 -- | checks whether a variable is bound to a namespace
 isNamespacedBound :: Env -> Char -> String -> IO Bool
-isNamespacedBound envRef namespace var = liftM (Data.Map.member 
+isNamespacedBound envRef namespace var = liftM (Data.Map.member
         (getVarName namespace var)) (readIORef (bindings envRef))
 
 getVarName :: Char -> String -> String
@@ -67,9 +68,9 @@ getVar envRef = getNamespacedVar envRef vnamespace
 
 -- | gets a variable from an environment in a specific namespace
 getNamespacedVar :: Env -> Char -> String -> IOThrowsError LispVal
-getNamespacedVar envRef namespace var = do 
+getNamespacedVar envRef namespace var = do
         v <- getNamespacedVar' envRef namespace var
-        case v of 
+        case v of
             Just a -> return a
             Nothing -> throwError $ UnboundVar "Getting an unbound variable" var
 
@@ -89,7 +90,7 @@ getNamespacedObj' envRef namespace var unpackFun = do
 
 setVar, defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 -- | sets a variable to an environment
-setVar envRef = setNamespacedVar envRef vnamespace 
+setVar envRef = setNamespacedVar envRef vnamespace
 -- | defines a variable to an environment
 defineVar envRef = defineNamespacedVar envRef vnamespace
 
@@ -127,7 +128,7 @@ updatePointers envRef namespace var = do
   case Data.Map.lookup (getVarName namespace var) ptrs of
     Just valIORef -> do
       val <- liftIO $ readIORef valIORef
-      case val of 
+      case val of
         (Pointer pVar pEnv : ps) -> do
           liftIO $ writeIORef valIORef []
           _ <- movePointers pEnv namespace pVar ps

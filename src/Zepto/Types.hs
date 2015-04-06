@@ -15,16 +15,16 @@ module Zepto.Types (LispNum(..),
                     nullCont,
                     liftThrows,
                     runIOThrows) where
-import Data.Fixed
-import System.IO
 import Data.Array
 import Data.Complex
+import Data.Fixed
 import Data.Ratio
 import Data.IORef
-import qualified Data.Map
 import Control.Monad
 import Control.Monad.Except
+import System.IO
 import Text.ParserCombinators.Parsec.Error
+import qualified Data.Map
 
 -- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)

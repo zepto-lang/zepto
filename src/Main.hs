@@ -1,7 +1,8 @@
 module Main where
+import System.Environment
+
 import Zepto.Prompt
 import Zepto.Primitives
-import System.Environment
 
 -- |Prints the usage
 printUsage :: IO ()
@@ -27,7 +28,7 @@ printCopyright :: IO ()
 printCopyright = putStrLn("Copyright (C) 2015 Veit Heller (GPL)\n" ++
                           "This is free software; " ++
                           "see the accompanying LICENSE " ++
-                          "for copying conditions.\n" ++ 
+                          "for copying conditions.\n" ++
                           "There is NO warranty whatsoever.\n" ++
                           "Hail Eris, all rites reversed.\n")
 
@@ -40,7 +41,7 @@ main = do args <- getArgs
                       printCommands
                       putStrLn ""
                       runRepl
-              else 
-                  if(head args ==  "-h") || (head args == "--help") 
-                      then printUsage 
+              else
+                  if(head args ==  "-h") || (head args == "--help")
+                      then printUsage
                       else runSingleStatement args

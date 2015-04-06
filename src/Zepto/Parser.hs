@@ -1,13 +1,14 @@
 module Zepto.Parser(readExpr, readExprList) where
-import Zepto.Types
-import Numeric
+import Control.Monad
+import Control.Monad.Except
+import Data.Array
 import Data.Char
 import Data.Complex
 import Data.Ratio
-import Data.Array
-import Control.Monad
-import Control.Monad.Except
+import Numeric
 import Text.ParserCombinators.Parsec hiding (spaces)
+
+import Zepto.Types
 
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+-/:<=>?@^_~"
@@ -46,9 +47,9 @@ parseNumber :: Parser LispVal
 parseNumber = try parseComplex
               <|> try parseRational
               <|> try parseStandardNum
-              <|> parseDigital2 
-              <|> parseHex 
-              <|> parseOct 
+              <|> parseDigital2
+              <|> parseHex
+              <|> parseOct
               <|> parseBin
 
 parseStandardNum :: Parser LispVal
@@ -112,8 +113,8 @@ parseDigital1 = do neg <- optionMaybe $ string "-"
                       Nothing -> (return . Number . NumI . read) x
 
 parseDigital2 :: Parser LispVal
-parseDigital2 = do _ <- try $ string "#d" 
-                   x <- many1 digit 
+parseDigital2 = do _ <- try $ string "#d"
+                   x <- many1 digit
                    (return . Number . NumI . read) x
 
 parseHex :: Parser LispVal
@@ -143,7 +144,7 @@ bin2dig = bin2digx 0
 bin2digx :: Integer -> String -> Integer
 bin2digx digint "" = digint
 
-bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in 
+bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in
                             bin2digx old xs
 
 parseList :: Parser LispVal
@@ -194,13 +195,13 @@ parseChar = do
   r <- many (letter <|> digit)
   let pchr = c : r
   case pchr of
-    "alarm"     -> return $ Character '\a' 
-    "backspace" -> return $ Character '\b' 
+    "alarm"     -> return $ Character '\a'
+    "backspace" -> return $ Character '\b'
     "delete"    -> return $ Character '\DEL'
-    "escape"    -> return $ Character '\ESC' 
+    "escape"    -> return $ Character '\ESC'
     "newline"   -> return $ Character '\n'
-    "null"      -> return $ Character '\0' 
-    "return"    -> return $ Character '\n' 
+    "null"      -> return $ Character '\0'
+    "return"    -> return $ Character '\n'
     "space"     -> return $ Character ' '
     "tab"       -> return $ Character '\t'
     _ -> case c : r of
@@ -218,7 +219,7 @@ parseHexScalar num = do
         _ -> return $ chr $ fst $ head ns
 
 parseComments :: Parser LispVal
-parseComments = do _ <- char ';' 
+parseComments = do _ <- char ';'
                    _ <- many (noneOf "\n")
                    return $ Nil ""
 
@@ -230,13 +231,13 @@ parseExpr = parseComments
                _ <- char ')'
                return x
         <|> parseSpliced
-        <|> try parseAtom 
-        <|> parseString   
-        <|> parseQuoted 
-        <|> try parseBool 
+        <|> try parseAtom
+        <|> parseString
+        <|> parseQuoted
+        <|> try parseBool
         <|> parseQuasiquoted
         <|> parseUnquoted
-        <|> try parseChar 
+        <|> try parseChar
         <|> do _ <- char '('
                x <- try parseList <|> parseDottedList
                _ <- char ')'
