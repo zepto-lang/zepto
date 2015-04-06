@@ -32,6 +32,7 @@ metaKeywords :: [String]
 metaKeywords = [ ":quit"
                , ":exit"
                , ":help"
+               , ":meta-help"
                , ":license"
                , ":complete-license"
                , ":prompt"
@@ -74,17 +75,22 @@ printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++
 
 -- | prints help for all keywords
 printKeywords :: IO ()
-printKeywords = putStrLn("Keywords:\n" ++
-                           "apply   - apply function to value\n" ++
-                           "define  - define global variable\n" ++
-                           "error   - print value to stderr\n" ++
-                           ":help    - display this help message(use without s-expression)\n" ++
-                           "help    - display help for function" ++
-                           "if      - branch on condition\n" ++
-                           "lambda  - create unnamed function\n" ++
-                           "let     - define local variable\n" ++
-                           "display - print value to stdout\n" ++
-                           "quit    - quit interpreter(use without s-expression)")
+printKeywords = putStrLn ("Keywords:\n" ++
+                          "apply   - apply function to value\n" ++
+                          "define  - define global variable\n" ++
+                          "error   - print value to stderr\n" ++
+                          "help    - display help for function" ++
+                          "if      - branch on condition\n" ++
+                          "lambda  - create unnamed function\n" ++
+                          "let     - define local variable\n")
+
+printMetaKeywords :: IO ()
+printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
+                              ":exit      - quit interpreter\n" ++
+                              ":help      - print help for all available commands\n" ++
+                              ":license   - print license text\n" ++
+                              ":meta-help - displays this help message\n" ++
+                              ":prompt    - changes prompt message (takes additional command)\n")
 
 -- | the main interpreter loop; gets input and hands everything except help and quit over
 until_ :: (String -> IO String) -> (String -> IO a) -> String -> IO ()
@@ -94,8 +100,14 @@ until_ prompt action text = do result <- prompt text
                                 _ <- printHelp
                                 printKeywords
                                 until_ prompt action text
+                      | matches x ":meta-help" = do
+                                printMetaKeywords
+                                until_ prompt action text
                       | setter x ":prompt" =
                                 until_ prompt action (getOpt x)
+                      | matches x ":prompt" = do
+                                putStrLn "Error: the prompt meta command takes one additional argument"
+                                until_ prompt action text
                       | matches x ":prompt-toggle-space" =
                                 if last text == ' '
                                     then until_ prompt action (init text)
