@@ -40,6 +40,8 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("truncate", numRound truncate, "truncates a number")
              , ("expt", numPow, "power of function")
              , ("pow", numPow, "power of function")
+             , ("^", numPow, "power of function")
+             , ("**", numPow, "power of function")
              , ("sqrt", numSqrt, "square root function")
              , ("log", numLog, "logarithm function")
              , ("abs", numOp abs, "get absolute value")
@@ -672,16 +674,27 @@ eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : b)) = 
         result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
 eval _ _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
 eval env conti (List (Atom "lambda" : List p : b)) =  do
+        result <- makeNormalFunc env p b
+        contEval env conti result
+eval env conti (List (Atom "λ" : List p : b)) =  do
         result <- makeNormalFunc env p b
         contEval env conti result
 eval env conti (List (Atom "lambda" : DottedList p varargs : b)) = do
         result <- makeVarargs varargs env p b "lambda"
         contEval env conti result
+eval env conti (List (Atom "λ" : DottedList p varargs : b)) = do
+        result <- makeVarargs varargs env p b "lambda"
+        contEval env conti result
 eval env conti (List (Atom "lambda" : varargs@(Atom _) : b)) = do
         result <- makeVarargs varargs env [] b "lambda"
         contEval env conti result
+eval env conti (List (Atom "λ" : varargs@(Atom _) : b)) = do
+        result <- makeVarargs varargs env [] b "lambda"
+        contEval env conti result
+eval _ _ (List [Atom "λ"]) = throwError $ NumArgs 2 []
+eval _ _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
+eval _ _ (List (Atom "λ" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [Atom "load"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "load", String file]) = do
