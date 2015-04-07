@@ -8,18 +8,6 @@
 (define complex? number?)
 (define (abs n) "absolute value of number" (if (>= n 0) n (- n)))
 (define (exact->inexact n) "make inexact number from exact" (* n 1.0))
-(define (hyper n) "get the nth hyper operator" 
-  (curry (hyper_ n)))
-(define (hyper_ n a b) "internal"
-                  (if (= n 0)
-                    (+ b 1)
-                    (if (= b 0)
-                      (if (= n 1)
-                        a
-                        (if (= n 2)
-                          0
-                          1))
-                      ((hyper (- n 1)) a (hyper_ a (- b 1))))))
 (define (<> n1 n2) "not equal" (not (= n1 n2)))
 
 (define (succ x) "next number" (+ x 1))
