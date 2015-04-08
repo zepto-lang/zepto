@@ -109,6 +109,8 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("string-copy", stringCopy, "copy string")
              , ("substring", substring, "makes substring from string")
              , ("vector-ref", vectorRef, "get element from vector")
+             , ("string-ref", stringRef, "get element from string")
+             , ("string-find", stringFind, "find first occurrence in string")
              , ("string-append", stringAppend, "append to string")
              , ("zepto-version", getVersion, "gets the version as a list")
              , ("zepto-version-str", getVersionStr, "gets the version as a string")
@@ -323,7 +325,7 @@ equal [x, y] = do
            return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector :: [LispVal] -> ThrowsError LispVal
+makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [Number n] = makeVector [Number n, List []]
 makeVector [Number (NumI n), a] = do
     let l = replicate (fromInteger n) a
@@ -375,6 +377,21 @@ stringLength :: [LispVal] -> ThrowsError LispVal
 stringLength [String s] = return $ Number $ foldr (const (+1)) 0 s
 stringLength [badType] = throwError $ TypeMismatch "string" badType
 stringLength badArgList = throwError $ NumArgs 1 badArgList
+
+stringRef [String v, Number (NumI n)] =
+        if n >= 0
+           then return $ Character $ v !! fromInteger n
+           else throwError $ TypeMismatch "positive integer" (Number $ NumI $ n)
+stringRef [badType] = throwError $ TypeMismatch "string integer" badType
+stringRef badArgList = throwError $ NumArgs 2 badArgList
+
+stringFind [String v, Character x] =
+        case findIndex (\m -> x == m) v of
+           Just n -> return $ Number $ NumI $ toInteger n
+           _      -> return $ Number $ NumI $ -1
+stringFind [badType, Character _] = throwError $ TypeMismatch "string" badType
+stringFind [String _, badType] = throwError $ TypeMismatch "string" badType
+stringFind badArgList = throwError $ NumArgs 2 badArgList
 
 substring :: [LispVal] -> ThrowsError LispVal
 substring [String s, Number (NumI start), Number (NumI end)] = do
