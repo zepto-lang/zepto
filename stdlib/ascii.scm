@@ -42,4 +42,35 @@
     (display "             ||----w |\n")
     (display "             ||     ||")))
 
+;; The smiley was found on http://loveascii.com/smilies.html
+(define (smiley) "be happy"
+  (begin
+    (display "    .-'\"\"\"\"\"'-.\n")
+    (display "  .'           `.\n")
+    (display " /   o      o    \\\n")
+    (display ":                 :\n")
+    (display "|                 |\n")
+    (display ":   \\        /    :\n")
+    (display " \\   `.____.'    /\n")
+    (display "  `.           .'\n")
+    (display "    `-._____.-'")))
 
+(define (standard-fish . direction) "everyone ought to have one; or so I heard"
+  (define (left-fish)
+    (begin
+      (display " _J\"\"-.\n")
+      (display "/o )   \\ ,';\n")
+      (display "\\ ,'    ;  /\n")
+      (display " \"-.__.'\"\\_;")))
+
+  (define (right-fish)
+    (begin
+      (display "     .-\"\"L_\n")
+      (display ";`, /   ( o\\\n")
+      (display "\\  ;    `, \/\n")
+      (display ";_/\"`.__.-\"")))
+
+  (cond ((null? direction) (left-fish))
+        ((string=? (car direction) "left") (left-fish))
+        ((string=? (car direction) "right") (right-fish))
+        (else (display (list "Unrecognized option: " direction)))))
