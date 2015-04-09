@@ -43,6 +43,7 @@ metaKeywords = map metaize
                , "complete-license"
                , "prompt"
                , "prompt-toggle-space"
+               , "prompt-color"
                ]
 
 metaize :: String -> String
@@ -123,6 +124,11 @@ until_ prompt action text = do result <- prompt text
                                 if last text == ' '
                                     then until_ prompt action (init text)
                                     else until_ prompt action (text ++ " ")
+                      | setter x "prompt-color" =
+                                until_ prompt action (colorize text (getOpt x))
+                      | matches x "prompt-color" = do
+                                putStrLn "Error: the prompt-color meta command takes one additional argument"
+                                until_ prompt action text
                       | matches x "license" =
                                 printFileContents "license_interactive"
                       | matches x "complete-license" =
@@ -159,6 +165,22 @@ until_ prompt action text = do result <- prompt text
               getOpt el =
                     let x = wordsBy isSpace el
                     in x !! 1
+              colorize :: String -> String -> String
+              colorize oldPrompt c =
+                    case lookupColor c of
+                      Just colorstring ->  "\x1b[" ++ snd colorstring ++
+                                        "m" ++ oldPrompt ++ "\x1b[0m"
+                      _                 -> oldPrompt
+                where lookupColor color = find (\t -> color == (fst t)) colors
+                      colors = [ ("black", "30")
+                               , ("red", "31")
+                               , ("green", "32")
+                               , ("yellow", "33")
+                               , ("blue", "34")
+                               , ("magenta", "35")
+                               , ("cyan", "36")
+                               , ("white", "37")
+                               ]
 
 -- | reads from the prompt
 readPrompt :: Env -> String -> IO String

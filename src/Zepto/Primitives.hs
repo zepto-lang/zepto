@@ -135,6 +135,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("read-contents", readContents, "read contents of file")
                , ("read-all", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
+               , ("color", colorProc, "colorize output")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
@@ -840,6 +841,23 @@ exitProc [Number (NumI x)] = do _ <- unsafePerformIO $ exitWith $ ExitFailure $ 
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
 
+colorProc :: [LispVal] -> IOThrowsError LispVal
+colorProc [String s] =
+        case lookupColor s of
+           Just found -> writeProc hPrint $ [String $ "\x1b[" ++ snd found ++ "m"]
+           _          -> throwError $ BadSpecialForm "Color not found: " $ String s
+    where lookupColor color = find (\t -> color == (fst t)) colors
+          colors = [ ("black", "30")
+                   , ("red", "31")
+                   , ("green", "32")
+                   , ("yellow", "33")
+                   , ("blue", "34")
+                   , ("magenta", "35")
+                   , ("cyan", "36")
+                   , ("white", "37")
+                   ]
+colorProc [badArg] = throwError $ TypeMismatch "string" badArg
+colorProc badArgs = throwError $ NumArgs 1 badArgs
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode

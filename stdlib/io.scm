@@ -35,4 +35,3 @@
                          (close-output-port outport)
                          (set-output-port prev-outport)
                          res)))))
-

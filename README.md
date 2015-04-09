@@ -132,7 +132,7 @@ directory.
 
 If you are like me, you want to make your Interpreter your own.
 Well, you can, sort of. There are exactly two meta commands as of right
-now, namely `:prompt` and `:prompt-toggle-space`, which let you customize
+now, namely `:prompt`, `:prompt-color` and `:prompt-toggle-space`, which let you customize
 your prompt. A quick demo:
 
 ```
@@ -142,6 +142,10 @@ doge>:prompt-toggle-space
 doge> doge
 wow such fancy
 ```
+
+An example of using `prompt-color` is not really feasible here, but trust me when
+I say that it will colorize your prompt if you give it a string denoting the color.
+Try it out by typing `:prompt-color green`.
 
 I will implement other features and config file support as we go along.
 
