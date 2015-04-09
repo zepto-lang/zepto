@@ -55,11 +55,11 @@ main = do args <- getArgs
               runSingleStatement (getOpt arg (makeArg "s" "single"))
             | otherwise = runFile arg
           hasIn :: [String] -> [String] -> Bool
-          hasIn x l = any (\t -> elem t l) x
+          hasIn x l = any (`elem` l) x
           makeArg :: String -> String -> [String]
           makeArg short long = ['-' : short, "--" ++ long]
           getOpt :: [String] -> [String] -> String
-          getOpt x l = case findIndex (\t -> elem t l) x of
+          getOpt x l = case findIndex (`elem` l) x of
                               Just i -> if length x > i + 1
                                         then x !! (i + 1)
                                         else "(display \"Malformed input: option " ++

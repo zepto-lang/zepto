@@ -152,7 +152,7 @@ until_ prompt action text = do result <- prompt text
               emptyInput :: String -> Bool
               emptyInput el =
                     let x = wordsBy isSpace el
-                    in length x == 0
+                    in null x
               matches :: String -> String -> Bool
               matches el matcher =
                     let x = wordsBy isSpace el
@@ -172,13 +172,13 @@ until_ prompt action text = do result <- prompt text
                                         "m" ++ resetPrompt oldPrompt ++
                                         "\x1b[0m"
                       _                 -> oldPrompt
-                where resetPrompt p = if isInfixOf "\x1b[0m" p
-                                        then (slice (length "\x1b[30m")
+                where resetPrompt p = if "\x1b[0m" `isInfixOf` p
+                                        then slice (length "\x1b[30m")
                                                     (length p - length "\x1b[0m")
-                                                    p)
+                                                    p
                                         else p
                       slice f t l = take (t - f + 1) (drop f l)
-                      lookupColor color = find (\t -> color == (fst t)) colors
+                      lookupColor color = find (\t -> color == fst t) colors
                       colors = [ ("black", "30")
                                , ("red", "31")
                                , ("green", "32")

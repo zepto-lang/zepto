@@ -70,7 +70,16 @@
       (display "\\  ;    `, \/\n")
       (display ";_/\"`.__.-\"")))
 
+  (define (fish-bubbles)
+    (begin
+      (display "              o O\n")
+      (display "     .-\"\"L_ O  o\n")
+      (display ";`, /   ( o\\  o\n")
+      (display "\\  ;    `, \/\n")
+      (display ";_/\"`.__.-\"")))
+
   (cond ((null? direction) (left-fish))
         ((string=? (car direction) "left") (left-fish))
         ((string=? (car direction) "right") (right-fish))
+        ((string=? (car direction) "bubbles") (fish-bubbles))
         (else (display (list "Unrecognized option: " direction)))))

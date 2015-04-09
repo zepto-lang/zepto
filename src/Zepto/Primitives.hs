@@ -16,7 +16,6 @@ import System.Directory
 import System.Exit
 import System.IO
 import System.IO.Error
-import System.IO.Unsafe
 
 import Paths_zepto
 import Zepto.Types
@@ -382,7 +381,7 @@ stringLength badArgList = throwError $ NumArgs 1 badArgList
 stringRef [String v, Number (NumI n)] =
         if n >= 0
            then return $ Character $ v !! fromInteger n
-           else throwError $ TypeMismatch "positive integer" (Number $ NumI $ n)
+           else throwError $ TypeMismatch "positive integer" (Number $ NumI n)
 stringRef [badType] = throwError $ TypeMismatch "string integer" badType
 stringRef badArgList = throwError $ NumArgs 2 badArgList
 
@@ -834,9 +833,9 @@ eval env conti (List (function : args)) = do
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 exitProc :: [LispVal] -> IOThrowsError LispVal
-exitProc [] = do _ <- unsafePerformIO exitSuccess
+exitProc [] = do _ <- liftIO $ tryIOError $ liftIO $ exitSuccess
                  return $ Nil ""
-exitProc [Number (NumI x)] = do _ <- unsafePerformIO $ exitWith $ ExitFailure $ fromInteger x
+exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $ exitWith $ ExitFailure $ fromInteger x
                                 return $ Nil ""
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
@@ -844,9 +843,9 @@ exitProc badArg = throwError $ NumArgs 1 badArg
 colorProc :: [LispVal] -> IOThrowsError LispVal
 colorProc [String s] =
         case lookupColor s of
-           Just found -> writeProc hPrint $ [String $ "\x1b[" ++ snd found ++ "m"]
+           Just found -> writeProc hPrint [String $ "\x1b[" ++ snd found ++ "m"]
            _          -> throwError $ BadSpecialForm "Color not found: " $ String s
-    where lookupColor color = find (\t -> color == (fst t)) colors
+    where lookupColor color = find (\t -> color == fst t) colors
           colors = [ ("black", "30")
                    , ("red", "31")
                    , ("green", "32")
@@ -875,10 +874,10 @@ readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, Port port] = do
-        out <- liftIO $ tryIOError (liftIO $ fun port obj)
-        case out of
-            Left _ -> throwError $ Default "IO Error writing to port"
-            Right _ -> return $ Nil ""
+      out <- liftIO $ tryIOError (liftIO $ fun port obj)
+      case out of
+          Left _ -> throwError $ Default "IO Error writing to port"
+          Right _ -> return $ Nil ""
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 errorProc :: [LispVal] -> IOThrowsError LispVal
