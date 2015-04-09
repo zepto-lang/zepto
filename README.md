@@ -66,15 +66,15 @@ zepto> (pow 3 300) ; for schemers: this is a convenience alias for expt
 206155688941388250484440597994042813512732765695774566001
 ```
 
-Please note that integers are promoted when they work together with floats:
+Please note that numerical types are promoted when they work together:
 
 ```
 zepto> (+ 1 1.5)
 2.5
 ```
 
-There are a few datatypes, namely integers, floats, strings, lists and
-vectors. Quoted expressions are supported, too.
+There are a few datatypes, namely integers, floats, exact and imaginary numbers, 
+strings, lists and vectors. Quoted and quasi-quoted expressions are supported, too.
 
 If you need help with a specific primitive, invoke help on it like so:
 
@@ -146,6 +146,9 @@ wow such fancy
 An example of using `prompt-color` is not really feasible here, but trust me when
 I say that it will colorize your prompt if you give it a string denoting the color.
 Try it out by typing `:prompt-color green`.
+
+If you do not like being greeted by a bloated header every time you start the REPL,
+invoke it with the `-S/--silent` option.
 
 I will implement other features and config file support as we go along.
 
