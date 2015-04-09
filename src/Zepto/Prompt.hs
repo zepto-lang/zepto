@@ -169,9 +169,16 @@ until_ prompt action text = do result <- prompt text
               colorize oldPrompt c =
                     case lookupColor c of
                       Just colorstring ->  "\x1b[" ++ snd colorstring ++
-                                        "m" ++ oldPrompt ++ "\x1b[0m"
+                                        "m" ++ resetPrompt oldPrompt ++
+                                        "\x1b[0m"
                       _                 -> oldPrompt
-                where lookupColor color = find (\t -> color == (fst t)) colors
+                where resetPrompt p = if isInfixOf "\x1b[0m" p
+                                        then (slice (length "\x1b[30m")
+                                                    (length p - length "\x1b[0m")
+                                                    p)
+                                        else p
+                      slice f t l = take (t - f + 1) (drop f l)
+                      lookupColor color = find (\t -> color == (fst t)) colors
                       colors = [ ("black", "30")
                                , ("red", "31")
                                , ("green", "32")
