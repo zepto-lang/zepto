@@ -176,8 +176,8 @@ to my plans, however, it will evolve into a dialect of Scheme tailored towards
 Multimedia (Audio, Video), separately optimizing functions concerned with
 audio and video programming through special primitives.
 
-Until I can do that, however, I want to implement a good set of R5RS and
-Common Lisp.
+Until I can do that, however, I want to implement a good (superset|subset|dialect) 
+of R5RS (and|or) Common Lisp.
 
 ## Future
 
