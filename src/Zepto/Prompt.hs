@@ -34,7 +34,7 @@ keywords = [ "apply"
            ]
 
 metaKeywords :: [String]
-metaKeywords = map metaize
+metaKeywords = fmap metaize
                [ "quit"
                , "exit"
                , "help"
@@ -50,10 +50,10 @@ metaize :: String -> String
 metaize cmd = metaPrefix : cmd
 
 completionSearch :: Env -> String -> [Completion]
-completionSearch env str = map simpleCompletion $ filter(str `isPrefixOf`) $
-                       map ("(" ++) keywords ++ getDefs ++ metaKeywords
+completionSearch env str = fmap simpleCompletion $ filter(str `isPrefixOf`) $
+                       fmap ("(" ++) keywords ++ getDefs ++ metaKeywords
                 where getDefs :: [String]
-                      getDefs = map (\x -> "(" ++ getAtom x) $ unsafePerformIO $ recExportsFromEnv env
+                      getDefs = fmap (\x -> "(" ++ getAtom x) $ unsafePerformIO $ recExportsFromEnv env
                       getAtom (Atom a) = a
                       getAtom _ = ""
 
@@ -70,15 +70,15 @@ addSettings env = Settings { historyFile = Just getDir
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= flip extendEnv (map (makeFunc IOFunc) ioPrimitives ++
-                                map (makeFunc PrimitiveFunc) primitives ++
-                                map (makeFunc EvalFunc) evalPrimitives)
+primitiveBindings = nullEnv >>= flip extendEnv (fmap (makeFunc IOFunc) ioPrimitives ++
+                                fmap (makeFunc PrimitiveFunc) primitives ++
+                                fmap (makeFunc EvalFunc) evalPrimitives)
                 where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
 
 -- | prints help for all primitives
 printHelp :: IO [()]
-printHelp = mapM putStrLn $ ["Primitives:"] ++ map getHelp primitives ++
-                             ["", "IO Primitives:"] ++ map getHelp ioPrimitives ++ [""]
+printHelp = mapM putStrLn $ ["Primitives:"] ++ fmap getHelp primitives ++
+                             ["", "IO Primitives:"] ++ fmap getHelp ioPrimitives ++ [""]
                 where getHelp tuple = firstEl tuple ++ " - " ++ thirdEl tuple
                       firstEl (x, _, _) = x
                       thirdEl (_, _, x) = x
@@ -217,7 +217,7 @@ runSingleStatement statement = do
 runFile :: [String] -> IO ()
 runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
-                                                    List $ map String $ drop 1 args)]
+                                                    List $ fmap String $ drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
         runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))

@@ -273,7 +273,7 @@ showVal (Port _) = "<IO port>"
 showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
                        docstring = doc}) =
     doc ++ "; source: " ++
-    "(lambda (" ++ unwords (map show args) ++
+    "(lambda (" ++ unwords (fmap show args) ++
         (case varargs of
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
@@ -298,7 +298,7 @@ showError (DivideByZero) = "Division by zero"
 showError (Default err) = err
 
 unwordsList :: [LispVal] -> String
-unwordsList = unwords . map showVal
+unwordsList = unwords . fmap showVal
 
 -- | traps an error and shows it
 trapError :: (MonadError e m, Show e) =>  m String -> m String

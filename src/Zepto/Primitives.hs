@@ -191,7 +191,7 @@ unpackStr (String s) = return s
 unpackStr notString = throwError $ TypeMismatch "string" notString
 
 unpackCIStr :: LispVal -> ThrowsError String
-unpackCIStr (String s) = return $ map toLower s
+unpackCIStr (String s) = return $ fmap toLower s
 unpackCIStr notString = throwError $ TypeMismatch "string" notString
 
 unpackBool :: LispVal -> ThrowsError Bool
@@ -428,7 +428,7 @@ stringToNumber [badType] = throwError $ TypeMismatch "string" badType
 stringToNumber badArgList = throwError $ NumArgs 1 badArgList
 
 stringToList :: [LispVal] -> ThrowsError LispVal
-stringToList [String s] = return $ List $ map Character s
+stringToList [String s] = return $ List $ fmap Character s
 stringToList [badType] = throwError $ TypeMismatch "string" badType
 stringToList badArgList = throwError $ NumArgs 1 badArgList
 
@@ -529,7 +529,7 @@ version' :: [Int]
 version' = [0, 6, 6]
 
 versionStr :: String
-versionStr = intercalate "." $ map show version'
+versionStr = intercalate "." $ fmap show version'
 
 majorVersion :: Int
 majorVersion = head version'
@@ -541,7 +541,7 @@ patchVersion :: Int
 patchVersion = version' !! 2
 
 getVersion :: [LispVal] -> ThrowsError LispVal
-getVersion [] = return $ List $ map (String . show) version'
+getVersion [] = return $ List $ fmap (String . show) version'
 getVersion badList = throwError $ NumArgs 0 badList
 
 getVersionStr :: [LispVal] -> ThrowsError LispVal
@@ -724,16 +724,16 @@ eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
 eval _ _ (List [Atom "help", String val]) =
         return $ String $ concat $
-        map thirdElem (filter filterTuple primitives) ++
-        map thirdElem (filter filterTuple ioPrimitives)
+        fmap thirdElem (filter filterTuple primitives) ++
+        fmap thirdElem (filter filterTuple ioPrimitives)
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
 eval env _ (List [Atom "help", Atom val]) = do
         let x = concat $
-                map thirdElem (filter filterTuple primitives) ++
-                map thirdElem (filter filterTuple ioPrimitives)
+                fmap thirdElem (filter filterTuple primitives) ++
+                fmap thirdElem (filter filterTuple ioPrimitives)
         if x == ""
             then getVar env val
             else return $ String x
@@ -910,7 +910,7 @@ apply conti (EvalFunc fun) args = fun (conti : args)
 apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
         if num fparams /= num args && isNothing varargs
             then throwError $ NumArgs (num fparams) args
-            else liftIO (extendEnv fclosure $ zip (map ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
+            else liftIO (extendEnv fclosure $ zip (fmap ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
     where
         remainingArgs = drop (length fparams) args
         num = toInteger . length
@@ -927,7 +927,7 @@ apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
 apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
 makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> String -> m LispVal
-makeFunc varargs env p b doc = return $ Func $ LispFun (map showVal p) varargs b env doc
+makeFunc varargs env p b doc = return $ Func $ LispFun (fmap showVal p) varargs b env doc
 
 makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
 makeNormalFunc env p b = makeFunc Nothing env p b "No documentation available"
