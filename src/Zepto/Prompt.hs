@@ -10,7 +10,6 @@ import Data.List.Split
 import System.Console.Haskeline
 import System.Directory
 import System.IO
-import System.IO.Unsafe
 import qualified Control.Exception
 
 import Paths_zepto
@@ -49,24 +48,24 @@ metaKeywords = fmap metaize
 metaize :: String -> String
 metaize cmd = metaPrefix : cmd
 
-completionSearch :: Env -> String -> [Completion]
-completionSearch env str = fmap simpleCompletion $ filter(str `isPrefixOf`) $
-                       fmap ("(" ++) keywords ++ getDefs ++ metaKeywords
-                where getDefs :: [String]
-                      getDefs = fmap (\x -> "(" ++ getAtom x) $ unsafePerformIO $ recExportsFromEnv env
+completionSearch :: Env -> String -> IO [Completion]
+completionSearch env str = do defs <- getDefs
+                              return $ fmap simpleCompletion $ filter(str `isPrefixOf`) $
+                                fmap ("(" ++) keywords ++ defs ++ metaKeywords
+                where getDefs :: IO [String]
+                      getDefs = do exports <- recExportsFromEnv env
+                                   return $ fmap (\x -> "(" ++ getAtom x) exports
                       getAtom (Atom a) = a
                       getAtom _ = ""
 
 -- | returns a fresh settings variable
-addSettings :: Env -> Settings IO
-addSettings env = Settings { historyFile = Just getDir
-                           , complete = completeWord Nothing " \t" $
-                                        return . completionSearch env
-                           , autoAddHistory = True
-                           }
-            where
-                  getDir :: FilePath
-                  getDir = unsafePerformIO getHomeDirectory ++ "/.zepto_history"
+addSettings :: Env -> IO (Settings IO)
+addSettings env = do dir <- getHomeDirectory
+                     return Settings { historyFile = Just (dir ++ "/.zepto_history")
+                                     , complete = completeWord Nothing " \t" $
+                                                  completionSearch env
+                                     , autoAddHistory = True
+                                     }
 
 -- | adds primitive bindings to an empty environment
 primitiveBindings :: IO Env
@@ -192,7 +191,8 @@ until_ prompt action text = do result <- prompt text
 
 -- | reads from the prompt
 readPrompt :: Env -> String -> IO String
-readPrompt env text = runInputT (addSettings env) $ poll text
+readPrompt env text = do set <- addSettings env
+                         runInputT set $ poll text
     where poll :: String -> InputT IO String
           poll p = do
             input <- getInputLine p
