@@ -83,3 +83,20 @@
         ((string=? (car direction) "right") (right-fish))
         ((string=? (car direction) "bubbles") (fish-bubbles))
         (else (display (list "Unrecognized option: " direction)))))
+
+;; The goose was found on http://www.retrojunkie.com/asciiart/animals/ducks.htm
+(define (non-standard-fish) "this might not be what you expect"
+  (begin
+    (display "                        __\n")
+    (display "                      /` ,\\__\n")
+    (display "                     |    ).-'\n")
+    (display "                    / .--'\n")
+    (display "                   / /\n")
+    (display "     ,      _.==''`  \\\n")
+    (display "   .'(  _.='         |\n")
+    (display "  {   ``  _.='       |\n")
+    (display "   {    \\`     ;    /\n")
+    (display "    `.   `'=..'  .='\n")
+    (display "      `=._    .='\n")
+    (display "   jgs  '-`\\\\`__\n")
+    (display "            `-._{\n")))
