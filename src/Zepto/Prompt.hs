@@ -117,18 +117,14 @@ until_ prompt action text = do result <- prompt text
                                 until_ prompt action text
                       | setter x "prompt" =
                                 until_ prompt action (getOpt x)
-                      | matches x "prompt" = do
-                                putStrLn "Error: the prompt meta command takes one additional argument"
-                                until_ prompt action text
+                      | matches x "prompt" = argMissing "prompt"
                       | matches x "prompt-toggle-space" =
                                 if last text == ' '
                                     then until_ prompt action (init text)
                                     else until_ prompt action (text ++ " ")
                       | setter x "prompt-color" =
                                 until_ prompt action (colorize text (getOpt x))
-                      | matches x "prompt-color" = do
-                                putStrLn "Error: the prompt-color meta command takes one additional argument"
-                                until_ prompt action text
+                      | matches x "prompt-color" = argMissing "prompt-color"
                       | matches x "license" =
                                 printFileContents "license_interactive"
                       | matches x "complete-license" =
@@ -149,6 +145,11 @@ until_ prompt action text = do result <- prompt text
                     putStrLn contents
                     hClose fhandle
                     until_ prompt action text
+              argMissing :: String -> IO ()
+              argMissing cmd = do
+                      putStrLn ("Error: the " ++ cmd ++
+                                " meta command takes one additional argument")
+                      until_ prompt action text
               emptyInput :: String -> Bool
               emptyInput el =
                     let x = wordsBy isSpace el
