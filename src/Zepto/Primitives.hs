@@ -526,7 +526,7 @@ isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
 version' :: [Int]
-version' = [0, 6, 6]
+version' = [0, 6, 7]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version'

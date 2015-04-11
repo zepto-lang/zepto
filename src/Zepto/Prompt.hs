@@ -4,9 +4,11 @@ module Zepto.Prompt( runRepl
                     , runFile
                     ) where
 import Control.Monad
+import Control.Monad.IO.Class
 import Data.Char
 import Data.List
 import Data.List.Split
+import Data.Maybe (fromMaybe)
 import System.Console.Haskeline
 import System.Directory
 import System.IO
@@ -48,22 +50,32 @@ metaKeywords = fmap metaize
 metaize :: String -> String
 metaize cmd = metaPrefix : cmd
 
-completionSearch :: Env -> String -> IO [Completion]
-completionSearch env str = do defs <- getDefs
-                              return $ fmap simpleCompletion $ filter(str `isPrefixOf`) $
-                                fmap ("(" ++) keywords ++ defs ++ metaKeywords
-                where getDefs :: IO [String]
-                      getDefs = do exports <- recExportsFromEnv env
-                                   return $ fmap (\x -> "(" ++ getAtom x) exports
-                      getAtom (Atom a) = a
-                      getAtom _ = ""
+completionSearch :: Env -> (String, String) -> IO (String, [Completion])
+completionSearch env (l, r) = complete' $ prepare l
+        where getDefs :: IO [String]
+              getDefs = do exports <- recExportsFromEnv env
+                           return $ fmap getAtom exports
+              getAtom (Atom a) = a
+              getAtom _ = ""
+              prepare x = reverse $ readIn x
+              readIn (x : xs) | x == '(' = []
+                              | isSpace x = []
+                              | otherwise = (x : readIn xs)
+              readIn [] = []
+              complete' ('"' : _) = liftIO $ completeFilename (l, r)
+              complete' left = do
+                   defs <- getDefs
+                   let allD = keywords ++ metaKeywords ++ defs
+                   let filtered = filter (left `isPrefixOf`) allD
+                   let found = map (\x -> Completion x x False) filtered
+                   let rest = fromMaybe l (stripPrefix (reverse left) l)
+                   return (rest, found)
 
 -- | returns a fresh settings variable
 addSettings :: Env -> IO (Settings IO)
 addSettings env = do dir <- getHomeDirectory
                      return Settings { historyFile = Just (dir ++ "/.zepto_history")
-                                     , complete = completeWord Nothing " \t" $
-                                                  completionSearch env
+                                     , complete = completionSearch env
                                      , autoAddHistory = True
                                      }
 
@@ -95,11 +107,14 @@ printKeywords = putStrLn ("Keywords:\n" ++
 
 printMetaKeywords :: IO ()
 printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
-                              ":exit      - quit interpreter\n" ++
-                              ":help      - print help for all available commands\n" ++
-                              ":license   - print license text\n" ++
-                              ":meta-help - displays this help message\n" ++
-                              ":prompt    - changes prompt message (takes additional command)\n")
+                              ":exit                - quit interpreter\n" ++
+                              ":help                - print help for all available commands\n" ++
+                              ":license             - print license text\n" ++
+                              ":meta-help           - displays this help message\n" ++
+                              ":prompt              - changes prompt message*\n" ++
+                              ":prompt-color        - changes prompt color*\n" ++
+                              ":prompt-toggle-space - appends a space to the prompt\n" ++
+                              "Commands denoted with * take an additional argument\n")
 
 -- | the main interpreter loop; gets input and hands everything except help and quit over
 until_ :: (String -> IO String) -> (String -> IO a) -> String -> IO ()
@@ -151,20 +166,27 @@ until_ prompt action text = do result <- prompt text
                       until_ prompt action text
               emptyInput :: String -> Bool
               emptyInput el =
-                    let x = wordsBy isSpace el
+                    let x = parse el
                     in null x
               matches :: String -> String -> Bool
               matches el matcher =
-                    let x = wordsBy isSpace el
+                    let x = parse el
                     in length x == 1 && head x == metaize matcher
               setter :: String -> String -> Bool
               setter el opt =
-                    let x = wordsBy isSpace el
+                    let x = parse el
                     in length x == 2 && head x == metaize opt
               getOpt :: String -> String
               getOpt el =
-                    let x = wordsBy isSpace el
+                    let x = parse el
                     in x !! 1
+              parse :: String -> [String]
+              parse x = case findIndex ('"' ==) x of
+                          Just _ ->  let y = wordsBy ('"' ==) x
+                                  in trim (y !! 0) : tail y
+                          _ -> wordsBy isSpace x
+              trim = let f = reverse . dropWhile isSpace
+                    in f . f
               colorize :: String -> String -> String
               colorize oldPrompt c =
                     case lookupColor c of
