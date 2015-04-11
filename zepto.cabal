@@ -17,7 +17,10 @@ Maintainer:          Veit Heller <github.com/hellerve>
 Bug-Reports:         http://github.com/hellerve/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
-Tested-with:         GHC == 7.8.4, GHC == 7.6.3
+Tested-with:         GHC == 7.10.1,
+                     GHC == 7.8.4,
+                     GHC == 7.6.3,
+                     GHC == 7.4.2
 
 Extra-Source-Files:  README.md
                      LICENSE
@@ -30,8 +33,20 @@ Source-Repository head
     Location:        git://github.com/hellerve/zepto.git
 
 Executable           zepto
-    Build-Depends:   array, base, containers, directory, haskeline, mtl >= 2.2.1, parsec, split, time, transformers >= 0.4.2
-    Extensions:      ExistentialQuantification CPP
-    ghc-options:     -Wall -Werror -O2
+    Build-Depends:   array,
+                     base,
+                     containers,
+                     directory,
+                     haskeline,
+                     mtl >= 2.2.1,
+                     parsec,
+                     split,
+                     time,
+                     transformers >= 0.4.2
+    Extensions:      ExistentialQuantification 
+                     CPP
+    ghc-options:     -Wall 
+                     -Werror 
+                     -O2
     Main-is:         Main.hs
     Hs-Source-Dirs:  src/
