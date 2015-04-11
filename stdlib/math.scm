@@ -1,5 +1,6 @@
 (define exact? integer?)
 (define pi 245850922/78256779)
+(define e 438351041/161260336)
 (define (inexact? x) "is inexact number" (and (real? x) (not (integer? x))))
 (define (even? n) "is even" (= (remainder n 2) 0))
 (define (odd? n) "is odd" (not (= (remainder n 2) 0)))
