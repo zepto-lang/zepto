@@ -32,6 +32,16 @@ keywords = [ "apply"
            , "help"
            , "if"
            , "lambda"
+           , "load"
+           , "quote"
+           , "quasiquote"
+           , "set!"
+           , "set-car"
+           , "set-cdr"
+           , "string-fill"
+           , "string-set"
+           , "vector-fill"
+           , "vector-set"
            ]
 
 metaKeywords :: [String]
@@ -45,6 +55,7 @@ metaKeywords = fmap metaize
                , "prompt"
                , "prompt-toggle-space"
                , "prompt-color"
+               , "prompt-bold"
                ]
 
 metaize :: String -> String
@@ -113,6 +124,7 @@ printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
                               ":meta-help           - displays this help message\n" ++
                               ":prompt              - changes prompt message*\n" ++
                               ":prompt-color        - changes prompt color*\n" ++
+                              ":prompt-bold         - changes prompt font weight\n" ++
                               ":prompt-toggle-space - appends a space to the prompt\n" ++
                               "Commands denoted with * take an additional argument\n")
 
@@ -139,6 +151,8 @@ until_ prompt action text = do result <- prompt text
                       | setter x "prompt-color" =
                                 until_ prompt action (colorize text (getOpt x))
                       | matches x "prompt-color" = argMissing "prompt-color"
+                      | matches x "prompt-bold" =
+                                until_ prompt action (fontweight text)
                       | matches x "license" =
                                 printFileContents "license_interactive"
                       | matches x "complete-license" =
@@ -187,6 +201,15 @@ until_ prompt action text = do result <- prompt text
                           _ -> wordsBy isSpace x
               trim = let f = reverse . dropWhile isSpace
                     in f . f
+              slice :: Int -> Int -> [a] -> [a]
+              slice f t l = take (t - f + 1) (drop f l)
+              fontweight :: String -> String
+              fontweight p =
+                    if "\x1b[1m" `isInfixOf` p
+                        then slice (length "\x1b[1m")
+                                   (length p - length "\x1b[0m" - 1)
+                                   p
+                        else "\x1b[1m" ++ p ++ "\x1b[0m"
               colorize :: String -> String -> String
               colorize oldPrompt c =
                     case lookupColor c of
@@ -199,7 +222,6 @@ until_ prompt action text = do result <- prompt text
                                                     (length p - length "\x1b[0m")
                                                     p
                                         else p
-                      slice f t l = take (t - f + 1) (drop f l)
                       lookupColor color = find (\t -> color == fst t) colors
                       colors = [ ("black", "30")
                                , ("red", "31")
