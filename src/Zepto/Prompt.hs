@@ -126,7 +126,8 @@ printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
                               ":prompt-color        - changes prompt color*\n" ++
                               ":prompt-bold         - changes prompt font weight\n" ++
                               ":prompt-toggle-space - appends a space to the prompt\n" ++
-                              "Commands denoted with * take an additional argument\n")
+                              "\n" ++
+                              "-- Commands denoted with * take an additional argument")
 
 -- | the main interpreter loop; gets input and hands everything except help and quit over
 until_ :: (String -> IO String) -> (String -> IO a) -> String -> IO ()
