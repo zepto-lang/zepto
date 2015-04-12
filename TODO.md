@@ -33,7 +33,7 @@
 * Complex Numbers [x]
 * call/cc [x]
 * rationals [x]
-* Make division by zero not error
+* Make division by zero not error [x]
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
