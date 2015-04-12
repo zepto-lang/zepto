@@ -53,6 +53,8 @@ main = do args <- getArgs
               runRepl
             | hasIn arg (makeArg "s" "single") =
               runSingleStatement (getOpt arg (makeArg "s" "single"))
+            | hasIn arg (makeArg "v" "version") =
+              printVersion
             | otherwise = runFile arg
           hasIn :: [String] -> [String] -> Bool
           hasIn x l = any (`elem` l) x
