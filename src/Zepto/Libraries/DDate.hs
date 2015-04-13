@@ -3,6 +3,7 @@ import Control.Monad
 import Data.Time.Clock
 import Data.Time.Calendar
 import Data.Time.Calendar.OrdinalDate (toOrdinalDate)
+import System.Random (randomRIO)
 
 weekdays :: [String]
 weekdays = [ "Setting Orange"
@@ -84,5 +85,13 @@ date (year, day) =
             seasonstr ++ " in the YOLD " ++ yearstr ++ holydaystr
 
 ddate :: IO String
-ddate = ddate'
-    where ddate' = liftM (date . toOrdinalDate . utctDay) getCurrentTime
+ddate = do
+        rand <- (randomRIO (1, 10))::IO Integer
+        if rand == 9
+           then bollocks
+           else righty
+    where ddate' time = liftM (date . toOrdinalDate . utctDay) time
+          bollocks = do
+                time <- getCurrentTime
+                ddate' $ return (addUTCTime 400000000 time)
+          righty = ddate' getCurrentTime

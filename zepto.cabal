@@ -40,6 +40,7 @@ Executable           zepto
                      haskeline,
                      mtl >= 2.2.1,
                      parsec,
+                     random,
                      split,
                      time,
                      transformers >= 0.4.2
