@@ -120,5 +120,3 @@
     (do ((i 0 (+ i 1))) ((= i 1e6) (rng-assert k  904977562)) (set! k (mwc)))
     (display "Seventh test")
     (do ((i 0 (+ i 1))) ((= i 1e6) (rng-assert k 3519793928)) (set! k (fib)))))
-
-;(test-rng)
