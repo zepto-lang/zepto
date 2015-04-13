@@ -71,7 +71,7 @@ completionSearch env (l, r) = complete' $ prepare l
               prepare x = reverse $ readIn x
               readIn (x : xs) | x == '(' = []
                               | isSpace x = []
-                              | otherwise = (x : readIn xs)
+                              | otherwise = x : readIn xs
               readIn [] = []
               complete' ('"' : _) = liftIO $ completeFilename (l, r)
               complete' left = do
@@ -196,9 +196,9 @@ until_ prompt action text = do result <- prompt text
                     let x = parse el
                     in x !! 1
               parse :: String -> [String]
-              parse x = case findIndex ('"' ==) x of
+              parse x = case elemIndex '"' x of
                           Just _ ->  let y = wordsBy ('"' ==) x
-                                  in trim (y !! 0) : tail y
+                                  in trim (head y) : tail y
                           _ -> wordsBy isSpace x
               trim = let f = reverse . dropWhile isSpace
                     in f . f
@@ -262,7 +262,7 @@ runSingleStatement statement = do
 runFile :: [String] -> IO ()
 runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
-                                                    List $ fmap String $ drop 1 args)]
+                                                    List $ String <$> drop 1 args)]
         lib <- getDataFileName "stdlib/module.scm"
         _ <- loadFile env lib
         runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
