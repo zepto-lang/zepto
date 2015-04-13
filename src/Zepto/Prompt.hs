@@ -3,9 +3,7 @@ module Zepto.Prompt( runRepl
                     , evalAndPrint
                     , runFile
                     ) where
-#if __GLASGOW_HASKELL__ < 710
-    import Control.Applicative
-#endif
+import Control.Applicative
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Char
