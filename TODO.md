@@ -37,8 +37,9 @@
 
 **Features soon to be implemented:**
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
-* Add EvalFuncs
-* Make fractional of Complex work
+* Implement SmallInt
+* Add EvalFuncs (macro evaluation needs to be reformed)
+* Make modulo of Complex work
 * Make macros more robust
 * Make cl libraries work
 * Hashtables (SRFI 69)

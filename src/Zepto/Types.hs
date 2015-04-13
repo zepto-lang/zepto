@@ -165,13 +165,17 @@ instance Integral LispNum where
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
     --implement for Complex
     quotRem (NumC x) (NumC y) = (NumC $ x / y, NumF $ 1/0)
-    quotRem (NumC _) _ = error "modulo/div not yet defined between complex and other number types"
-    quotRem _ (NumC _) = error "modulo/div not yet defined between complex and other number types"
+    quotRem (NumC x) (NumI y) = (NumC $ x / mkPolar (fromIntegral y) 0, NumF $ 1/0)
+    quotRem (NumI x) (NumC y) = (NumC $ mkPolar (fromIntegral x) 0 / y, NumF $ 1/0)
+    quotRem (NumC x) (NumF y) = (NumC $ x / mkPolar y 0, NumF $ 1/0)
+    quotRem (NumF x) (NumC y) = (NumC $ mkPolar x 0 / y, NumF $ 1/0)
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
     quotRem (NumI x) (NumR y) = (NumR $ toRational x / y, NumR $ mod' (toRational x) y)
     quotRem (NumR x) (NumI y) = (NumR $ x / toRational y, NumR $ mod' x (toRational y))
     quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
     quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
+    quotRem (NumC x) (NumR y) = (NumC $ x / mkPolar (fromRational y) 0, NumF $ 1/0)
+    quotRem (NumR x) (NumC y) = (NumC $ mkPolar (fromRational x) 0 / y, NumF $ 1/0)
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
@@ -188,6 +192,7 @@ data LispNum = NumI Integer
              | NumF Double
              | NumC (Complex Double)
              | NumR Rational
+             -- | NumS Int
 
 instance Show LispVal where show = showVal
 -- | a LispVal data type comprising all Lisp data types

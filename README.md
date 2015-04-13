@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.7-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.8-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -46,7 +46,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.6.7
+zepto Version 0.6.8
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
