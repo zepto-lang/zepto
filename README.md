@@ -143,6 +143,14 @@ doge> doge
 wow such fancy
 ```
 
+If you want to use spaces in your prompt, do it like this:
+
+```
+zepto> :prompt "i am a spaced prompt$ "
+i am a spaced prompt$ "yay"
+yay
+```
+
 An example of using `prompt-color` is not really feasible here, but trust me when
 I say that it will colorize your prompt if you give it a string denoting the color.
 Try it out by typing `:prompt-color green`.
