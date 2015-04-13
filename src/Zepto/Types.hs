@@ -36,17 +36,17 @@ instance Eq LispNum where
     (NumI x) == (NumF y) = fromIntegral x == y
     (NumF x) == (NumF y) = x == y
     (NumC x) == (NumC y) = x == y
-    (NumC x) == (NumF y) = x == mkPolar y 0
-    (NumF x) == (NumC y) = mkPolar x 0 == y
-    (NumC x) == (NumI y) = x == mkPolar (fromIntegral y) 0
-    (NumI x) == (NumC y) = mkPolar (fromIntegral x) 0 == y
+    (NumC x) == (NumF y) = x == (y :+ 0)
+    (NumF x) == (NumC y) = (x :+ 0) == y
+    (NumC x) == (NumI y) = x == ((fromIntegral y) :+ 0)
+    (NumI x) == (NumC y) = ((fromIntegral x) :+ 0) == y
     (NumR x) == (NumR y) = x == y
     (NumR x) == (NumI y) = x == toRational y
     (NumI x) == (NumR y) = toRational x == y
     (NumR x) == (NumF y) = fromRational x == y
     (NumF x) == (NumR y) = x == fromRational y
-    (NumR x) == (NumC y) = mkPolar (fromRational x) 0 == y
-    (NumC x) == (NumR y) = x == mkPolar (fromRational y) 0
+    (NumR x) == (NumC y) = ((fromRational x) :+ 0) == y
+    (NumC x) == (NumR y) = x == ((fromRational y) :+ 0)
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
     compare (NumF x) (NumI y) = compare x (fromIntegral y)
@@ -98,49 +98,49 @@ instance Num LispNum where
     (NumI x) + (NumF y) = NumF $ fromIntegral x + y
     (NumF x) + (NumF y) = NumF $ x + y
     (NumC x) + (NumC y) = NumC $ x + y
-    (NumC x) + (NumF y) = NumC $ x + mkPolar y 0
-    (NumF x) + (NumC y) = NumC $ mkPolar x 0 + y
-    (NumC x) + (NumI y) = NumC $ x + mkPolar (fromIntegral y) 0
-    (NumI x) + (NumC y) = NumC $ mkPolar (fromIntegral x) 0 + y
+    (NumC x) + (NumF y) = NumC $ x + (y :+ 0)
+    (NumF x) + (NumC y) = NumC $ (x :+ 0) + y
+    (NumC x) + (NumI y) = NumC $ x + ((fromIntegral y) :+ 0)
+    (NumI x) + (NumC y) = NumC $ ((fromIntegral x) :+ 0) + y
     (NumR x) + (NumR y) = NumR $ x + y
     (NumR x) + (NumI y) = NumR $ x + fromIntegral y
     (NumI x) + (NumR y) = NumR $ fromIntegral x + y
     (NumR x) + (NumF y) = NumF $ fromRational x + y
     (NumF x) + (NumR y) = NumF $ x + fromRational y
-    (NumR x) + (NumC y) = NumC $ mkPolar (fromRational x) 0 + y
-    (NumC x) + (NumR y) = NumC $ mkPolar (fromRational y) 0 + x
+    (NumR x) + (NumC y) = NumC $ ((fromRational x) :+ 0) + y
+    (NumC x) + (NumR y) = NumC $ ((fromRational y) :+ 0) + x
     (NumI x) * (NumI y) = NumI $ x * y
     (NumF x) * (NumI y) = NumF $ x * fromIntegral y
     (NumI x) * (NumF y) = NumF $ fromIntegral x * y
     (NumF x) * (NumF y) = NumF $ x * y
     (NumC x) * (NumC y) = NumC $ x * y
-    (NumC x) * (NumF y) = NumC $ x * mkPolar y 0
-    (NumF x) * (NumC y) = NumC $ mkPolar x 0 * y
-    (NumC x) * (NumI y) = NumC $ x * mkPolar (fromIntegral y) 0
-    (NumI x) * (NumC y) = NumC $ mkPolar (fromIntegral x) 0 * y
+    (NumC x) * (NumF y) = NumC $ x * (y :+ 0)
+    (NumF x) * (NumC y) = NumC $ (x :+ 0) * y
+    (NumC x) * (NumI y) = NumC $ x * ((fromIntegral y) :+ 0)
+    (NumI x) * (NumC y) = NumC $ ((fromIntegral x) :+ 0) * y
     (NumR x) * (NumR y) = NumR $ x * y
     (NumI x) * (NumR y) = NumR $ fromIntegral x * y
     (NumR x) * (NumI y) = NumR $ x * fromIntegral y
     (NumF x) * (NumR y) = NumF $ x * fromRational y
     (NumR x) * (NumF y) = NumF $ fromRational x * y
-    (NumR x) * (NumC y) = NumC $ mkPolar (fromRational x) 0 * y
-    (NumC x) * (NumR y) = NumC $ x * mkPolar (fromRational y) 0
+    (NumR x) * (NumC y) = NumC $ ((fromRational x) :+ 0) * y
+    (NumC x) * (NumR y) = NumC $ x * ((fromRational y) :+ 0)
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
     (NumF x) - (NumF y) = NumF $ x - y
     (NumC x) - (NumC y) = NumC $ x - y
-    (NumC x) - (NumF y) = NumC $ x - mkPolar y 0
-    (NumF x) - (NumC y) = NumC $ mkPolar x 0 - y
-    (NumC x) - (NumI y) = NumC $ x - mkPolar (fromIntegral y) 0
-    (NumI x) - (NumC y) = NumC $ mkPolar (fromIntegral x) 0 - y
+    (NumC x) - (NumF y) = NumC $ x - (y :+ 0)
+    (NumF x) - (NumC y) = NumC $ (x :+ 0) - y
+    (NumC x) - (NumI y) = NumC $ x - ((fromIntegral y) :+ 0)
+    (NumI x) - (NumC y) = NumC $ ((fromIntegral x) :+ 0) - y
     (NumR x) - (NumR y) = NumR $ x - y
     (NumI x) - (NumR y) = NumR $ fromIntegral x - y
     (NumR x) - (NumI y) = NumR $ x - fromIntegral y
     (NumF x) - (NumR y) = NumF $ x - fromRational y
     (NumR x) - (NumF y) = NumF $ fromRational x - y
-    (NumR x) - (NumC y) = NumC $ mkPolar (fromRational x) 0 - y
-    (NumC x) - (NumR y) = NumC $ x - mkPolar (fromRational y) 0
+    (NumR x) - (NumC y) = NumC $ ((fromRational x) :+ 0) - y
+    (NumC x) - (NumR y) = NumC $ x - ((fromRational y) :+ 0)
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
     negate (NumC x) = NumC $ negate x
@@ -165,17 +165,17 @@ instance Integral LispNum where
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
     --implement for Complex
     quotRem (NumC x) (NumC y) = (NumC $ x / y, NumF $ 1/0)
-    quotRem (NumC x) (NumI y) = (NumC $ x / mkPolar (fromIntegral y) 0, NumF $ 1/0)
-    quotRem (NumI x) (NumC y) = (NumC $ mkPolar (fromIntegral x) 0 / y, NumF $ 1/0)
-    quotRem (NumC x) (NumF y) = (NumC $ x / mkPolar y 0, NumF $ 1/0)
-    quotRem (NumF x) (NumC y) = (NumC $ mkPolar x 0 / y, NumF $ 1/0)
+    quotRem (NumC x) (NumI y) = (NumC $ x / ((fromIntegral y) :+ 0), NumF $ 1/0)
+    quotRem (NumI x) (NumC y) = (NumC $ ((fromIntegral x) :+ 0) / y, NumF $ 1/0)
+    quotRem (NumC x) (NumF y) = (NumC $ x / (y :+ 0), NumF $ 1/0)
+    quotRem (NumF x) (NumC y) = (NumC $ (x :+ 0) / y, NumF $ 1/0)
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
     quotRem (NumI x) (NumR y) = (NumR $ toRational x / y, NumR $ mod' (toRational x) y)
     quotRem (NumR x) (NumI y) = (NumR $ x / toRational y, NumR $ mod' x (toRational y))
     quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
     quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
-    quotRem (NumC x) (NumR y) = (NumC $ x / mkPolar (fromRational y) 0, NumF $ 1/0)
-    quotRem (NumR x) (NumC y) = (NumC $ mkPolar (fromRational x) 0 / y, NumF $ 1/0)
+    quotRem (NumC x) (NumR y) = (NumC $ x / ((fromRational y) :+ 0), NumF $ 1/0)
+    quotRem (NumR x) (NumC y) = (NumC $ ((fromRational x) :+ 0) / y, NumF $ 1/0)
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x

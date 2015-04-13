@@ -245,6 +245,16 @@ numPow [Number (NumC n), Number (NumF base)] =
     return $ Number $ NumC $ n ** (base :+ 0)
 numPow [Number (NumR n), Number (NumR base)] =
     return $ Number $ NumF $ fromRational n ** fromRational base
+numPow [Number (NumR n), Number (NumI base)] =
+    return $ Number $ NumF $ fromRational n ** fromIntegral base
+numPow [Number (NumI n), Number (NumR base)] =
+    return $ Number $ NumF $ fromIntegral n ** fromRational base
+numPow [Number (NumR n), Number (NumF base)] =
+    return $ Number $ NumF $ fromRational n ** base
+numPow [Number (NumF n), Number (NumR base)] =
+    return $ Number $ NumF $ n ** fromRational base
+numPow [Number (NumC n), Number (NumR base)] =
+    return $ Number $ NumC $ n ** (fromRational base :+ 0)
 numPow [Number _, x] = throwError $ TypeMismatch "number" x
 numPow [x, Number _] = throwError $ TypeMismatch "number" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
