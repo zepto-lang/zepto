@@ -209,6 +209,7 @@ numRound _ badArgList = throwError $ NumArgs 1 badArgList
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [Number (NumI n)] = return $ Number $ NumF $ op $ fromInteger n
 numOp op [Number (NumF n)] = return $ Number $ NumF $ op n
+numOp op [Number (NumR n)] = return $ Number $ NumR $ toRational $ op $ fromRational n
 numOp op [Number (NumC n)] = return $ Number $ NumC $ op (realPart n) :+ op (imagPart n)
 numOp _ [x] = throwError $ TypeMismatch "number" x
 numOp _ badArgList = throwError $ NumArgs 1 badArgList
@@ -216,6 +217,7 @@ numOp _ badArgList = throwError $ NumArgs 1 badArgList
 numLog :: [LispVal] -> ThrowsError LispVal
 numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
 numLog [Number (NumF n)] = return $ Number $ NumF $ log n
+numLog [Number (NumR n)] = return $ Number $ NumF $ log $ fromRational n
 numLog [Number (NumC n)] = return $ Number $ NumC $ log n
 numLog [Number (NumI n), Number (NumI base)] =
     return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
@@ -241,8 +243,10 @@ numPow [Number (NumC n), Number (NumI base)] =
     return $ Number $ NumC $ n ** fromIntegral base
 numPow [Number (NumC n), Number (NumF base)] =
     return $ Number $ NumC $ n ** (base :+ 0)
-numPow [x, Number _] = throwError $ TypeMismatch "number" x
+numPow [Number (NumR n), Number (NumR base)] =
+    return $ Number $ NumF $ fromRational n ** fromRational base
 numPow [Number _, x] = throwError $ TypeMismatch "number" x
+numPow [x, Number _] = throwError $ TypeMismatch "number" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
 
 numSqrt :: [LispVal] -> ThrowsError LispVal
@@ -251,6 +255,7 @@ numSqrt [Number (NumI n)] = if n >= 0 then return $ Number $ NumF $ sqrt $ fromI
 numSqrt [Number (NumF n)] = if n >= 0 then return $ Number $ NumF $ sqrt n
                                       else return $ Number $ NumC $ sqrt (n :+ 0)
 numSqrt [Number (NumC n)] = return $ Number $ NumC $ sqrt n
+numSqrt [Number (NumR n)] = return $ Number $ NumF $ sqrt $ fromRational n
 numSqrt [x] = throwError $ TypeMismatch "number" x
 numSqrt badArgList = throwError $ NumArgs 1 badArgList
 
@@ -476,6 +481,7 @@ isDottedList _ = return $ Bool False
 
 isProcedure :: [LispVal] -> ThrowsError LispVal
 isProcedure ([PrimitiveFunc _]) = return $ Bool True
+isProcedure ([EvalFunc _]) = return $ Bool True
 isProcedure ([Func _]) = return $ Bool True
 isProcedure ([IOFunc _]) = return $ Bool True
 isProcedure ([Cont _]) = return $ Bool True
