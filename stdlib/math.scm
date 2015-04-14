@@ -10,6 +10,7 @@
 (define complex? number?)
 (define (abs n) "absolute value of number" (if (>= n 0) n (- n)))
 (define (exact->inexact n) "make inexact number from exact" (* n 1.0))
+(define (integer->float n) "make float from integer" (* n 1.0))
 (define (<> n1 n2) "not equal" (not (= n1 n2)))
 
 (define (succ x) "next number" (+ x 1))
