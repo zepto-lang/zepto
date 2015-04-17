@@ -36,13 +36,17 @@
 * Make division by zero not error [x]
 
 **Features soon to be implemented:**
-* Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
+Small:
+* Implement stdlib completion
 * Implement SmallInt
-* Add EvalFuncs (macro evaluation needs to be reformed)
 * Make modulo of Complex work
+Medium:
+* Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
+* Add EvalFuncs (macro evaluation needs to be reformed)
 * Make macros more robust
 * Make cl libraries work
 * Hashtables (SRFI 69)
+Big:
 * Foreign Function Interface to C and Haskell
 * Wrap OpenGL (https://github.com/haskell-opengl/OpenGL)
 * A Compiler
