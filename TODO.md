@@ -50,6 +50,7 @@ Big:
 * Foreign Function Interface to C and Haskell
 * Wrap OpenGL (https://github.com/haskell-opengl/OpenGL)
 * A Compiler
+  - with backend targetting gpu/ptx (maybe par-define?)
 * A solid actor-based concurrency system
 
 **Miscellaneous enhancements:**
