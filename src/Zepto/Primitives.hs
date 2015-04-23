@@ -560,7 +560,7 @@ getVersion [] = return $ List $ fmap (String . show) version'
 getVersion badList = throwError $ NumArgs 0 badList
 
 getVersionStr :: [LispVal] -> ThrowsError LispVal
-getVersionStr [] = return $ String $ verionStr
+getVersionStr [] = return $ String $ versionStr
 getVersionStr badList = throwError $ NumArgs 0 badList
 
 getMajVersion :: [LispVal] -> ThrowsError LispVal
