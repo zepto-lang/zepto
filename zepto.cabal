@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.6.8
+Version:             0.6.9
 Synopsis:            Minimal R5RS Scheme interpreter and REPL.
 Description:         
   zepto is an implementation of the R5RS standard.
@@ -37,6 +37,7 @@ Executable           zepto
                      base,
                      containers,
                      directory,
+                     filepath,
                      haskeline,
                      mtl >= 2.2.1,
                      parsec,

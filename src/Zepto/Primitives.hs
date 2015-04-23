@@ -8,7 +8,6 @@ import Data.Array
 import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
 import Data.List
-import Data.Version
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -542,7 +541,7 @@ isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
 version' :: [Int]
-version' = [0, 6, 8]
+version' = [0, 6, 9]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version'
@@ -561,7 +560,7 @@ getVersion [] = return $ List $ fmap (String . show) version'
 getVersion badList = throwError $ NumArgs 0 badList
 
 getVersionStr :: [LispVal] -> ThrowsError LispVal
-getVersionStr [] = return $ String $ showVersion version
+getVersionStr [] = return $ String $ verionStr
 getVersionStr badList = throwError $ NumArgs 0 badList
 
 getMajVersion :: [LispVal] -> ThrowsError LispVal

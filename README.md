@@ -1,5 +1,5 @@
 # zepto
-![general version](http://img.shields.io/badge/version-0.6.8-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.6.9-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -46,7 +46,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.6.8
+zepto Version 0.6.9
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
@@ -131,9 +131,9 @@ directory.
 ## Customizing the REPL
 
 If you are like me, you want to make your Interpreter your own.
-Well, you can, sort of. There are exactly two meta commands as of right
-now, namely `:prompt`, `:prompt-color` and `:prompt-toggle-space`, which let you customize
-your prompt. A quick demo:
+Well, you can, sort of. There are exactly three meta commands for changing
+the prompt as of right now, namely `:prompt`, `:prompt-color` and 
+`:prompt-toggle-space`, which let you customize your prompt. A quick demo:
 
 ```
 zepto> :prompt-toggle-space

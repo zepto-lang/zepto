@@ -12,8 +12,9 @@ import Data.Char
 import Data.List
 import Data.List.Split
 import Data.Maybe (fromMaybe)
-import System.Console.Haskeline
+import System.Console.Haskeline hiding (listFiles, completeFilename)
 import System.Directory
+import System.FilePath
 import System.IO
 import qualified Control.Exception
 
@@ -63,6 +64,50 @@ metaKeywords = fmap metaize
 
 metaize :: String -> String
 metaize cmd = metaPrefix : cmd
+
+completeFilename :: MonadIO m => CompletionFunc m
+completeFilename  = completeQuotedWord (Just '\\') "\"'" listFiles $
+                    completeWord (Just '\\')
+                                 ("\"\'" ++ filenameWordBreakChars)
+                                 listFiles
+
+fixPath :: String -> IO String
+fixPath "" = return "."
+fixPath ('~':c:path) | isPathSeparator c = do
+      home <- getHomeDirectory
+      return (home </> path)
+fixPath path = return path
+
+completion :: String -> Completion
+completion str = Completion str str True
+
+setReplacement :: (String -> String) -> Completion -> Completion
+setReplacement f c = c {replacement = f $ replacement c}
+
+listFiles :: MonadIO m => FilePath -> m [Completion]
+listFiles path = liftIO $ do
+    fixedDir <- fixPath dir
+    dirExists <- doesDirectoryExist fixedDir
+    std <- getDataFileName "stdlib"
+    stdfiles <- fmap (map completion . filterPrefix) $
+                  getDirectoryContents std
+    allFiles <- if not dirExists
+                    then return stdfiles
+                    else do
+                        curfiles <- fmap (map completion . filterPrefix) $
+                            getDirectoryContents fixedDir
+                        return (stdfiles ++ curfiles)
+    forM allFiles $ \c -> do
+            isDir <- doesDirectoryExist (fixedDir </> replacement c)
+            return $ setReplacement fullName $ alterIfDir isDir c
+  where
+    (dir, file) = splitFileName path
+    filterPrefix = filter (\f -> notElem f [".",".."]
+                                        && file `isPrefixOf` f)
+    alterIfDir False c = c
+    alterIfDir True c = c {replacement = addTrailingPathSeparator (replacement c),
+                            isFinished = False}
+    fullName = replaceFileName path
 
 completionSearch :: Env -> (String, String) -> IO (String, [Completion])
 completionSearch env (l, r) = complete' $ prepare l
