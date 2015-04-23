@@ -30,6 +30,7 @@
 * Numbers with e-notation [x]
 * Quasiquoting [x]
 * Completion and History [x]
+  * Stdlib file completion in strings [x]
 * Complex Numbers [x]
 * call/cc [x]
 * rationals [x]
@@ -37,7 +38,6 @@
 
 **Features soon to be implemented:**
 Small:
-* Implement stdlib completion
 * Implement SmallInt
 * Make modulo of Complex work
 Medium:
