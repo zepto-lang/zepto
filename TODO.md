@@ -51,7 +51,7 @@ Big:
 * Wrap OpenGL (https://github.com/haskell-opengl/OpenGL)
 * A Compiler
   - with backend targetting gpu/ptx (maybe par-define?)
-* A solid actor-based concurrency system
+* A solid actor-based concurrency system (+ transactional memory)
 
 **Miscellaneous enhancements:**
 * Quickcheck testing
