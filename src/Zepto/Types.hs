@@ -277,14 +277,14 @@ showVal (EvalFunc _) = "<eval primitive>"
 showVal (Port _) = "<IO port>"
 showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
                        docstring = doc}) =
-    doc ++ "; source: " ++
+    doc ++ "\n\tsource: " ++
     "(lambda (" ++ unwords (fmap show args) ++
         (case varargs of
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
 showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer p _) = "<pointer " ++ p ++ ">"
-showVal (Nil _) = ""
+showVal (Nil _) = "nil"
 showVal (Cont _) = "<continuation>"
 
 -- | a show function for all LispErrors

@@ -737,7 +737,16 @@ eval env conti (List [Atom "load", String file]) = do
 eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
+eval _ _ (List [Atom "doc"]) = throwError $ NumArgs 1 []
 eval _ _ (List [Atom "help", String val]) =
+        return $ String $ concat $
+        fmap thirdElem (filter filterTuple primitives) ++
+        fmap thirdElem (filter filterTuple ioPrimitives)
+    where
+          filterTuple tuple = (== val) $ firstElem tuple
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
+eval _ _ (List [Atom "doc", String val]) =
         return $ String $ concat $
         fmap thirdElem (filter filterTuple primitives) ++
         fmap thirdElem (filter filterTuple ioPrimitives)
@@ -756,8 +765,21 @@ eval env _ (List [Atom "help", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string" x
+eval env _ (List [Atom "doc", Atom val]) = do
+        let x = concat $
+                fmap thirdElem (filter filterTuple primitives) ++
+                fmap thirdElem (filter filterTuple ioPrimitives)
+        if x == ""
+            then getVar env val
+            else return $ String x
+    where
+          filterTuple tuple = (== val) $ firstElem tuple
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
+eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string/atom" x
 eval _ _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [Atom "doc", x]) = throwError $ TypeMismatch "string/atom" x
+eval _ _ (List (Atom "doc" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote env val
     where doUnQuote :: Env -> LispVal -> IOThrowsError LispVal
