@@ -277,7 +277,7 @@ showVal (EvalFunc _) = "<eval primitive>"
 showVal (Port _) = "<IO port>"
 showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
                        docstring = doc}) =
-    doc ++ "\n\tsource: " ++
+    doc ++ "\n  source: " ++
     "(lambda (" ++ unwords (fmap show args) ++
         (case varargs of
             Nothing -> ""
