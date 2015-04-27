@@ -61,12 +61,6 @@
                  (if test
                    (begin result1 result2 ...)))))
 
-(define-syntax unless
-  (syntax-rules ()
-                ((unless test result1 result2 ...)
-                 (if (not test)
-                   (begin result1 result2 ...)))))
-
 (define-syntax letrec*
   (syntax-rules ()
                 ((letrec* ((var1 init1) ...) body1 body2 ...)
@@ -74,3 +68,11 @@
                    (set! var1 init1)
                    ...
                    (let () body1 body2 ...)))))
+
+;; This is the only homebrew definition
+(define-syntax unless
+  (syntax-rules ()
+                ((unless test result1 ...)
+                 (if (not test)
+                   result1
+                   ...))))

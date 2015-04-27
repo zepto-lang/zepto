@@ -159,7 +159,8 @@ printKeywords = putStrLn ("Keywords:\n" ++
                           "apply   - apply function to value\n" ++
                           "define  - define global variable\n" ++
                           "error   - print value to stderr\n" ++
-                          "help    - display help for function" ++
+                          "help    - display help for function\n" ++
+                          "doc     - display help for function(alias for help)\n" ++
                           "if      - branch on condition\n" ++
                           "lambda  - create unnamed function\n" ++
                           "let     - define local variable\n")
@@ -169,6 +170,7 @@ printMetaKeywords = putStrLn ("Meta Keywords:\n" ++
                               ":exit                - quit interpreter\n" ++
                               ":help                - print help for all available commands\n" ++
                               ":license             - print license text\n" ++
+                              ":keyword-help        - displays help for all keywords\n" ++
                               ":meta-help           - displays this help message\n" ++
                               ":prompt              - changes prompt message*\n" ++
                               ":prompt-color        - changes prompt color*\n" ++
@@ -185,6 +187,9 @@ until_ prompt action text = do result <- prompt text
                                 until_ prompt action text
                       | matches x "help" = do
                                 _ <- printHelp
+                                printKeywords
+                                until_ prompt action text
+                      | matches x "keyword-help" = do
                                 printKeywords
                                 until_ prompt action text
                       | matches x "meta-help" = do
