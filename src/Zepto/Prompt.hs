@@ -53,6 +53,7 @@ metaKeywords = fmap metaize
                [ "quit"
                , "exit"
                , "help"
+               , "keyword-help"
                , "meta-help"
                , "license"
                , "complete-license"
