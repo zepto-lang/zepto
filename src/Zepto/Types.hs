@@ -38,15 +38,24 @@ instance Eq LispNum where
     (NumC x) == (NumC y) = x == y
     (NumC x) == (NumF y) = x == (y :+ 0)
     (NumF x) == (NumC y) = (x :+ 0) == y
-    (NumC x) == (NumI y) = x == ((fromIntegral y) :+ 0)
-    (NumI x) == (NumC y) = ((fromIntegral x) :+ 0) == y
+    (NumC x) == (NumI y) = x == (fromIntegral y :+ 0)
+    (NumI x) == (NumC y) = (fromIntegral x :+ 0) == y
     (NumR x) == (NumR y) = x == y
     (NumR x) == (NumI y) = x == toRational y
     (NumI x) == (NumR y) = toRational x == y
     (NumR x) == (NumF y) = fromRational x == y
     (NumF x) == (NumR y) = x == fromRational y
-    (NumR x) == (NumC y) = ((fromRational x) :+ 0) == y
-    (NumC x) == (NumR y) = x == ((fromRational y) :+ 0)
+    (NumR x) == (NumC y) = (fromRational x :+ 0) == y
+    (NumC x) == (NumR y) = x == (fromRational y :+ 0)
+    (NumS x) == (NumS y) = x == y
+    (NumS x) == (NumI y) = toInteger x == y
+    (NumI x) == (NumS y) = x == toInteger y
+    (NumS x) == (NumF y) = fromIntegral x == y
+    (NumF x) == (NumS y) = x == fromIntegral y
+    (NumS x) == (NumC y) = (fromIntegral x :+ 0) == y
+    (NumC x) == (NumS y) = x == (fromIntegral y :+ 0)
+    (NumS x) == (NumR y) = toRational x == y
+    (NumR x) == (NumS y) = x == toRational y
 instance Ord LispNum where
     compare (NumI x) (NumI y) = compare x y
     compare (NumF x) (NumI y) = compare x (fromIntegral y)
@@ -92,6 +101,7 @@ instance Ord LispNum where
         if fx == EQ
             then compare (imagPart x) 0
             else fx
+    compare _ _ = EQ
 instance Num LispNum where
     (NumI x) + (NumI y) = NumI $ x + y
     (NumF x) + (NumI y) = NumF $ x + fromIntegral y
@@ -100,15 +110,24 @@ instance Num LispNum where
     (NumC x) + (NumC y) = NumC $ x + y
     (NumC x) + (NumF y) = NumC $ x + (y :+ 0)
     (NumF x) + (NumC y) = NumC $ (x :+ 0) + y
-    (NumC x) + (NumI y) = NumC $ x + ((fromIntegral y) :+ 0)
-    (NumI x) + (NumC y) = NumC $ ((fromIntegral x) :+ 0) + y
+    (NumC x) + (NumI y) = NumC $ x + (fromIntegral y :+ 0)
+    (NumI x) + (NumC y) = NumC $ (fromIntegral x :+ 0) + y
     (NumR x) + (NumR y) = NumR $ x + y
     (NumR x) + (NumI y) = NumR $ x + fromIntegral y
     (NumI x) + (NumR y) = NumR $ fromIntegral x + y
     (NumR x) + (NumF y) = NumF $ fromRational x + y
     (NumF x) + (NumR y) = NumF $ x + fromRational y
-    (NumR x) + (NumC y) = NumC $ ((fromRational x) :+ 0) + y
-    (NumC x) + (NumR y) = NumC $ ((fromRational y) :+ 0) + x
+    (NumR x) + (NumC y) = NumC $ (fromRational x :+ 0) + y
+    (NumC x) + (NumR y) = NumC $ (fromRational y :+ 0) + x
+    (NumS x) + (NumS y) = NumS $ x + y
+    (NumS x) + (NumI y) = NumI $ toInteger x + y
+    (NumI x) + (NumS y) = NumI $ x + toInteger y
+    (NumS x) + (NumF y) = NumF $ fromIntegral x + y
+    (NumF x) + (NumS y) = NumF $ x + fromIntegral y
+    (NumS x) + (NumC y) = NumC $ (fromIntegral x :+ 0) + y
+    (NumC x) + (NumS y) = NumC $ x + (fromIntegral y :+ 0)
+    (NumS x) + (NumR y) = NumR $ fromIntegral x + y
+    (NumR x) + (NumS y) = NumR $ x + fromIntegral y
     (NumI x) * (NumI y) = NumI $ x * y
     (NumF x) * (NumI y) = NumF $ x * fromIntegral y
     (NumI x) * (NumF y) = NumF $ fromIntegral x * y
@@ -116,15 +135,16 @@ instance Num LispNum where
     (NumC x) * (NumC y) = NumC $ x * y
     (NumC x) * (NumF y) = NumC $ x * (y :+ 0)
     (NumF x) * (NumC y) = NumC $ (x :+ 0) * y
-    (NumC x) * (NumI y) = NumC $ x * ((fromIntegral y) :+ 0)
-    (NumI x) * (NumC y) = NumC $ ((fromIntegral x) :+ 0) * y
+    (NumC x) * (NumI y) = NumC $ x * (fromIntegral y :+ 0)
+    (NumI x) * (NumC y) = NumC $ (fromIntegral x :+ 0) * y
     (NumR x) * (NumR y) = NumR $ x * y
     (NumI x) * (NumR y) = NumR $ fromIntegral x * y
     (NumR x) * (NumI y) = NumR $ x * fromIntegral y
     (NumF x) * (NumR y) = NumF $ x * fromRational y
     (NumR x) * (NumF y) = NumF $ fromRational x * y
-    (NumR x) * (NumC y) = NumC $ ((fromRational x) :+ 0) * y
-    (NumC x) * (NumR y) = NumC $ x * ((fromRational y) :+ 0)
+    (NumR x) * (NumC y) = NumC $ (fromRational x :+ 0) * y
+    (NumC x) * (NumR y) = NumC $ x * (fromRational y :+ 0)
+    _ * _ = error "Not implemented"
     (NumI x) - (NumI y) = NumI $ x - y
     (NumF x) - (NumI y) = NumF $ x - fromIntegral y
     (NumI x) - (NumF y) = NumF $ fromIntegral x - y
@@ -132,30 +152,35 @@ instance Num LispNum where
     (NumC x) - (NumC y) = NumC $ x - y
     (NumC x) - (NumF y) = NumC $ x - (y :+ 0)
     (NumF x) - (NumC y) = NumC $ (x :+ 0) - y
-    (NumC x) - (NumI y) = NumC $ x - ((fromIntegral y) :+ 0)
-    (NumI x) - (NumC y) = NumC $ ((fromIntegral x) :+ 0) - y
+    (NumC x) - (NumI y) = NumC $ x - (fromIntegral y :+ 0)
+    (NumI x) - (NumC y) = NumC $ (fromIntegral x :+ 0) - y
     (NumR x) - (NumR y) = NumR $ x - y
     (NumI x) - (NumR y) = NumR $ fromIntegral x - y
     (NumR x) - (NumI y) = NumR $ x - fromIntegral y
     (NumF x) - (NumR y) = NumF $ x - fromRational y
     (NumR x) - (NumF y) = NumF $ fromRational x - y
-    (NumR x) - (NumC y) = NumC $ ((fromRational x) :+ 0) - y
-    (NumC x) - (NumR y) = NumC $ x - ((fromRational y) :+ 0)
+    (NumR x) - (NumC y) = NumC $ (fromRational x :+ 0) - y
+    (NumC x) - (NumR y) = NumC $ x - (fromRational y :+ 0)
+    _ - _ = error "Not implemented"
     negate (NumI x) = NumI $ negate x
     negate (NumF x) = NumF $ negate x
     negate (NumC x) = NumC $ negate x
     negate (NumR x) = NumR $ negate x
+    negate (NumS x) = NumS $ negate x
     abs (NumI x) = NumI $ abs x
     abs (NumF x) = NumF $ abs x
     abs (NumC x) = NumC $ abs x
     abs (NumR x) = NumR $ abs x
+    abs (NumS x) = NumS $ abs x
     signum (NumI x) = NumI $ signum x
     signum (NumF x) = NumF $ signum x
     signum (NumC x) = NumC $ signum x
     signum (NumR x) = NumR $ signum x
+    signum (NumS x) = NumS $ signum x
     fromInteger x = NumI $ fromInteger x
 instance Integral LispNum where
     toInteger (NumI x) = x
+    toInteger (NumS x) = toInteger x
     toInteger (NumF x) = round x
     toInteger (NumC x) = round $ realPart x
     toInteger (NumR x) = round x
@@ -165,8 +190,8 @@ instance Integral LispNum where
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
     --implement for Complex
     quotRem (NumC x) (NumC y) = (NumC $ x / y, NumF $ 1/0)
-    quotRem (NumC x) (NumI y) = (NumC $ x / ((fromIntegral y) :+ 0), NumF $ 1/0)
-    quotRem (NumI x) (NumC y) = (NumC $ ((fromIntegral x) :+ 0) / y, NumF $ 1/0)
+    quotRem (NumC x) (NumI y) = (NumC $ x / (fromIntegral y :+ 0), NumF $ 1/0)
+    quotRem (NumI x) (NumC y) = (NumC $ (fromIntegral x :+ 0) / y, NumF $ 1/0)
     quotRem (NumC x) (NumF y) = (NumC $ x / (y :+ 0), NumF $ 1/0)
     quotRem (NumF x) (NumC y) = (NumC $ (x :+ 0) / y, NumF $ 1/0)
     quotRem (NumR x) (NumR y) = (NumR $ x / fromRational y, NumR $ mod' x y)
@@ -174,25 +199,28 @@ instance Integral LispNum where
     quotRem (NumR x) (NumI y) = (NumR $ x / toRational y, NumR $ mod' x (toRational y))
     quotRem (NumF x) (NumR y) = (NumF $ x / fromRational y, NumF $ mod' x (fromRational y))
     quotRem (NumR x) (NumF y) = (NumF $ fromRational x / y, NumF $ mod' (fromRational x) y)
-    quotRem (NumC x) (NumR y) = (NumC $ x / ((fromRational y) :+ 0), NumF $ 1/0)
-    quotRem (NumR x) (NumC y) = (NumC $ ((fromRational x) :+ 0) / y, NumF $ 1/0)
+    quotRem (NumC x) (NumR y) = (NumC $ x / (fromRational y :+ 0), NumF $ 1/0)
+    quotRem (NumR x) (NumC y) = (NumC $ (fromRational x :+ 0) / y, NumF $ 1/0)
+    quotRem _ _ = error "not yet implemented"
 instance Real LispNum where
     toRational (NumI x) = toRational x
     toRational (NumF x) = toRational x
     toRational (NumC _) = 0
     toRational (NumR x) = x
+    toRational (NumS x) = toRational x
 instance Enum LispNum where
     toEnum x = NumI $ toInteger x
     fromEnum (NumI x) = fromIntegral x
     fromEnum (NumF x) = round x
     fromEnum (NumC _) = 0
     fromEnum (NumR _) = 0
+    fromEnum (NumS x) = fromIntegral x
 -- | a LispNum data type comprising a float and an integer
 data LispNum = NumI Integer
              | NumF Double
              | NumC (Complex Double)
              | NumR Rational
-             -- | NumS Int
+             | NumS Int
 
 instance Show LispVal where show = showVal
 -- | a LispVal data type comprising all Lisp data types
@@ -260,6 +288,7 @@ showNum (NumF contents) = show contents
 showNum (NumI contents) = show contents
 showNum (NumC contents) = show (realPart contents) ++ "+" ++ show (imagPart contents) ++ "i"
 showNum (NumR contents) = show (numerator contents) ++ "/" ++ show (denominator contents)
+showNum (NumS contents) = show contents ++ "s"
 
 -- | a show function for all LispVals
 showVal :: LispVal -> String

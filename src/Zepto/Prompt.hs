@@ -90,12 +90,12 @@ listFiles path = liftIO $ do
     fixedDir <- fixPath dir
     dirExists <- doesDirectoryExist fixedDir
     std <- getDataFileName "stdlib"
-    stdfiles <- fmap (map completion . filterPrefix) $
+    stdfiles <- (map completion . filterPrefix) <$>
                   getDirectoryContents std
     allFiles <- if not dirExists
                     then return stdfiles
                     else do
-                        curfiles <- fmap (map completion . filterPrefix) $
+                        curfiles <- (map completion . filterPrefix) <$>
                             getDirectoryContents fixedDir
                         return (stdfiles ++ curfiles)
     forM allFiles $ \c -> do

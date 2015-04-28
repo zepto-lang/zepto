@@ -96,6 +96,7 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("string-length", stringLength, "get length of string")
              , ("make-string", makeString, "make a new string")
              , ("make-vector", makeVector, "create a vector")
+             , ("make-small", makeSmall, "create a small integer")
              , ("char->integer", charToInteger, "makes integer from char")
              , ("vector->list", vectorToList, "makes list from vector")
              , ("list->vector", listToVector, "makes vector from list")
@@ -339,6 +340,11 @@ equal [x, y] = do
            return $ Bool (primitiveEquals || let (Bool z) = eqvEquals in z)
 equal badArgList = throwError $ NumArgs 2 badArgList
 
+makeSmall :: [LispVal] -> ThrowsError LispVal
+makeSmall [Number (NumI n)] = return $ Number $ NumS $ fromInteger n
+makeSmall [badType] = throwError $ TypeMismatch "integer" badType
+makeSmall badArgList = throwError $ NumArgs 1 badArgList
+
 makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [Number n] = makeVector [Number n, List []]
 makeVector [Number (NumI n), a] = do
@@ -560,7 +566,7 @@ getVersion [] = return $ List $ fmap (String . show) version'
 getVersion badList = throwError $ NumArgs 0 badList
 
 getVersionStr :: [LispVal] -> ThrowsError LispVal
-getVersionStr [] = return $ String $ versionStr
+getVersionStr [] = return $ String versionStr
 getVersionStr badList = throwError $ NumArgs 0 badList
 
 getMajVersion :: [LispVal] -> ThrowsError LispVal

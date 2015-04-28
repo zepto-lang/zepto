@@ -86,11 +86,11 @@ date (year, day) =
 
 ddate :: IO String
 ddate = do
-        rand <- (randomRIO (1, 10))::IO Integer
+        rand <- randomRIO (1, 10)::IO Integer
         if rand == 9
            then bollocks
            else righty
-    where ddate' time = liftM (date . toOrdinalDate . utctDay) time
+    where ddate' = liftM (date . toOrdinalDate . utctDay)
           bollocks = do
                 time <- getCurrentTime
                 ddate' $ return (addUTCTime 400000000 time)
