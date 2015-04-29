@@ -200,7 +200,8 @@ unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 
 numRound :: (Double -> Integer) -> [LispVal] -> ThrowsError LispVal
 numRound _ [n@(Number (NumI _))] = return n
-numRound op [Number (NumF n)] = return $ Number $ NumI $ fromInteger $ op n
+numRound _ [n@(Number (NumS _))] = return n
+numRound op [Number (NumF n)] = return $ Number $ NumI $ op n
 numRound op [Number (NumC n)] = return $ Number $ NumC $ fromInteger (op $ realPart n) :+ fromInteger (op $ imagPart n)
 numRound op [Number (NumR n)] = return $ Number $ NumI $ op $ fromRational n
 numRound _ [x] = throwError $ TypeMismatch "number" x
@@ -208,14 +209,17 @@ numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [Number (NumI n)] = return $ Number $ NumF $ op $ fromInteger n
+numOp op [Number (NumS n)] = return $ Number $ NumF $ op $ fromIntegral n
 numOp op [Number (NumF n)] = return $ Number $ NumF $ op n
 numOp op [Number (NumR n)] = return $ Number $ NumR $ toRational $ op $ fromRational n
 numOp op [Number (NumC n)] = return $ Number $ NumC $ op (realPart n) :+ op (imagPart n)
 numOp _ [x] = throwError $ TypeMismatch "number" x
 numOp _ badArgList = throwError $ NumArgs 1 badArgList
 
+--NumS
 numLog :: [LispVal] -> ThrowsError LispVal
 numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
+numLog [Number (NumS n)] = return $ Number $ NumF $ log $ fromIntegral n
 numLog [Number (NumF n)] = return $ Number $ NumF $ log n
 numLog [Number (NumR n)] = return $ Number $ NumF $ log $ fromRational n
 numLog [Number (NumC n)] = return $ Number $ NumC $ log n
@@ -228,6 +232,7 @@ numLog [Number (NumC n), Number (NumI base)] =
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
+--NumS
 numPow :: [LispVal] -> ThrowsError LispVal
 numPow [Number (NumI n), wrong@(Number (NumI base))] =
     if base > -1
@@ -256,12 +261,14 @@ numPow [Number (NumF n), Number (NumR base)] =
 numPow [Number (NumC n), Number (NumR base)] =
     return $ Number $ NumC $ n ** (fromRational base :+ 0)
 numPow [Number _, x] = throwError $ TypeMismatch "number" x
-numPow [x, Number _] = throwError $ TypeMismatch "number" x
+numPow [x, Number _] = throwError $ TypeMismatch "number(not complex)" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
 
 numSqrt :: [LispVal] -> ThrowsError LispVal
 numSqrt [Number (NumI n)] = if n >= 0 then return $ Number $ NumF $ sqrt $ fromInteger n
                                       else return $ Number $ NumC $ sqrt (fromInteger n :+ 0)
+numSqrt [Number (NumS n)] = if n >= 0 then return $ Number $ NumF $ sqrt $ fromIntegral n
+                                      else return $ Number $ NumC $ sqrt (fromIntegral n :+ 0)
 numSqrt [Number (NumF n)] = if n >= 0 then return $ Number $ NumF $ sqrt n
                                       else return $ Number $ NumC $ sqrt (n :+ 0)
 numSqrt [Number (NumC n)] = return $ Number $ NumC $ sqrt n
@@ -350,6 +357,9 @@ makeVector [Number n] = makeVector [Number n, List []]
 makeVector [Number (NumI n), a] = do
     let l = replicate (fromInteger n) a
     return $ Vector $ listArray (0, length l - 1) l
+makeVector [Number (NumS n), a] = do
+    let l = replicate n a
+    return $ Vector $ listArray (0, length l - 1) l
 makeVector [badType] = throwError $ TypeMismatch "integer" badType
 makeVector badArgList = throwError $ NumArgs 1 badArgList
 
@@ -363,6 +373,7 @@ vectorLength [badType] = throwError $ TypeMismatch "vector" badType
 vectorLength badArgList = throwError $ NumArgs 1 badArgList
 
 vectorRef [Vector v, Number (NumI n)] = return $ v ! fromInteger n
+vectorRef [Vector v, Number (NumS n)] = return $ v ! n
 vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
 vectorRef badArgList = throwError $ NumArgs 2 badArgList
 
@@ -401,7 +412,11 @@ stringLength badArgList = throwError $ NumArgs 1 badArgList
 stringRef [String v, Number (NumI n)] =
         if n >= 0
            then return $ Character $ v !! fromInteger n
-           else throwError $ TypeMismatch "positive integer" (Number $ NumI n)
+           else return $ Character $ v !! ((length v) - fromInteger n)
+stringRef [String v, Number (NumS n)] =
+        if n >= 0
+           then return $ Character $ v !! n
+           else return $ Character $ v !! ((length v) - n)
 stringRef [badType] = throwError $ TypeMismatch "string integer" badType
 stringRef badArgList = throwError $ NumArgs 2 badArgList
 
@@ -418,6 +433,9 @@ substring [String s, Number (NumI start), Number (NumI end)] = do
     let len = fromInteger $ end - start
     let begin = fromInteger start
     return $ String $ (take len . drop begin) s
+substring [String s, Number (NumS start), Number (NumS end)] = do
+    let len = end - start
+    return $ String $ (take len . drop start) s
 substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
@@ -479,10 +497,12 @@ isReal _ = return $ Bool False
 
 isInteger :: [LispVal] -> ThrowsError LispVal
 isInteger ([Number (NumI _)]) = return $ Bool True
+isInteger ([Number (NumS _)]) = return $ Bool True
 isInteger _ = return $ Bool False
 
 isRational :: [LispVal] -> ThrowsError LispVal
 isRational ([Number (NumR _)]) = return $ Bool True
+isRational ([Number (NumS _)]) = return $ Bool True
 isRational ([Number (NumI _)]) = return $ Bool True
 isRational ([Number (NumF x)]) =
         if x == fromInteger (round x)
@@ -547,7 +567,7 @@ isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
 version' :: [Int]
-version' = [0, 6, 9]
+version' = [0, 6, 10]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version'
@@ -878,7 +898,11 @@ eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badFo
 exitProc :: [LispVal] -> IOThrowsError LispVal
 exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
                  return $ Nil ""
-exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $ exitWith $ ExitFailure $ fromInteger x
+exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $
+                                     exitWith $ ExitFailure $ fromInteger x
+                                return $ Nil ""
+exitProc [Number (NumS x)] = do _ <- liftIO $ tryIOError $ liftIO $
+                                     exitWith $ ExitFailure x
                                 return $ Nil ""
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
@@ -897,6 +921,9 @@ colorProc [String s] =
                    , ("magenta", "35")
                    , ("cyan", "36")
                    , ("white", "37")
+                   , ("reset", "0")
+                   , ("none", "0")
+                   , ("", "0")
                    ]
 colorProc [badArg] = throwError $ TypeMismatch "string" badArg
 colorProc badArgs = throwError $ NumArgs 1 badArgs
