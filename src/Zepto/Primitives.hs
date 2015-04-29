@@ -216,27 +216,48 @@ numOp op [Number (NumC n)] = return $ Number $ NumC $ op (realPart n) :+ op (ima
 numOp _ [x] = throwError $ TypeMismatch "number" x
 numOp _ badArgList = throwError $ NumArgs 1 badArgList
 
---NumS
 numLog :: [LispVal] -> ThrowsError LispVal
 numLog [Number (NumI n)] = return $ Number $ NumF $ log $ fromInteger n
-numLog [Number (NumS n)] = return $ Number $ NumF $ log $ fromIntegral n
+numLog [Number (NumS n)] = return $ Number $ NumF $ log (fromIntegral n)
 numLog [Number (NumF n)] = return $ Number $ NumF $ log n
 numLog [Number (NumR n)] = return $ Number $ NumF $ log $ fromRational n
 numLog [Number (NumC n)] = return $ Number $ NumC $ log n
 numLog [Number (NumI n), Number (NumI base)] =
-    return $ Number $ NumF $ logBase (fromInteger base) (fromInteger n)
+    return $ Number $ NumF $ logBase (fromInteger base) (fromIntegral n)
+numLog [Number (NumS n), Number (NumI base)] =
+    return $ Number $ NumF $ logBase (fromIntegral base) (fromIntegral n)
+numLog [Number (NumI n), Number (NumS base)] =
+    return $ Number $ NumF $ logBase (fromIntegral base) (fromIntegral n)
+numLog [Number (NumS n), Number (NumS base)] =
+    return $ Number $ NumF $ logBase (fromIntegral base) (fromIntegral n)
 numLog [Number (NumF n), Number (NumI base)] =
     return $ Number $ NumF $ logBase (fromInteger base) n
 numLog [Number (NumC n), Number (NumI base)] =
     return $ Number $ NumC $ logBase (fromInteger base) n
+numLog [Number (NumF n), Number (NumS base)] =
+    return $ Number $ NumF $ logBase (fromIntegral base) n
+numLog [Number (NumC n), Number (NumS base)] =
+    return $ Number $ NumC $ logBase (fromIntegral base) n
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
---NumS
+--TODO SmallInt support
 numPow :: [LispVal] -> ThrowsError LispVal
 numPow [Number (NumI n), wrong@(Number (NumI base))] =
     if base > -1
         then return $ Number $ NumI $ n ^ base
+        else throwError $ TypeMismatch "positive" wrong
+numPow [Number (NumS n), wrong@(Number (NumI base))] =
+    if base > -1
+        then return $ Number $ NumI $ (fromIntegral n) ^ base
+        else throwError $ TypeMismatch "positive" wrong
+numPow [Number (NumI n), wrong@(Number (NumS base))] =
+    if base > -1
+        then return $ Number $ NumI $ n ^ (fromIntegral base::Integer)
+        else throwError $ TypeMismatch "positive" wrong
+numPow [Number (NumS n), wrong@(Number (NumS base))] =
+    if base > -1
+        then return $ Number $ NumS $ n ^ base
         else throwError $ TypeMismatch "positive" wrong
 numPow [Number (NumF n), Number (NumI base)] =
     return $ Number $ NumF $ n ** fromIntegral base

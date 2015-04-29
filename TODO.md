@@ -32,14 +32,15 @@
 * Completion and History [x]
   * Stdlib file completion in strings [x]
 * Complex Numbers [x]
+* Rational Numbers [x]
 * call/cc [x]
 * rationals [x]
 * Make division by zero not error [x]
+* SmallInts [x]
 
 **Features soon to be implemented:**
 
 Small:
-* Implement SmallInt
 * Make modulo of Complex work
 
 Medium:
