@@ -76,6 +76,24 @@ zepto> (+ 1 1.5)
 There are a few datatypes, namely integers, floats, exact and imaginary numbers, 
 strings, lists and vectors. Quoted and quasi-quoted expressions are supported, too.
 
+A faster version of integers, wrapping natives, is available. Please note that
+it is only available via explicitly creating it by invoking `make-small` on a
+regular integer. They will wrap around and overflow just as you would expect from
+a hardware integer. It string representation is with `s`-suffix. Whenever it comes
+in contact with other number types, expect it to be promoted. A quick demo:
+
+```
+zepto> (make-small 1)
+1s
+zepto> (+ (make-small 100) 10) ; Fly away, you're an integer now!
+110
+zepto> (make-small (pow 2 63)) ; Hardware-dependent
+-9223372036854775808s
+```
+
+*Remember:* If you use small integers, you will have a bad time unless you know
+exactly what you are doing! They are unsafe, your mileage may vary.
+
 If you need help with a specific primitive, invoke help on it like so:
 
 ```
