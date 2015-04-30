@@ -241,7 +241,6 @@ numLog [Number (NumC n), Number (NumS base)] =
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
---TODO SmallInt support
 numPow :: [LispVal] -> ThrowsError LispVal
 numPow [Number (NumI n), wrong@(Number (NumI base))] =
     if base > -1
@@ -281,6 +280,16 @@ numPow [Number (NumF n), Number (NumR base)] =
     return $ Number $ NumF $ n ** fromRational base
 numPow [Number (NumC n), Number (NumR base)] =
     return $ Number $ NumC $ n ** (fromRational base :+ 0)
+numPow [Number (NumF n), Number (NumS base)] =
+    return $ Number $ NumF $ n ** fromIntegral base
+numPow [Number (NumS n), Number (NumF base)] =
+    return $ Number $ NumF $ fromIntegral n ** base
+numPow [Number (NumR n), Number (NumS base)] =
+    return $ Number $ NumF $ fromRational n ** fromIntegral base
+numPow [Number (NumS n), Number (NumR base)] =
+    return $ Number $ NumF $ fromIntegral n ** fromRational base
+numPow [Number (NumC n), Number (NumS base)] =
+    return $ Number $ NumC $ n ** fromIntegral base
 numPow [Number _, x] = throwError $ TypeMismatch "number" x
 numPow [x, Number _] = throwError $ TypeMismatch "number(not complex)" x
 numPow badArgList = throwError $ NumArgs 2 badArgList
