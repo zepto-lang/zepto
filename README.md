@@ -42,6 +42,11 @@ run `make test` to check your installation.
 
 ## Introduction
 
+**DISCLAIMER:** This is really only a quickstart. If you plan on going
+into it a bit deeper, you might want to take a look into the wiki. It all
+is a work in progress, though, so the resources might not be as exhaustive
+as would be appropriate.
+
 If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 

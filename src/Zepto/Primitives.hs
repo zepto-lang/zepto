@@ -87,6 +87,9 @@ primitives = [ ("+", numericPlusop (+), "add two values")
              , ("symbol?", isSymbol, "check whether variable is symbol")
              , ("vector?", unaryOp isVector, "check whether variable is vector")
              , ("string?", isString, "check whether variable is string")
+             , ("port?", isPort, "check whether variable is port")
+             , ("input-port?", isInputPort, "check whether variable is input port")
+             , ("output-port?", isOutputPort, "check whether variable is output port")
              , ("char?", isChar, "check whether vairable is char")
              , ("boolean?", isBoolean, "check whether variable is boolean")
              , ("vector", buildVector, "build a new vector")
@@ -588,6 +591,18 @@ isString :: [LispVal] -> ThrowsError LispVal
 isString ([String _]) = return $ Bool True
 isString _ = return $ Bool False
 
+isPort :: [LispVal] -> ThrowsError LispVal
+isPort ([Port _]) = return $ Bool True
+isPort _ = return $ Bool False
+
+isInputPort :: [LispVal] -> ThrowsError LispVal
+isInputPort ([Port _]) = return $ Bool True
+isInputPort _ = return $ Bool False
+
+isOutputPort :: [LispVal] -> ThrowsError LispVal
+isOutputPort ([Port _]) = return $ Bool True
+isOutputPort _ = return $ Bool False
+
 isChar :: [LispVal] -> ThrowsError LispVal
 isChar ([Character _]) = return $ Bool True
 isChar _ = return $ Bool False
@@ -698,6 +713,7 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
+eval env conti (Atom (':' : a)) = contEval env conti $ Atom a
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quote", val]) = contEval env conti val

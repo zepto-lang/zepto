@@ -1,3 +1,13 @@
+(define (read? x) "read from a file if it is an input file, else return #f"
+  (if (input-port? x)
+    (read x)
+    #f))
+
+(define (write? x s) "write s to a file if it is an output file, else return #f"
+  (if (output-port? x)
+    (write x s)
+    #f))
+
 (define (call-with-input-file s p) "open an input file s and apply a function to it, then close the file"
      (let ((inport (open-input-file s)))
           (if (eq? inport #f)
