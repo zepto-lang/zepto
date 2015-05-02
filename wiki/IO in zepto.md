@@ -86,4 +86,23 @@ all of you metaprogramming fiends.
 
 ## Output
 
+Output is pretty similar to Input, only the other way around. Makes sense,
+doesn't it? The relevant function calls are:
+
+```clojure
+(write)
+(write "bla" :stdout)
+(error)
+(write "bla" :stderr)
+(write (open-input-file "foo"))
+(write? (open-input-file "foo"))
+(color :black)
+```
+
+It all behaves pretty similarly to the Input functions. If you want to
+write to stderr, either call `error` or `write` and pass in the escaped
+atom of `stderr`. Calling color will change your outputs color. If you
+are done with the funkiness, call `color` again, this time either with
+no arguments or, if you want to make it more verbose `reset` or `none`.
+
 ## IO in the standard library

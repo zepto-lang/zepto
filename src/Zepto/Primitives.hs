@@ -956,7 +956,7 @@ exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
 
 colorProc :: [LispVal] -> IOThrowsError LispVal
-colorProc [String s] =
+colorProc [Atom s] =
         case lookupColor s of
            Just found -> writeProc hPrint [String $ "\x1b[" ++ snd found ++ "m"]
            _          -> throwError $ BadSpecialForm "Color not found: " $ String s
@@ -993,6 +993,7 @@ readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, Atom "stdout"] = writeProc fun [obj, Port stdout]
+writeProc fun [obj, Atom "stderr"] = writeProc fun [obj, Port stderr]
 writeProc fun [obj, Port port] = do
       out <- liftIO $ tryIOError (liftIO $ fun port obj)
       case out of
@@ -1001,7 +1002,7 @@ writeProc fun [obj, Port port] = do
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 errorProc :: [LispVal] -> IOThrowsError LispVal
-errorProc [obj] = liftIO $ hPrint stderr obj >> return (Bool True)
+errorProc [obj] = liftIO $ hPrint stderr obj >> return (Nil "")
 errorProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 readContents :: [LispVal] -> IOThrowsError LispVal
