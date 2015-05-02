@@ -166,7 +166,7 @@ doge> doge
 wow such fancy
 ```
 
-*I am really sore for the broken highlighting here.*
+*I am really sorry for the broken highlighting here.*
 
 If you want to use spaces in your prompt, do it like this:
 
