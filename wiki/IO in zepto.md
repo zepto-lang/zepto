@@ -1,7 +1,7 @@
 # IO in zepto
 
 Doing IO in zepto is pretty straightforward (or so I hope), but
-there are a few pitfalls. This tutorial aims to provide you
+[there are a few pitfalls](#output). This tutorial aims to provide you
 with all knowledge that is necessary to print things to stdout
 and into files.
 
@@ -104,6 +104,12 @@ write to stderr, either call `error` or `write` and pass in the escaped
 atom of `stderr`. Calling color will change your outputs color. If you
 are done with the funkiness, call `color` again, this time either with
 no arguments or, if you want to make it more verbose `reset` or `none`.
+
+**There is one major pitfall here:** Ports are buffered, so depending
+on how large the chunks you write are you might have to close it before
+expecting anything in the file. *The streams are not guaranteed to be
+written when the REPL or the program ends unless you explicitly close
+the port.* This does not apply to stdout, of course.
 
 ## IO in the standard library
 
