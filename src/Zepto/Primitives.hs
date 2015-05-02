@@ -135,7 +135,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                             _ -> hPutStr port $ show obj), "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
-               , ("read-all", readAll, "read and parse file")
+               , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
                , ("color", colorProc, "colorize output")
                ]
@@ -595,10 +595,12 @@ isPort :: [LispVal] -> ThrowsError LispVal
 isPort ([Port _]) = return $ Bool True
 isPort _ = return $ Bool False
 
+-- Implement
 isInputPort :: [LispVal] -> ThrowsError LispVal
 isInputPort ([Port _]) = return $ Bool True
 isInputPort _ = return $ Bool False
 
+-- Implement
 isOutputPort :: [LispVal] -> ThrowsError LispVal
 isOutputPort ([Port _]) = return $ Bool True
 isOutputPort _ = return $ Bool False
@@ -984,11 +986,13 @@ closePort _ = return $ Bool False
 
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
+readProc [Atom "stdin"] = readProc [Port stdin]
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
+writeProc fun [obj, Atom "stdout"] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, Port port] = do
       out <- liftIO $ tryIOError (liftIO $ fun port obj)
       case out of
