@@ -73,7 +73,7 @@ zepto> (pow 3 300) ; for schemers: this is a convenience alias for expt
 
 Please note that numerical types are promoted when they work together:
 
-```clojure
+```scheme
 zepto> (+ 1 1.5)
 2.5
 ```
@@ -165,6 +165,8 @@ doge>:prompt-toggle-space
 doge> doge
 wow such fancy
 ```
+
+*I am really sore for the broken highlighting here.*
 
 If you want to use spaces in your prompt, do it like this:
 
