@@ -18,7 +18,7 @@ pretty similar to the `FILE` type in C or the `file` objects in Python.
 You can create them in two ways, depending on their type. There are
 two ways of opening files, namely:
 
-```scheme
+```clojure
 (open-input-file "foo")
 (open-output-file "bar")
 (close-input-file input-file)
@@ -34,7 +34,7 @@ the analogous call.
 How can you avoid errors like the above? Firstly, there are a few
 check functions:
 
-```scheme
+```clojure
 (port? foo)
 (input-port? bar)
 (output-port? baz)
@@ -42,7 +42,7 @@ check functions:
 
 This allows us to do something like this:
 
-```scheme
+```clojure
 (if (input-port? foo)
   (read foo)
   #f)
@@ -51,7 +51,7 @@ This allows us to do something like this:
 Some of such functions are defined in the IO part of the standard library.
 Here are the ones I consider the most important:
 
-```scheme
+```clojure
 (read? input-file) ; this will either read from the port if it is a input-file
                    ; or return #f.
 (write? output-file "some important log or such") ; this is the inverse for an
@@ -65,7 +65,7 @@ This should suffice as an appetizer. Let us move on to more specialized topics.
 With all the initial hurdles out of the way, let us do some input. There are a
 few functions used for doing input, here is an overview:
 
-```scheme
+```clojure
 (read)
 (read :stdin)
 (read (open-input-file "foo"))
