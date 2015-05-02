@@ -65,7 +65,7 @@ zepto>
 
 Now you can just fiddle, maybe try something like
 
-```
+```clojure
 zepto> (pow 3 300) ; for schemers: this is a convenience alias for expt
 136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
 206155688941388250484440597994042813512732765695774566001
@@ -73,7 +73,7 @@ zepto> (pow 3 300) ; for schemers: this is a convenience alias for expt
 
 Please note that numerical types are promoted when they work together:
 
-```
+```clojure
 zepto> (+ 1 1.5)
 2.5
 ```
@@ -87,7 +87,7 @@ regular integer. They will wrap around and overflow just as you would expect fro
 a hardware integer. It string representation is with `s`-suffix. Whenever it comes
 in contact with other number types, expect it to be promoted. A quick demo:
 
-```
+```clojure
 zepto> (make-small 1)
 1s
 zepto> (+ (make-small 100) 10) ; Fly away, you're an integer now!
@@ -101,7 +101,7 @@ exactly what you are doing! They are unsafe, your mileage may vary.
 
 If you need help with a specific primitive, invoke help on it like so:
 
-```
+```clojure
 zepto> (help +)
 add two values
 zepto> (help "+")
@@ -110,7 +110,7 @@ add two values
 
 You can also get help for normal functions:
 
-```
+```clojure
 zepto> (define (x fst snd) "multiply two values" (* fst snd))
 multiply two values; source: (lambda ("fst" "snd") ...)
 zepto> (help x)
@@ -121,7 +121,7 @@ And it autocompletes your newly created function, too!
 
 Once you're done with the fiddling, just do:
 
-```
+```clojure
 zepto> :quit
 
 Moriturus te saluto.
@@ -132,7 +132,7 @@ And you're back to your regular shell.
 You can also run files  or strings by handing them to the program 
 like that:
 
-```
+```bash
 $ cat test.scm
 (display "hi")
 $ zepto test.scm
@@ -158,7 +158,7 @@ Well, you can, sort of. There are exactly three meta commands for changing
 the prompt as of right now, namely `:prompt`, `:prompt-color` and 
 `:prompt-toggle-space`, which let you customize your prompt. A quick demo:
 
-```
+```clojure
 zepto> :prompt-toggle-space
 zepto>:prompt doge>
 doge>:prompt-toggle-space
@@ -168,7 +168,7 @@ wow such fancy
 
 If you want to use spaces in your prompt, do it like this:
 
-```
+```clojure
 zepto> :prompt "i am a spaced prompt$ "
 i am a spaced prompt$ "yay"
 yay
