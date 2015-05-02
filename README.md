@@ -132,10 +132,10 @@ And you're back to your regular shell.
 You can also run files  or strings by handing them to the program 
 like that:
 
-```bash
-$ cat test.scm
+```sh
+$ cat t.scm
 (display "hi")
-$ zepto test.scm
+$ zepto t.scm
 hi
 $ zepto --single "(display \"bye\")"
 bye
