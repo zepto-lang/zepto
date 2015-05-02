@@ -106,3 +106,17 @@ are done with the funkiness, call `color` again, this time either with
 no arguments or, if you want to make it more verbose `reset` or `none`.
 
 ## IO in the standard library
+
+There are not as many standard library abstractions to IO as I would
+hope for yet. However, there are a few wrapper functions. We already
+saw two of them, namely `read?` and `write?`. The other ones are: 
+
+````clojure
+(call-with-input-file "foo" some-func)
+(call-with-output-file "bar" some-func)
+(with-input-from-file "baz" some-func)
+(with-output-to-file "fooz?" some-func)
+```
+
+*None of those are extensively tested, though*, so I would advise
+against using them at the moment.
