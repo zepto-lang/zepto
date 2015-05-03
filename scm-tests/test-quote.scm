@@ -31,7 +31,6 @@
 (assert-equal (lambda () (id `((foo ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))))
     '((foo 7) . cons))
 
-; TODO: needs vector support
 (assert-equal (lambda () (id `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)))
     '#(10 5 2.0 4.0 3.0 8))
 
@@ -43,6 +42,8 @@
 
 (assert-equal (lambda () (id '(quasiquote (list (unquote (+ 1 2)) 4))))
     '`(list ,(+ 1 2) 4))
+
+(assert-equal (lambda () (eval [+ 1 2])) 3)
 
 (unit-test-handler-results)
 (unit-test-all-passed)
