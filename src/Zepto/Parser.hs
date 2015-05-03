@@ -79,6 +79,7 @@ parseComplex = do
     _ <- char 'i'
     return $ Number $ NumC $ realPrt :+ imagPrt
 
+-- TODO: make parser error on invalid denominator
 parseRational :: Parser LispVal
 parseRational = do
     numeratorParse <- parseDigital1

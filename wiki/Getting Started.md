@@ -92,9 +92,8 @@ zepto> (make-small 100)
 100s
 ```
 
-When working with any other number type (even integers) they are promoted.
-
-Before explaining how the rational and complex number types work,
+When working with any other number type (even Integers) they are promoted.
+Before explaining how the Rational and Complex number types work,
 let me give you a quick list of standard functions that work with numbers:
 
 ````clojure
@@ -125,12 +124,38 @@ let me give you a quick list of standard functions that work with numbers:
 pi ; returns pi as a rational
 e ; returns e as a rational
 (make-small 40) ; make small from integer
-(char->integer #\Λ) ; smake integer from char, conforming to ASCII/Unicode
+(char->integer #\Λ) ; smake integer from char, conforming to ASCII/Unicode; this is a captial lambda, by the way
 (string->number "400") ; make number from string, can be any number type except small
 ```
 
 Those are not a lot, but quite a few and certainly enough to do a few basic
-experiments.
+experiments and probably more.
+
+After having those things off the table, let me explain Rationals.
+They are actually a pretty smart way to overcome a problem as old
+as computers - and I am able to say that it is smart, because it is
+smart, effective and not my idea. You have actually seen them before,
+namely in above list, but probably not recognized as such.
+In Scheme derivatives, a Rational is represented as two numbers
+divided by a slash and no spaces, e.g. `1/30000000`. The Rational
+is not evaluated to a Float, instead two numbers are kept in memory.
+This allows us to represent very numbers precisely instead of cutting
+digits off at some point. Cool, isn't it?
+
+The Complex type is a bit peculiar. If you do not know what a complex
+number is, you will likely not need this type and even if you do,
+you might not have use for it. If you think that is the case, just
+skip this section and jump to the next. You're not missing anything
+major, except if you ever try to calculate the square root of a negative
+number and expect the program to die.
+The Complex type is represented as two numbers, also without spaced,
+joined by a plus and with a trailing i like that `1+1i`. Complex
+as well as Rationals exist in many languages, the really killer feature
+in zepto in that regard is that those number types are first-class
+citizens.
+
+That should be it with the numbers, let's move on to chars and
+strings.
 
 ## Chars and Strings
 
