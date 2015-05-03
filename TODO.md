@@ -42,6 +42,7 @@
 
 Small:
 * Make modulo of Complex work
+* List shorthand []
 
 Medium:
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
