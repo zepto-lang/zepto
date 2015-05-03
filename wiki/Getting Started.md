@@ -163,6 +163,6 @@ strings.
 
 ## Macros
 
-## Contiunations
+## Continuations
 
 ## Atoms
