@@ -22,6 +22,7 @@ import Zepto.Parser
 import Zepto.Variables
 import Zepto.Macro
 
+-- TODO: change to two or more values
 -- | a list of all regular primitives
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [ ("+", numericPlusop (+), "add two values")
