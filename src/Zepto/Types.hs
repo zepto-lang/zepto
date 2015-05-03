@@ -376,9 +376,12 @@ showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form
 showError (NotFunction message func) = message ++ ": " ++ show func
-showError (NumArgs expected found) = "Expected " ++ show expected ++
-                                    " args; found " ++ show (length found)
-                                    ++ "; values are " ++ unwordsList found
+showError (NumArgs expected found) =
+        let x = "Expected " ++ show expected ++
+                " args; found " ++ show (length found)
+        in if length found /= 0
+              then x ++ "; values are " ++ unwordsList found
+              else x
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
                                           ", found " ++ show found
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr

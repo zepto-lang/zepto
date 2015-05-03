@@ -668,7 +668,7 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
-evalFun [Cont (Continuation env _ _ _ _), val] = macroEval env val
+evalFun [c@(Cont (Continuation env _ _ _ _)), val] = eval env c val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
 

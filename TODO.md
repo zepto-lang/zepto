@@ -37,6 +37,7 @@
 * rationals [x]
 * Make division by zero not error [x]
 * SmallInts [x]
+* [] convenience alias for lists
 
 **Features soon to be implemented:**
 
