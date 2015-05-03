@@ -149,7 +149,7 @@ skip this section and jump to the next. You're not missing anything
 major, except if you ever try to calculate the square root of a negative
 number and expect the program to die.
 The Complex type is represented as two numbers, also without spaced,
-joined by a plus and with a trailing i like that `1+1i`. Complex
+joined by a plus and with a trailing i, like that: `1+1i`. Complex
 as well as Rationals exist in many languages, the really killer feature
 in zepto in that regard is that those number types are first-class
 citizens.
