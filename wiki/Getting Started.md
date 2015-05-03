@@ -2,7 +2,8 @@
 
 This is supposed to be an introduction into zepto.
 If you know Scheme already, you can skip to the 
-[Atoms](#atoms) section.
+[Atoms](#atoms) section, which is the only addition 
+in terms of syntax yet.
 
 ## Basic syntax
 
