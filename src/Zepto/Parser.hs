@@ -79,7 +79,6 @@ parseComplex = do
     _ <- char 'i'
     return $ Number $ NumC $ realPrt :+ imagPrt
 
--- TODO: make parser error on invalid denominator
 parseRational :: Parser LispVal
 parseRational = do
     numeratorParse <- parseDigital1
@@ -243,6 +242,10 @@ parseExpr = parseComments
                x <- try parseList <|> parseDottedList
                _ <- char ')'
                return x
+        <|> do _ <- char '['
+               x <- parseList
+               _ <- char ']'
+               return $ List [Atom "quote", x]
         <?> "Expression"
 
 readOrThrow :: Parser a -> String -> ThrowsError a

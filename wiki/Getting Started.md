@@ -159,6 +159,8 @@ strings.
 
 ## Chars and Strings
 
+## Lists and Vectors
+
 ## Macros
 
 ## Contiunations
