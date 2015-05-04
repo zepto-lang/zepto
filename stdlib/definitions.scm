@@ -1,5 +1,4 @@
 (define len length)
-(define nil '())
 (define ok '())
 (define fold foldl)
 (define reduce fold)

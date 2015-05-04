@@ -92,6 +92,8 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("output-port?", isOutputPort, "check whether arg is output port")
              , ("char?", isChar, "check whether arg is char")
              , ("boolean?", isBoolean, "check whether arg is boolean")
+             , ("typeof", checkType, "return type string")
+             , ("nil", buildNil, "return nil")
              , ("vector", buildVector, "build a new vector")
              , ("string", buildString, "build a new string")
              , ("char-downcase", charDowncase, "downcases a char")
@@ -383,6 +385,10 @@ makeSmall [Number (NumI n)] = return $ Number $ NumS $ fromInteger n
 makeSmall [badType] = throwError $ TypeMismatch "integer" badType
 makeSmall badArgList = throwError $ NumArgs 1 badArgList
 
+buildNil:: [LispVal] -> ThrowsError LispVal
+buildNil [] = return $ Nil ""
+buildNil badArgList = throwError $ NumArgs 0 badArgList
+
 makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [Number n] = makeVector [Number n, List []]
 makeVector [Number (NumI n), a] = do
@@ -610,6 +616,29 @@ isChar _ = return $ Bool False
 isBoolean :: [LispVal] -> ThrowsError LispVal
 isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
+
+checkType :: [LispVal] -> ThrowsError LispVal
+checkType [Number (NumI _)] = return $ String "integer"
+checkType [Number (NumS _)] = return $ String "small integer"
+checkType [Number (NumF _)] = return $ String "float"
+checkType [Number (NumR _)] = return $ String "rational"
+checkType [Number (NumC _)] = return $ String "complex"
+checkType [Vector _] = return $ String "vector"
+checkType [Bool _] = return $ String "boolean"
+checkType [Character _] = return $ String "character"
+checkType [String _] = return $ String "string"
+checkType [List _] = return $ String "list"
+checkType [DottedList _ _] = return $ String "dotted list"
+checkType [Atom _] = return $ String "atom"
+checkType [PrimitiveFunc _] = return $ String "primitive"
+checkType [IOFunc _] = return $ String "io primitive"
+checkType [EvalFunc _] = return $ String "eval primitive"
+checkType [Port _] = return $ String "port"
+checkType [Func _] = return $ String "function"
+checkType [Nil _] = return $ String "nil"
+checkType [Pointer _ _] = return $ String "pointer"
+checkType [Cont _] = return $ String "continuation"
+checkType badArgList = throwError $ NumArgs 1 badArgList
 
 version' :: [Int]
 version' = [0, 6, 10]
@@ -1004,7 +1033,6 @@ writeProc fun [obj, Port port] = do
           Left _ -> throwError $ Default "IO Error writing to port"
           Right _ -> return $ Nil ""
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
-
 
 print' :: Handle -> LispVal -> IO ()
 print' port obj =
