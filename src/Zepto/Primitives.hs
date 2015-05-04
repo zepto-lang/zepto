@@ -129,14 +129,12 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
                , ("write", writeProc hPrint, "write to file")
-               , ("display", writeProc (\ port obj ->
-                        case obj of
-                            String str -> hPutStr port str
-                            _ -> hPutStr port $ show obj), "print to stdout")
+               , ("display", writeProc print', "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
+               , ("escape-sequence", escapeProc, "send escape sequence to shell")
                , ("color", colorProc, "colorize output")
                ]
 
@@ -955,23 +953,29 @@ exitProc [Number (NumS x)] = do _ <- liftIO $ tryIOError $ liftIO $
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
 
+escapeProc :: [LispVal] -> IOThrowsError LispVal
+escapeProc [Number (NumI n)] = writeProc print' [String $ "\x1b[" ++ show n ++ "m"]
+escapeProc [Number (NumS n)] = writeProc print' [String $ "\x1b[" ++ show n ++ "m"]
+escapeProc [badArg] = throwError $ TypeMismatch "integer" badArg
+escapeProc badArgList = throwError $ NumArgs 1 badArgList
+
 colorProc :: [LispVal] -> IOThrowsError LispVal
 colorProc [Atom s] =
         case lookupColor s of
-           Just found -> writeProc hPrint [String $ "\x1b[" ++ snd found ++ "m"]
+           Just found -> escapeProc $ [Number (NumI $ snd found)]
            _          -> throwError $ BadSpecialForm "Color not found: " $ String s
     where lookupColor color = find (\t -> color == fst t) colors
-          colors = [ ("black", "30")
-                   , ("red", "31")
-                   , ("green", "32")
-                   , ("yellow", "33")
-                   , ("blue", "34")
-                   , ("magenta", "35")
-                   , ("cyan", "36")
-                   , ("white", "37")
-                   , ("reset", "0")
-                   , ("none", "0")
-                   , ("", "0")
+          colors = [ ("black", 30)
+                   , ("red", 31)
+                   , ("green", 32)
+                   , ("yellow", 33)
+                   , ("blue", 34)
+                   , ("magenta", 35)
+                   , ("cyan", 36)
+                   , ("white", 37)
+                   , ("reset", 0)
+                   , ("none", 0)
+                   , ("", 0)
                    ]
 colorProc [badArg] = throwError $ TypeMismatch "string" badArg
 colorProc badArgs = throwError $ NumArgs 1 badArgs
@@ -1000,6 +1004,13 @@ writeProc fun [obj, Port port] = do
           Left _ -> throwError $ Default "IO Error writing to port"
           Right _ -> return $ Nil ""
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+
+print' :: Handle -> LispVal -> IO ()
+print' port obj =
+      case obj of
+          String str -> hPutStr port str
+          _ -> hPutStr port $ show obj
 
 errorProc :: [LispVal] -> IOThrowsError LispVal
 errorProc [obj] = liftIO $ hPrint stderr obj >> return (Nil "")

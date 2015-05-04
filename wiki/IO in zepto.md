@@ -97,6 +97,7 @@ doesn't it? The relevant function calls are:
 (write (open-input-file "foo"))
 (write? (open-input-file "foo"))
 (color :black)
+(escape-sequence 30)
 ```
 
 It all behaves pretty similarly to the Input functions. If you want to
@@ -104,6 +105,9 @@ write to stderr, either call `error` or `write` and pass in the escaped
 atom of `stderr`. Calling color will change your outputs color. If you
 are done with the funkiness, call `color` again, this time either with
 no arguments or, if you want to make it more verbose `reset` or `none`.
+`escape-sequence` is a bit more general. You can provide it an integer
+and it will wrap a ANSI escape sequence around it. The above example will
+colorize your prompt red, for instance.
 
 **There is one major pitfall here:** Ports are buffered, so depending
 on how large the chunks you write are you might have to close it before
