@@ -5,5 +5,6 @@
 
 (define nst (big 1000000))
 
-(write (eval nst))
-(newline)
+(if (= (eval nst) 10000000)
+  (write "Test passed")
+  (write "Test failed"))

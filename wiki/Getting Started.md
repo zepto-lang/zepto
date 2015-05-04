@@ -159,6 +159,13 @@ strings.
 
 ## Chars and Strings
 
+The first thing to note is that Chars and Strings are different data
+types in zepto, as is convention in Scheme. That means that Strings
+are not just an array of characters, but rather a basic building block
+in itself. There are ways to let those two types interact, of course,
+but let us begin by just introducing the types itself before working
+on making them play nicely.
+
 ## Lists and Vectors
 
 ## Macros
