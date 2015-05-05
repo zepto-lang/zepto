@@ -14,8 +14,10 @@ import Data.List.Split
 import Data.Maybe (fromMaybe)
 import System.Console.Haskeline hiding (listFiles, completeFilename)
 import System.Directory
+import System.Exit
 import System.FilePath
 import System.IO
+import System.IO.Error
 import qualified Control.Exception
 
 import Paths_zepto
@@ -217,6 +219,14 @@ until_ prompt action text = do result <- prompt text
                       | matches x "ddate" = do
                                 ddate >>= putStrLn
                                 until_ prompt action text
+                      | setter x "quit" || setter x "exit" =
+                                let code = read $ getOpt x
+                                in do
+                                  if code == 0
+                                    then exitter (liftIO $ tryIOError $ liftIO $
+                                              exitWith $ ExitSuccess)
+                                    else exitter (liftIO $ tryIOError $ liftIO $
+                                              exitWith $ ExitFailure code)
                       | matches x "quit" || matches x "exit" = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
@@ -228,6 +238,8 @@ until_ prompt action text = do result <- prompt text
                     putStrLn contents
                     hClose fhandle
                     until_ prompt action text
+              exitter x = do _ <- x
+                             return ()
               argMissing :: String -> IO ()
               argMissing cmd = do
                       putStrLn ("Error: the " ++ cmd ++

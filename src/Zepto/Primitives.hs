@@ -973,6 +973,10 @@ eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badFo
 exitProc :: [LispVal] -> IOThrowsError LispVal
 exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
                  return $ Nil ""
+exitProc [Number (NumI 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
+                                return $ Nil ""
+exitProc [Number (NumS 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
+                                return $ Nil ""
 exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $
                                      exitWith $ ExitFailure $ fromInteger x
                                 return $ Nil ""
