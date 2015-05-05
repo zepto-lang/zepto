@@ -992,7 +992,7 @@ colorProc :: [LispVal] -> IOThrowsError LispVal
 colorProc [Atom s] =
         case lookupColor s of
            Just found -> escapeProc $ [Number (NumI $ snd found)]
-           _          -> throwError $ BadSpecialForm "Color not found: " $ String s
+           _          -> throwError $ BadSpecialForm "Color not found" $ String s
     where lookupColor color = find (\t -> color == fst t) colors
           colors = [ ("black", 30)
                    , ("red", 31)
@@ -1006,7 +1006,7 @@ colorProc [Atom s] =
                    , ("none", 0)
                    , ("", 0)
                    ]
-colorProc [badArg] = throwError $ TypeMismatch "string" badArg
+colorProc [badArg] = throwError $ TypeMismatch "Atom" badArg
 colorProc badArgs = throwError $ NumArgs 1 badArgs
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal

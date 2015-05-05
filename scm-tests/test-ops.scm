@@ -10,5 +10,8 @@
 (assert-equal (lambda () (string>? "ABCD" "abc")) #f)
 (assert-equal (lambda () (string-ci>? "ABCD" "abc")) #t)
 
+(assert-equal (lambda () (typeof (nil))) "nil")
+(assert-equal (lambda () (typeof nil)) "primitive")
+
 (unit-test-handler-results)
 (unit-test-all-passed)
