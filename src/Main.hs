@@ -19,7 +19,10 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn ("zepto Version " ++ versionStr)
+printVersion = putStrLn ("zepto Version "
+                        ++ versionStr
+                        ++ ", compiled with GHC version "
+                        ++ show (__GLASGOW_HASKELL__::Integer))
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()

@@ -51,7 +51,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.6.10
+zepto Version 0.6.10, compiled with GHC version 710
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
