@@ -96,7 +96,8 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("nil", buildNil, "return nil")
              , ("vector", buildVector, "build a new vector")
              , ("string", buildString, "build a new string")
-             , ("char-downcase", charDowncase, "downcases a char")
+             , ("char-lower-case", charDowncase, "converts a char to lower case")
+             , ("char-upper-case", charUpcase, "converts a char to upper case")
              , ("vector-length", vectorLength, "get length of vector")
              , ("string-length", stringLength, "get length of string")
              , ("make-string", makeString, "make a new string")
@@ -522,6 +523,11 @@ charDowncase :: [LispVal] -> ThrowsError LispVal
 charDowncase [Character c] = return $ Character $ toLower c
 charDowncase [badType] = throwError $ TypeMismatch "character" badType
 charDowncase badArgList = throwError $ NumArgs 1 badArgList
+
+charUpcase :: [LispVal] -> ThrowsError LispVal
+charUpcase [Character c] = return $ Character $ toUpper c
+charUpcase [badType] = throwError $ TypeMismatch "character" badType
+charUpcase badArgList = throwError $ NumArgs 1 badArgList
 
 isNumber :: [LispVal] -> ThrowsError LispVal
 isNumber ([Number _]) = return $ Bool True

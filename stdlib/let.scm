@@ -54,15 +54,15 @@
                    body ...))))
 
 (define-syntax do
-(syntax-rules ()
-((_ ((var init . step) ...)
-(test expr ...)
-command ...)
-(let loop ((var init) ...)
-(if test
-(begin expr ...)
-(begin (begin command ...)
-(loop
-(if (null? (cdr (list var . step)))
-(car (list var . step))
-(cadr (list var . step))) ...)))))))
+  (syntax-rules ()
+    ((_ ((var init . step) ...)
+        (test expr ...)
+      command ...)
+      (let loop ((var init) ...)
+        (if test
+          (begin expr ...)
+          (begin (begin command ...)
+            (loop
+              (if (null? (cdr (list var . step)))
+                  (car (list var . step))
+                  (cadr (list var . step))) ...)))))))

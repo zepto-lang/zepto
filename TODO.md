@@ -38,6 +38,7 @@
 * Make division by zero not error [x]
 * SmallInts [x]
 * [] convenience alias for lists
+* Add EvalFuncs [x]
 
 **Features soon to be implemented:**
 
@@ -47,8 +48,8 @@ Small:
 
 Medium:
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
-* Add EvalFuncs (macro evaluation needs to be reformed)
 * Make macros more robust
+* Fix continuations
 * Make cl libraries work
 * Hashtables (SRFI 69)
 

@@ -166,6 +166,33 @@ in itself. There are ways to let those two types interact, of course,
 but let us begin by just introducing the types itself before working
 on making them play nicely.
 
+Let's start with Chars.
+
+Chars have a somewhat awkward syntax in Scheme and, for that matter,
+zepto. If you want to use a literal character a, you will have to
+type `#\a`. This might look weird to you, but at least literal Unicode
+characters are supported (an example can be found in `char->integer`
+above).
+
+There are a few functions for working with characters:
+```clojure
+(char-lower-case a) ; convert char to lower case
+(char-upper-case a) ; convert char to upper case
+(char=? a b) ; checks whether chars are equal
+(char<? a b) ; checks whether one char is less than another
+(char>? a b) ; checks whether one char is greater than another
+(char<=? a b) ; you know the drill by now
+(char>=? a b) ; are we through yet?
+
+; all of the above functions are also available in 
+; case insensitive versions:
+(char-ci=? a b)
+(char-ci<? a b)
+(char-ci>? a b)
+(char-ci<=? a b)
+(char-ci>=? a b)
+```
+
 ## Lists and Vectors
 
 ## Macros

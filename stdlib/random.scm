@@ -3,7 +3,7 @@
 ;; It is not to be used in cryptography or related fields.
 (define random
   (let ((a 69069) (c 1) (m (expt 2 32)) (seed 19380110.0))
-    (lambda new-seed
+    (lambda (new-seed)
       (if (pair? new-seed)
         (begin (set! seed (car new-seed)))
         (begin (set! seed (modulo (+ (* seed a) c) m))))
