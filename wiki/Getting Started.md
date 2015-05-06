@@ -176,21 +176,22 @@ above).
 
 There are a few functions for working with characters:
 ```clojure
-(char-lower-case a) ; convert char to lower case
-(char-upper-case a) ; convert char to upper case
-(char=? a b) ; checks whether chars are equal
-(char<? a b) ; checks whether one char is less than another
-(char>? a b) ; checks whether one char is greater than another
-(char<=? a b) ; you know the drill by now
-(char>=? a b) ; are we through yet?
+(char-lower-case #\A) ; convert char to lower case
+(char-upper-case #\a) ; convert char to upper case
+(char=? #\C #\d) ; checks whether chars are equal
+(char<? #\B #\Y) ; checks whether one char is less than another
+(char>? #\l #\ä) ; checks whether one char is greater than another
+(char<=? #\q #\m) ; you know the drill by now
+(char>=? #\Ü #\á) ; are we through yet?
 
 ; all of the above functions are also available in 
 ; case insensitive versions:
-(char-ci=? a b)
-(char-ci<? a b)
-(char-ci>? a b)
-(char-ci<=? a b)
-(char-ci>=? a b)
+(char-ci=? #\L #\l)
+(char-ci<? #\@ #\\)
+(char-ci>? #\X #\#)
+(char-ci<=? #\€ #\$) ; if you type #\€ into your repl, you will likely not
+                     ; display what you would expect. But it works, promise.
+(char-ci>=? #\l #\m)
 ```
 
 ## Lists and Vectors
