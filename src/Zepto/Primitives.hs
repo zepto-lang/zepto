@@ -11,6 +11,7 @@ import Data.List
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
+import System.Process hiding (env)
 import System.Directory
 import System.Exit
 import System.IO
@@ -137,6 +138,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("read-contents", readContents, "read contents of file")
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
+               , ("system", systemProc, "call a system command")
                , ("escape-sequence", escapeProc, "send escape sequence to shell")
                , ("color", colorProc, "colorize output")
                ]
@@ -993,6 +995,20 @@ exitProc [Number (NumS x)] = do _ <- liftIO $ tryIOError $ liftIO $
                                 return $ Nil ""
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
+
+systemProc :: [LispVal] -> IOThrowsError LispVal
+systemProc [Atom s] = do
+        x <- liftIO $ tryIOError $ liftIO $ system s
+        case x of
+          Right _ -> return $ Number $ NumI 0
+          Left w -> return $ String $ show w
+systemProc [String s] = do
+        x <- liftIO $ tryIOError $ liftIO $ system s
+        case x of
+          Right _ -> return $ Number $ NumI 0
+          Left w -> return $ String $ show w
+systemProc [x] = throwError $ TypeMismatch "string" x
+systemProc badArg = throwError $ NumArgs 1 badArg
 
 escapeProc :: [LispVal] -> IOThrowsError LispVal
 escapeProc [Number (NumI n)] = writeProc print' [String $ "\x1b[" ++ show n ++ "m"]

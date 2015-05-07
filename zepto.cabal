@@ -41,6 +41,7 @@ Executable           zepto
                      haskeline,
                      mtl >= 2.2.1,
                      parsec,
+                     process,
                      random,
                      split,
                      time,
