@@ -53,6 +53,7 @@ keywords = [ "apply"
 metaKeywords :: [String]
 metaKeywords = fmap metaize
                [ "quit"
+               , "q"
                , "exit"
                , "help"
                , "keyword-help"
@@ -227,7 +228,7 @@ until_ prompt action text = do result <- prompt text
                                               exitWith $ ExitSuccess)
                                     else exitter (liftIO $ tryIOError $ liftIO $
                                               exitWith $ ExitFailure code)
-                      | matches x "quit" || matches x "exit" = do
+                      | matches x "quit" || matches x "exit" || matches x "q" = do
                                 putStrLn "\nMoriturus te saluto."
                                 return ()
                       | otherwise = action x >> until_ prompt action text
