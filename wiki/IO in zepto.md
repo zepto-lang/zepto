@@ -96,6 +96,7 @@ doesn't it? The relevant function calls are:
 (write "bla" :stderr)
 (write (open-input-file "foo"))
 (write? (open-input-file "foo"))
+(newline)
 (color :black)
 (escape-sequence 30)
 ```

@@ -2,7 +2,7 @@
 
 This is supposed to be an introduction into zepto.
 If you know Scheme already, you can skip to the 
-[Atoms](#atoms) section, which is the only addition 
+[Atoms](#atoms-&-symbols) section, which is the only addition 
 in terms of syntax so far.
 
 ## Basic syntax
@@ -176,6 +176,7 @@ above).
 
 There are a few functions for working with characters:
 ```clojure
+(char? 1) ; check whether arg is char
 (char-lower-case #\A) ; convert char to lower case
 (char-upper-case #\a) ; convert char to upper case
 (char=? #\C #\d) ; checks whether chars are equal
@@ -194,10 +195,54 @@ There are a few functions for working with characters:
 (char-ci>=? #\l #\m)
 ```
 
+Chars are normally not all that interesting by themselves, though,
+but rather when they're joined together, namely as strings. As I
+already told you, Strings in zepto are a datatype that is seperate
+from characters which means that they are more than just
+`'(#\l #\i #\s #\t #\s)`. This allows for greater flexibility.
+Many standard functions behave a lot as if they were, though.
+There are also a few functions for working with Strings in zepto,
+namely:
+
+```clojure
+(string? #\a) ; checks whether arg is string
+(string=? #\a) ; checks wether strings are equal
+(string<? #\a) ; you already know all those functions
+(string>? #\a)
+(string<=? #\a)
+(string>=? #\a)
+(string-ci=? #\a)
+(string-ci<? #\a)
+(string-ci>? #\a)
+(string-ci<=? #\a)
+(string-ci>=? #\a)
+(string '(#\w #\o #\w)) ; the string "constructor"; takes one or more characters
+(make-string 10) ; another string constructor. it takes the initial length as integer
+(string-length "doge") ; gets length of string
+(symbol->string duck) ; creates a string from symbol
+(list->string [#s]) ; behaves as the constructor, but takes only lists
+(string-copy "lol") ; returns a copy of a string
+(substring "zepto" 1 3) ; returns a substring delimite by two integers
+(string-ref "lisp" 1) ; returns a reference to a string element (as char)
+(string-find "scheme" #\e) ; returns first occurrence of the element as index
+(string-append "a" "b") ; appends char or string to string
+```
+
+The purists among you may notice some deviations from R5RS.
+Most of it is by design, although if you think some of this is
+unacceptable behaviour, create a pull request of file an issue,
+I am always open to suggestions.
+
+Programmatically, strings are not used as often. [Atoms](#atoms-&-symbols) are
+used more frequently.
+
+This concludes our short introudction to Strings in zepto.
+Next up are Lists and Vectors.
+
 ## Lists and Vectors
 
 ## Macros
 
 ## Continuations
 
-## Atoms
+## Atoms & Symbols

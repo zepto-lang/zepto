@@ -463,7 +463,7 @@ stringFind [String v, Character x] =
            Just n -> return $ Number $ NumI $ toInteger n
            _      -> return $ Number $ NumI $ -1
 stringFind [badType, Character _] = throwError $ TypeMismatch "string" badType
-stringFind [String _, badType] = throwError $ TypeMismatch "string" badType
+stringFind [String _, badType] = throwError $ TypeMismatch "character" badType
 stringFind badArgList = throwError $ NumArgs 2 badArgList
 
 substring :: [LispVal] -> ThrowsError LispVal
@@ -479,13 +479,15 @@ substring badArgList = throwError $ NumArgs 3 badArgList
 
 stringAppend :: [LispVal] -> ThrowsError LispVal
 stringAppend [String s] = return $ String s
+stringAppend [Character s] = return $ String [s]
 stringAppend (String st:sts) = do
     rest <- stringAppend sts
     case rest of
         String s -> return $ String $ st ++ s
-        elsewise -> throwError $ TypeMismatch "string" elsewise
+        Character c -> return $ String $ st ++ [c]
+        elsewise -> throwError $ TypeMismatch "string/character" elsewise
 stringAppend [badType] = throwError $ TypeMismatch "string" badType
-stringAppend badArgList = throwError $ NumArgs 1 badArgList
+stringAppend badArgList = throwError $ NumArgs 2 badArgList
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
 stringToNumber [String s] = do
