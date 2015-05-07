@@ -2,7 +2,7 @@
 
 This is supposed to be an introduction into zepto.
 If you know Scheme already, you can skip to the 
-[Atoms](#atoms-&-symbols) section, which is the only addition 
+[Atoms](#atoms--symbols) section, which is the only addition 
 in terms of syntax so far.
 
 ## Basic syntax
@@ -233,7 +233,7 @@ Most of it is by design, although if you think some of this is
 unacceptable behaviour, create a pull request of file an issue,
 I am always open to suggestions.
 
-Programmatically, strings are not used as often. [Atoms](#atoms-&-symbols) are
+Programmatically, strings are not used as often. [Atoms](#atoms--symbols) are
 used more frequently.
 
 This concludes our short introudction to Strings in zepto.
