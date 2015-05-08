@@ -157,6 +157,63 @@ citizens.
 That should be it with the numbers, let's move on to chars and
 strings.
 
+## Atoms & Symbols
+
+There is a syntactic addition to zepto that may confuse Scheme, Lisp and Clojure
+programmers, albeit for different reasons. But I am getting
+ahead of myself. First of all, zepto has a basic notion of symbols like any
+other language in the Lisp realm. This allows for constructs such as
+`(define x 10)` and the like; in other words, values can be bound to names.
+
+This is wonderful, but there is a piece of syntactic sugar that is elementary
+to zepto, but not necessarily to other Scheme interpreters, which is Atoms.
+Now, before any of you Clojure guys jump to conclusions, it is not what you
+call Atoms. In Clojure and Common Lisp land, this concept is known as Keywords.
+I simply decided to use them Atoms, because Keywords is a terrible name for that
+concept in my opinion. But that is just my personal opinion and you are free to
+disagree with me.
+
+For all of you not familiar with what I just ranted about, Atoms are simply symbols
+with an inherent value. They stand for themselves, i.e. `:ok` is just that, it is
+`:ok`. You also cannot assign something to them, as in `(define :ok "ok")`.
+So why not just use `"ok"` then? Fair enough, that would be possible, but
+unelegant and, in zepto, unidiomatic. If you do not feel like arguing with me on
+that - and you really should! Don't just drink the Kool-Aid. -, just keep in mind
+that strings are mostly used when we need a textual representation of something.
+If we need a programmatic representation of some higher level concept, use Atoms.
+Let me give you a slightly silly example for when to use Atoms:
+
+```clojure
+(define (run f) "runs f and wraps booleans in atoms"
+  (if (eval f)
+    :ok
+    :error))
+```
+
+We could now do something like `run '(lambda () #t))`, which would yield `:ok`.
+
+I hope you can see by now that using Atoms looks a bit cleaner than passing around
+strings all the time. There are a few functions that check for common Atoms:
+
+```clojure
+(ok? :ok)
+(error? :error)
+(yes? :yes)
+(no? :no)
+```
+
+There is a little caveat on the whole "Atoms remain unevaluated" thing. As you may
+have already noticed by now, REPL keywords (such as `quit`) share their syntax with
+Atoms. They are not the same thing, but they look the same. So typing keywords in the
+REPL can differ from a scripts' behaviour (where you have to us `(exit)` or `(quit)`
+to end a script explicitly.
+
+*For Clojure people:* Other than in Clojure, using Atoms in zepto does not result
+in a significant speedup in zepto. They are just a different syntactic concept to
+keep your code clean, not a funky data structure. In fact, a bit of profiling shows
+they might even be (very slightly) slower than Strings at the moment. That will
+change eventually but do not expect them to be blazingly fast any time soon.
+
 ## Chars and Strings
 
 The first thing to note is that Chars and Strings are different data
@@ -241,8 +298,11 @@ Next up are Lists and Vectors.
 
 ## Lists and Vectors
 
+I lied. This section is not only about Lists and Vectors, but also about
+Quasiquoted Lists and Dotted Lists, two data structures which behave similarish
+to Lists, but are *not* the same.
+
 ## Macros
 
 ## Continuations
 
-## Atoms & Symbols

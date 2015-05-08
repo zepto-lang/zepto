@@ -120,7 +120,7 @@ setNamespacedVarDirect envRef namespace var valueToStore = do
                 return valueToStore
             Nothing -> case parentEnv envRef of
                 Just par -> setNamespacedVarDirect par namespace var valueToStore
-                Nothing -> throwError $ UnboundVar "Setting an unbound variable: " var
+                Nothing -> throwError $ UnboundVar "Setting an unbound variable" var
 
 updatePointers :: Env -> Char -> String -> IOThrowsError LispVal
 updatePointers envRef namespace var = do
@@ -197,6 +197,6 @@ addReversePointer namespace var envRef ptrNamespace ptrVar ptrEnvRef = do
                 else return v
         Nothing -> case parentEnv envRef of
             Just par -> addReversePointer namespace var par ptrNamespace ptrVar ptrEnvRef
-            Nothing -> throwError $ UnboundVar "Getting an unbound variable: " var
+            Nothing -> throwError $ UnboundVar "Getting an unbound variable" var
 
 -- | binds multiple variables at once

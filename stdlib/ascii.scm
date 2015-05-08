@@ -79,9 +79,9 @@
       (display ";_/\"`.__.-\"")))
 
   (cond ((null? direction) (left-fish))
-        ((string=? (car direction) "left") (left-fish))
-        ((string=? (car direction) "right") (right-fish))
-        ((string=? (car direction) "bubbles") (fish-bubbles))
+        ((eq? (car direction) :left) (left-fish))
+        ((eq? (car direction) :right) (right-fish))
+        ((eq? (car direction) :bubbles) (fish-bubbles))
         (else (display (list "Unrecognized option: " direction)))))
 
 ;; The goose was found on http://www.retrojunkie.com/asciiart/animals/ducks.htm

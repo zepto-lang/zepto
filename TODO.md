@@ -39,12 +39,14 @@
 * SmallInts [x]
 * [] convenience alias for lists
 * Add EvalFuncs [x]
+* Added Atoms [x]
 
 **Features soon to be implemented:**
 
 Small:
 * Make modulo of Complex work
 * fix single number expression (in the repl 1.5lasd is parsed as 1.5)
+* Rework Atoms (Own token/data structure?)
 
 Medium:
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.

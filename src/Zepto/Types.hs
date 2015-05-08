@@ -11,10 +11,12 @@ module Zepto.Types (LispNum(..),
                     showError,
                     trapError,
                     extractValue,
+                    typeString,
                     nullEnv,
                     nullCont,
                     liftThrows,
-                    runIOThrows) where
+                    runIOThrows
+                    ) where
 import Data.Array
 import Data.Complex
 import Data.Fixed
@@ -383,11 +385,35 @@ showError (NumArgs expected found) =
               then x ++ "; values are " ++ unwordsList found
               else x
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
-                                          ", found " ++ show found
+                                          ", found " ++ typeString found ++ "(value: " ++
+                                          show found ++ ")"
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
 showError (DivideByZero) = "Division by zero"
 showError (Default err) = err
+
+typeString :: LispVal -> String
+typeString (Number (NumI _)) = "integer"
+typeString (Number (NumS _)) = "small integer"
+typeString (Number (NumF _)) = "float"
+typeString (Number (NumR _)) = "rational"
+typeString (Number (NumC _)) = "complex"
+typeString (Vector _) = "vector"
+typeString (Bool _) = "boolean"
+typeString (Character _) = "character"
+typeString (String _) = "string"
+typeString (List _) = "list"
+typeString (DottedList _ _) = "dotted list"
+typeString (Atom (':' : _)) = "atom"
+typeString (Atom _) = "symbol"
+typeString (PrimitiveFunc _) = "primitive"
+typeString (IOFunc _) = "io primitive"
+typeString (EvalFunc _) = "eval primitive"
+typeString (Port _) = "port"
+typeString (Func _) = "function"
+typeString (Nil _) = "nil"
+typeString (Pointer _ _) = "pointer"
+typeString (Cont _) = "continuation"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal

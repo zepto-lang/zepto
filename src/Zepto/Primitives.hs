@@ -3,7 +3,8 @@ module Zepto.Primitives(primitives
                        , evalPrimitives
                        , eval
                        , versionStr
-                       , evalString) where
+                       , evalString
+                       ) where
 import Data.Array
 import Data.Char hiding(isNumber, isSymbol)
 import Data.Complex
@@ -86,6 +87,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("list?", unaryOp isList, "check whether arg is list")
              , ("null?", isNull, "check whether arg is null")
              , ("symbol?", isSymbol, "check whether arg is symbol")
+             , ("atom?", isAtom, "check whether arg is atom")
              , ("vector?", unaryOp isVector, "check whether arg is vector")
              , ("string?", isString, "check whether arg is string")
              , ("port?", isPort, "check whether arg is port")
@@ -583,6 +585,10 @@ isSymbol :: [LispVal] -> ThrowsError LispVal
 isSymbol ([Atom _]) = return $ Bool True
 isSymbol _ = return $ Bool False
 
+isAtom :: [LispVal] -> ThrowsError LispVal
+isAtom ([Atom (':' : _)]) = return $ Bool True
+isAtom _ = return $ Bool False
+
 symbol2String :: [LispVal] -> ThrowsError LispVal
 symbol2String ([Atom a]) = return $ String a
 symbol2String [notAtom] = throwError $ TypeMismatch "symbol" notAtom
@@ -628,30 +634,11 @@ isBoolean ([Bool _]) = return $ Bool True
 isBoolean _ = return $ Bool False
 
 checkType :: [LispVal] -> ThrowsError LispVal
-checkType [Number (NumI _)] = return $ String "integer"
-checkType [Number (NumS _)] = return $ String "small integer"
-checkType [Number (NumF _)] = return $ String "float"
-checkType [Number (NumR _)] = return $ String "rational"
-checkType [Number (NumC _)] = return $ String "complex"
-checkType [Vector _] = return $ String "vector"
-checkType [Bool _] = return $ String "boolean"
-checkType [Character _] = return $ String "character"
-checkType [String _] = return $ String "string"
-checkType [List _] = return $ String "list"
-checkType [DottedList _ _] = return $ String "dotted list"
-checkType [Atom _] = return $ String "atom"
-checkType [PrimitiveFunc _] = return $ String "primitive"
-checkType [IOFunc _] = return $ String "io primitive"
-checkType [EvalFunc _] = return $ String "eval primitive"
-checkType [Port _] = return $ String "port"
-checkType [Func _] = return $ String "function"
-checkType [Nil _] = return $ String "nil"
-checkType [Pointer _ _] = return $ String "pointer"
-checkType [Cont _] = return $ String "continuation"
+checkType [x] = return $ String $ typeString x
 checkType badArgList = throwError $ NumArgs 1 badArgList
 
 version' :: [Int]
-version' = [0, 6, 10]
+version' = [0, 7, 0]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version'
@@ -752,7 +739,7 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
-eval env conti (Atom (':' : a)) = contEval env conti $ Atom a
+eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quote", val]) = contEval env conti val
@@ -801,6 +788,8 @@ eval env conti (List [Atom "set-car!", Atom var, form]) = do
           set_car _ _ = return $ Nil "This should never happen"
 eval _ _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [Atom "define"]) = throwError $ NumArgs 2 []
+eval _ _ (List [Atom "define", a@(Atom (':' : _)), _]) =
+            throwError $ TypeMismatch "symbol" a
 eval env conti (List [Atom "define", Atom var, form]) = do
         result <- eval env (nullCont env) form >>= defineVar env var
         contEval env conti result
@@ -887,9 +876,9 @@ eval env _ (List [Atom "doc", Atom val]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string/atom" x
+eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string/symbol" x
 eval _ _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "doc", x]) = throwError $ TypeMismatch "string/atom" x
+eval _ _ (List [Atom "doc", x]) = throwError $ TypeMismatch "string/symbol" x
 eval _ _ (List (Atom "doc" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote env val
@@ -1017,7 +1006,7 @@ escapeProc [badArg] = throwError $ TypeMismatch "integer" badArg
 escapeProc badArgList = throwError $ NumArgs 1 badArgList
 
 colorProc :: [LispVal] -> IOThrowsError LispVal
-colorProc [Atom s] =
+colorProc [Atom (':' : s)] =
         case lookupColor s of
            Just found -> escapeProc $ [Number (NumI $ snd found)]
            _          -> throwError $ BadSpecialForm "Color not found" $ String s
@@ -1034,7 +1023,7 @@ colorProc [Atom s] =
                    , ("none", 0)
                    , ("", 0)
                    ]
-colorProc [badArg] = throwError $ TypeMismatch "Atom" badArg
+colorProc [badArg] = throwError $ TypeMismatch "atom" badArg
 colorProc badArgs = throwError $ NumArgs 1 badArgs
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
@@ -1047,14 +1036,14 @@ closePort _ = return $ Bool False
 
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
-readProc [Atom "stdin"] = readProc [Port stdin]
+readProc [Atom ":stdin"] = readProc [Port stdin]
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
-writeProc fun [obj, Atom "stdout"] = writeProc fun [obj, Port stdout]
-writeProc fun [obj, Atom "stderr"] = writeProc fun [obj, Port stderr]
+writeProc fun [obj, Atom ":stdout"] = writeProc fun [obj, Port stdout]
+writeProc fun [obj, Atom ":stderr"] = writeProc fun [obj, Port stderr]
 writeProc fun [obj, Port port] = do
       out <- liftIO $ tryIOError (liftIO $ fun port obj)
       case out of
