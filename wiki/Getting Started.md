@@ -185,12 +185,12 @@ Let me give you a slightly silly example for when to use Atoms:
 
 ```clojure
 (define (run f) "runs f and wraps booleans in atoms"
-  (if (eval f)
+  (if (f)
     :ok
     :error))
 ```
 
-We could now do something like `run '(lambda () #t))`, which would yield `:ok`.
+We could now do something like `(run (lambda () #t))`, which would yield `:ok`.
 
 I hope you can see by now that using Atoms looks a bit cleaner than passing around
 strings all the time. There are a few functions that check for common Atoms:
