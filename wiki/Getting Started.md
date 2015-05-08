@@ -206,7 +206,8 @@ There is a little caveat on the whole "Atoms remain unevaluated" thing. As you m
 have already noticed by now, REPL keywords (such as `quit`) share their syntax with
 Atoms. They are not the same thing, but they look the same. So typing keywords in the
 REPL can differ from a scripts' behaviour (where you have to us `(exit)` or `(quit)`
-to end a script explicitly.
+to end a script explicitly. There is an ongoing discussion (within myself) whether I
+should replace one or the other with `#`, but I have not settled yet.
 
 *For Clojure people:* Other than in Clojure, using Atoms in zepto does not result
 in a significant speedup in zepto. They are just a different syntactic concept to
