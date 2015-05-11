@@ -18,7 +18,7 @@ statement, such as:
 (+ 1 1)
 ```
 
-Note that everx operator is a function in Scheme (and thus,
+Note that every operator is a function in Scheme (and thus,
 zepto), so it is always written in prefix notation as opposed
 to the infix notation we are used to.
 
