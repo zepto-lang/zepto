@@ -120,6 +120,9 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("string-ref", stringRef, "get element from string")
              , ("string-find", stringFind, "find first occurrence in string")
              , ("string-append", stringAppend, "append to string")
+             , ("list-append", listAppend, "append to list")
+             , ("vector-append", vectorAppend, "append to vector")
+             , ("++", allAppend, "append to collection")
              , ("zepto-version", getVersion, "gets the version as a list")
              , ("zepto-version-str", getVersionStr, "gets the version as a string")
              , ("zepto-major-version", getMajVersion, "gets the major version number")
@@ -492,6 +495,37 @@ stringAppend (String st:sts) = do
         elsewise -> throwError $ TypeMismatch "string/character" elsewise
 stringAppend [badType] = throwError $ TypeMismatch "string" badType
 stringAppend badArgList = throwError $ NumArgs 2 badArgList
+
+listAppend :: [LispVal] -> ThrowsError LispVal
+listAppend (List st:sts) = do
+    rest <- listAppend sts
+    case rest of
+        List s -> return $ List $ st ++ s
+        elsewise -> throwError $ TypeMismatch "list/element" elsewise
+listAppend [x] = return $ List [x]
+listAppend badArgList = throwError $ NumArgs 2 badArgList
+
+vectorAppend :: [LispVal] -> ThrowsError LispVal
+vectorAppend (Vector st:sts) = do
+    rest <- vectorAppend sts
+    let ast = elems st
+    case rest of
+        Vector s -> return $ Vector $
+                    listArray (0, (length ast + length (elems s)) - 1) (ast ++ elems s)
+        elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+vectorAppend [x] = return $ Vector $ listArray (0, 0) [x]
+vectorAppend badArgList = throwError $ NumArgs 2 badArgList
+
+allAppend :: [LispVal] -> ThrowsError LispVal
+allAppend v@[String _, _] = stringAppend v
+allAppend v@(String _ : _) = stringAppend v
+allAppend v@[List _, _] = listAppend v
+allAppend v@(List _ : _) = listAppend v
+allAppend v@[Vector _, _] = vectorAppend v
+allAppend v@(Vector _ : _) = vectorAppend v
+allAppend [badType, _] = throwError $ TypeMismatch "string/list/vector" badType
+allAppend (badType : _) = throwError $ TypeMismatch "string/list/vector" badType
+allAppend badArgList = throwError $ NumArgs 2 badArgList
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
 stringToNumber [String s] = do

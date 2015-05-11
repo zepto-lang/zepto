@@ -235,7 +235,6 @@ instance Integral LispNum where
     quotRem (NumI x) (NumF y) = (NumF $ fromIntegral x / y, NumF $ mod' (fromIntegral x) y)
     quotRem (NumF x) (NumF y) = (NumF $ x / y, NumF $ mod' x y)
 
-    --implement for Complex
     quotRem (NumC x) (NumC y) = (NumC $ x / y, NumF $ 1/0)
     quotRem (NumC x) (NumI y) = (NumC $ x / (fromIntegral y :+ 0), NumF $ 1/0)
     quotRem (NumI x) (NumC y) = (NumC $ (fromIntegral x :+ 0) / y, NumF $ 1/0)
