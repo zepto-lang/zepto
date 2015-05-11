@@ -119,10 +119,13 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("vector-ref", vectorRef, "get element from vector")
              , ("string-ref", stringRef, "get element from string")
              , ("string-find", stringFind, "find first occurrence in string")
-             , ("string-append", stringAppend, "append to string")
+             , ("string-append", stringExtend, "append to string")
              , ("list-append", listAppend, "append to list")
              , ("vector-append", vectorAppend, "append to vector")
-             , ("++", allAppend, "append to collection")
+             , ("+=", allAppend, "append to collection")
+             , ("list-extend", listExtend, "extend list")
+             , ("vector-extend", vectorExtend, "extend vector")
+             , ("++", allExtend, "extend collection")
              , ("zepto-version", getVersion, "gets the version as a list")
              , ("zepto-version-str", getVersionStr, "gets the version as a string")
              , ("zepto-major-version", getMajVersion, "gets the major version number")
@@ -484,43 +487,67 @@ substring [String s, Number (NumS start), Number (NumS end)] = do
 substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
-stringAppend :: [LispVal] -> ThrowsError LispVal
-stringAppend [String s] = return $ String s
-stringAppend [Character s] = return $ String [s]
-stringAppend (String st:sts) = do
-    rest <- stringAppend sts
-    case rest of
-        String s -> return $ String $ st ++ s
-        Character c -> return $ String $ st ++ [c]
-        elsewise -> throwError $ TypeMismatch "string/character" elsewise
-stringAppend [badType] = throwError $ TypeMismatch "string" badType
-stringAppend badArgList = throwError $ NumArgs 2 badArgList
+stringExtend :: [LispVal] -> ThrowsError LispVal
+stringExtend v@(String _ : _) = extend' v
+  where extend' :: [LispVal] -> ThrowsError LispVal
+        extend' [Character s] = return $ String [s]
+        extend' [String s] = return $ String s
+        extend' [s] = throwError $ TypeMismatch "string/character" s
+        extend' (String st : sts) = do
+          rest <- extend' sts
+          case rest of
+              String s -> return $ String $ st ++ s
+              Character c -> return $ String $ st ++ [c]
+              elsewise -> throwError $
+                            TypeMismatch "string/character" elsewise
+        extend' _ = throwError $ InternalError "this should not happen"
+stringExtend [badType] = throwError $ TypeMismatch "string" badType
+stringExtend badArgList = throwError $ NumArgs 2 badArgList
 
 listAppend :: [LispVal] -> ThrowsError LispVal
-listAppend [x@(List _)] = return $ x
-listAppend (List st : sts) = do
-    rest <- listAppend sts
-    case rest of
-        List s -> return $ List $ st ++ s
-        elsewise -> throwError $ TypeMismatch "list/element" elsewise
-listAppend [x] = return $ List [x]
+listAppend (vec@(List _) : t) = append' [vec] t
+  where append' :: [LispVal] -> [LispVal] -> ThrowsError LispVal
+        append' [] [v] = return $ List [v]
+        append' [List x] (st : sts) = do
+          rest <- append' [] sts
+          case rest of
+              List s -> return $ List $ x ++ [st] ++ s
+              elsewise -> throwError $ TypeMismatch "list/element" elsewise
+        append' [] (st : sts) = do
+          rest <- append' [] sts
+          case rest of
+              List s -> return $ List $ [st] ++ s
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' [] [] = return $ List []
+        append' _ _ = throwError $ InternalError "This should not happen"
 listAppend badArgList = throwError $ NumArgs 2 badArgList
 
 vectorAppend :: [LispVal] -> ThrowsError LispVal
-vectorAppend [x@(Vector _)] = return $ x
-vectorAppend (Vector st:sts) = do
-    rest <- vectorAppend sts
-    let ast = elems st
-    case rest of
-        Vector s -> return $ Vector $
-                    listArray (0, (length ast + length (elems s)) - 1) (ast ++ elems s)
-        elsewise -> throwError $ TypeMismatch "vector/element" elsewise
-vectorAppend [x] = return $ Vector $ listArray (0, 0) [x]
+vectorAppend (vec@(Vector _) : t) = append' [vec] t
+  where append' :: [LispVal] -> [LispVal] -> ThrowsError LispVal
+        append' [] [x] = return $ Vector $ listArray (0, 0) [x]
+        append' [Vector x] (st : sts) = do
+          rest <- append' [] sts
+          let ast = elems x
+          case rest of
+              Vector s ->
+                  let z = st : elems s
+                  in return $ Vector $
+                              listArray (0, (length ast + length z) - 1) (ast ++ z)
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' [] (st : sts) = do
+          rest <- append' [] sts
+          case rest of
+              Vector s -> return $ Vector $
+                          listArray (0, length (elems s)) (st : elems s)
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' [] [] = return $ Vector $ listArray (0, -1) []
+        append' _ _ = throwError $ InternalError "This should not happen"
 vectorAppend badArgList = throwError $ NumArgs 2 badArgList
 
 allAppend :: [LispVal] -> ThrowsError LispVal
-allAppend v@[String _, _] = stringAppend v
-allAppend v@(String _ : _) = stringAppend v
+allAppend v@[String _, _] = stringExtend v
+allAppend v@(String _ : _) = stringExtend v
 allAppend v@[List _, _] = listAppend v
 allAppend v@(List _ : _) = listAppend v
 allAppend v@[Vector _, _] = vectorAppend v
@@ -528,6 +555,56 @@ allAppend v@(Vector _ : _) = vectorAppend v
 allAppend [badType, _] = throwError $ TypeMismatch "string/list/vector" badType
 allAppend (badType : _) = throwError $ TypeMismatch "string/list/vector" badType
 allAppend badArgList = throwError $ NumArgs 2 badArgList
+
+listExtend :: [LispVal] -> ThrowsError LispVal
+listExtend l@(List _ : _) = append' l
+  where append' :: [LispVal] -> ThrowsError LispVal
+        append' [List v] = return $ List v
+        append' [v] = return $ List [v]
+        append' [] = return $ List []
+        append' (List st : sts) = do
+          rest <- append' sts
+          case rest of
+              List s -> return $ List $ st ++ s
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' (st : sts) = do
+          rest <- append' sts
+          case rest of
+              List s -> return $ List $ st : s
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+listExtend badArgList = throwError $ NumArgs 2 badArgList
+
+vectorExtend :: [LispVal] -> ThrowsError LispVal
+vectorExtend v@(Vector _: _) = append' v
+  where append' :: [LispVal] -> ThrowsError LispVal
+        append' [Vector x] = return $ Vector x
+        append' [x] = return $ Vector $ listArray (0, 0) [x]
+        append' (Vector st : sts) = do
+          rest <- append' sts
+          case rest of
+              Vector s -> return $ Vector $
+                          listArray (0, length (elems s) + length (elems st) - 1)
+                                    (elems st ++ elems s)
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' (st : sts) = do
+          rest <- append' sts
+          case rest of
+              Vector s -> return $ Vector $
+                          listArray (0, length (elems s)) (st : elems s)
+              elsewise -> throwError $ TypeMismatch "vector/element" elsewise
+        append' _ = throwError $ InternalError "This should not happen"
+vectorExtend badArgList = throwError $ NumArgs 2 badArgList
+
+allExtend :: [LispVal] -> ThrowsError LispVal
+allExtend v@[String _, _] = stringExtend v
+allExtend v@(String _ : _) = stringExtend v
+allExtend v@[List _, _] = listExtend v
+allExtend v@(List _ : _) = listExtend v
+allExtend v@[Vector _, _] = vectorExtend v
+allExtend v@(Vector _ : _) = vectorExtend v
+allExtend [badType, _] = throwError $ TypeMismatch "string/list/vector" badType
+allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector" badType
+allExtend badArgList = throwError $ NumArgs 2 badArgList
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
 stringToNumber [String s] = do
