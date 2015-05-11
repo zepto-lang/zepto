@@ -230,6 +230,10 @@ parseExpr = parseComments
                x <- parseVect
                _ <- char ')'
                return x
+        <|> do _ <- char '{'
+               x <- parseVect
+               _ <- char '}'
+               return x
         <|> parseSpliced
         <|> try parseAtom
         <|> parseString

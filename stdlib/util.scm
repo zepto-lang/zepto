@@ -8,13 +8,16 @@
   (lambda (arg1 arg2)
     (func arg2 arg1)))
 
-(define (list-tail l k) "get tail of a list"
+(define (indexed-tail l k) "get tail of a list starting at index"
     (if (zero? k)
       l
       (list-tail (cdr l) (- k 1))))
 
 (define (list-ref l k) "get reference to list element at certain point"
     (car (list-tail l k)))
+
+(define (list-tail l) "get tail of a list"
+  (cdr l))
 
 (define (append i a) "append something to a list"
     (foldr (lambda (ax ix) (cons ax ix)) a i))

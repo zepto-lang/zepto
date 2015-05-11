@@ -303,6 +303,53 @@ I lied. This section is not only about Lists and Vectors, but also about
 Quasiquoted Lists and Dotted Lists, two data structures which behave similarish
 to Lists, but are *not* the same.
 
+Let's talk about Lists. Lists are heterogenous collections. They can be used
+like arrays in other languages, but they are actually much more than that.
+You can also see them as unevaluated code, really, e.g. `'(+ 1 2 3)` is a valid
+List. The little `'` is the symbol that means that the following brackets are
+not code, but data. You can read this as `quote`, which makes sense - at least 
+to me. If you come from a programming language like Python or Ruby,
+you might find the alternative square bracket notation - you can write the above
+list as `[+ 1 2 3]` - rather convenient. The quoted expression or list can later
+be transformed into code by calling eval on it, i.e. `(eval '(+ 1 2 3))` will
+return `6`.
+
+Lists are not your run-of-the-mill arrays then. You can use them as such, but
+that can be somewhat clumsy. If you want to have high-performance, plain-old-data
+collections, I'd suggest you go for Vectors. Before explaining the concept of Vectors,
+I will again supply you with a list of functions for working with Lists:
+
+```clojure
+(list? [foo bar baz]) ; is arg a list
+(list 1 2 3) ; create list from elements
+(head [1 2 3]) ; get head (first element) of list
+(tail [1 2 3]) ; get tail of list
+(indexed-tail [1 2 3] 2) ; get tail of list beginning at index
+(list-tail [1 2 3] 2) ; alias for tail
+(cons 1) ; construct list
+(car [+ 1 2]) ; alias for head
+(cdr [+ 1 2]) ; alias for tail
+(cadr [+ 1 2]) ; get head of tail
+(cdar ...)
+(cddr ....)
+[...]
+(cddddr ...) ; this is the longest version of it in the stdlib
+(list-ref [+ 1 2 3] 2) ; get element from list at index
+(vector->list #(1 2 3)) ; make list from vector
+(string->list "hi") ; makes list from string
+```
+
+Let's talk about Vectors for a brief moment. Vectors are optimized
+for random access. They are fast, they are small. But they are also
+less cool than list, because they are only data and cannot become code,
+except through converting it to a list before. As such, you can use them
+wherever you want to efficiently manipulate data, but nothing too meta.
+As an aside: there is an experimental matrix library in the standard
+library that wraps vectors of vectors and makes working with such data
+easier; if you ever find yourself in a position where you have to do matrix
+manipulation, feel free to have a look at it. There is a section on matrices
+in the [Math](github.com/hellerve/zepto/wiki/Math) chapter.
+
 ## Macros
 
 ## Continuations
