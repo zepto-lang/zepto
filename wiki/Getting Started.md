@@ -337,6 +337,7 @@ I will again supply you with a list of functions for working with Lists:
 (list-ref [+ 1 2 3] 2) ; get element from list at index
 (vector->list #(1 2 3)) ; make list from vector
 (string->list "hi") ; makes list from string
+(list-append '(a) "b") ; appends element or list to list
 ```
 
 Let's talk about Vectors for a brief moment. Vectors are optimized

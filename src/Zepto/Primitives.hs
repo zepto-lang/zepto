@@ -497,7 +497,8 @@ stringAppend [badType] = throwError $ TypeMismatch "string" badType
 stringAppend badArgList = throwError $ NumArgs 2 badArgList
 
 listAppend :: [LispVal] -> ThrowsError LispVal
-listAppend (List st:sts) = do
+listAppend [x@(List _)] = return $ x
+listAppend (List st : sts) = do
     rest <- listAppend sts
     case rest of
         List s -> return $ List $ st ++ s
@@ -506,6 +507,7 @@ listAppend [x] = return $ List [x]
 listAppend badArgList = throwError $ NumArgs 2 badArgList
 
 vectorAppend :: [LispVal] -> ThrowsError LispVal
+vectorAppend [x@(Vector _)] = return $ x
 vectorAppend (Vector st:sts) = do
     rest <- vectorAppend sts
     let ast = elems st
