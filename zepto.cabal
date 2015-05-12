@@ -1,14 +1,18 @@
 Name:                zepto
 Version:             0.7.0
-Synopsis:            Minimal R5RS Scheme interpreter and REPL.
+Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:         
-  zepto is an implementation of the R5RS standard.
+  zepto is a relaxed implementation of the R5RS standard.
   Implemented features include but are not limited to
-  macros, the datatypes described in the standard and 
-  a help function.
+  macros, continuations and the datatypes and libraries
+  described in the standard.
   .
   For detailed information on each release and a quick
   howto, see <https://github.com/zepto-lang/zepto/README.md>.
+  .
+  For a more in-depth overview I suggest you take at
+  the wiki, which can be found at
+  <https://github.com/zepto-lang/zepto/wiki>.
 
 License:             GPL
 License-file:        LICENSE
