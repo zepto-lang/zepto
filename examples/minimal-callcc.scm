@@ -2,7 +2,7 @@
   (return 2)
   3)
  
-(write (f (lambda (x) x)))
+(write (f (lambda (x) x))) ; displays 3
  
-(write (call-with-current-continuation f))
-(write (call/cc f))
+(write (call-with-current-continuation f)) ; displays 2
+(write (call/cc f)) ; displays 2
