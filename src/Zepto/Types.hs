@@ -319,9 +319,9 @@ data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | ParseErr ParseError
                | BadSpecialForm String LispVal
+               | BadSpecialForms String [LispVal]
                | NotFunction String String
                | UnboundVar String String
-               | DivideByZero
                | InternalError String
                | Default String
 
@@ -375,20 +375,27 @@ showVal (Cont _) = "<continuation>"
 -- | a show function for all LispErrors
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
-showError (BadSpecialForm message form) = message ++ ": " ++ show form
+showError (BadSpecialForm message form) = message ++ ": " ++ show form ++
+                                          " (type: " ++ typeString form ++ ")"
+showError (BadSpecialForms message forms) = message ++ ": " ++ (init $
+                                           init $ unwords $
+                                           map (\form -> show form ++
+                                                " (type: " ++ typeString form ++
+                                                "), ") forms)
 showError (NotFunction message func) = message ++ ": " ++ show func
 showError (NumArgs expected found) =
         let x = "Expected " ++ show expected ++
                 " args; found " ++ show (length found)
         in if length found /= 0
-              then x ++ "; values are " ++ unwordsList found
+              then x ++ "; values are " ++ unwords (map (\val -> show val ++ " (type: " ++
+                                                         typeString val ++ ") ")
+                                                        found)
               else x
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
-                                          ", found " ++ typeString found ++ "(value: " ++
+                                          ", found " ++ typeString found ++ " (value: " ++
                                           show found ++ ")"
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
-showError (DivideByZero) = "Division by zero"
 showError (Default err) = err
 
 typeString :: LispVal -> String
