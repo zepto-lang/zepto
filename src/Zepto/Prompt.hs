@@ -92,7 +92,7 @@ listFiles :: MonadIO m => FilePath -> m [Completion]
 listFiles path = liftIO $ do
     fixedDir <- fixPath dir
     dirExists <- doesDirectoryExist fixedDir
-    std <- getDataFileName "stdlib"
+    std <- getDataFileName "zepto-stdlib"
     stdfiles <- (map completion . filterPrefix) <$>
                   getDirectoryContents std
     allFiles <- if not dirExists
@@ -320,7 +320,7 @@ evalAndPrint env expr = evalString env expr >>= putStrLn
 runSingleStatement :: String -> IO ()
 runSingleStatement statement = do
         env <- primitiveBindings
-        lib <- getDataFileName "stdlib/module.scm"
+        lib <- getDataFileName "zepto-stdlib/module.scm"
         _ <- loadFile env lib
         evalAndPrint env statement
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
@@ -330,7 +330,7 @@ runFile :: [String] -> IO ()
 runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
                                                     List $ String <$> drop 1 args)]
-        lib <- getDataFileName "stdlib/module.scm"
+        lib <- getDataFileName "zepto-stdlib/module.scm"
         _ <- loadFile env lib
         runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
             >>= hPutStrLn stderr
@@ -341,7 +341,7 @@ runFile args = do
 runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
-        lib <- getDataFileName "stdlib/module.scm"
+        lib <- getDataFileName "zepto-stdlib/module.scm"
         _ <- loadFile env lib
         until_ (readPrompt env) (evaluation env) defaultPrompt
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"

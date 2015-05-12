@@ -8,13 +8,13 @@ Description:
   a help function.
   .
   For detailed information on each release and a quick
-  howto, see <https://github.com/hellerve/zepto/README.md>.
+  howto, see <https://github.com/zepto-lang/zepto/README.md>.
 
 License:             GPL
 License-file:        LICENSE
 Author:              Veit Heller <veitheller.de>
 Maintainer:          Veit Heller <github.com/hellerve>
-Bug-Reports:         http://github.com/hellerve/zepto/issues
+Bug-Reports:         http://github.com/zepto-lang/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
 Tested-with:         GHC == 7.10.1,
@@ -24,13 +24,13 @@ Tested-with:         GHC == 7.10.1,
 
 Extra-Source-Files:  README.md
                      LICENSE
-Data-Files:          stdlib/*.scm
+Data-Files:          zepto-stdlib/*.scm
                      assets/*.as
 Cabal-Version:       >= 1.2 
 
 Source-Repository head
     Type:            git
-    Location:        git://github.com/hellerve/zepto.git
+    Location:        git://github.com/zepto-lang/zepto.git
 
 Executable           zepto
     Build-Depends:   array,
