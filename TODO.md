@@ -44,9 +44,7 @@
 **Features soon to be implemented:**
 
 Small:
-* Make modulo of Complex work
 * fix single number expression (in the repl 1.5lasd is parsed as 1.5)
-* Rework Atoms (Own token/data structure?)
 
 Medium:
 * Profiling shows getting variables(especially namespaced vars) takes ages(~86% of execution time). Fix that.
@@ -54,6 +52,7 @@ Medium:
 * Fix continuations
 * Make cl libraries work
 * Hashtables (SRFI 69)
+* add traceback to errors
 
 Big:
 * Foreign Function Interface to C and Haskell
