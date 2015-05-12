@@ -5,7 +5,7 @@
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
 [![Build Status](https://travis-ci.org/hellerve/zepto.png?branch=master)](https://travis-ci.org/hellerve/zepto)
 
-A simple Scheme(R5RS) interpreter in Haskell(based on 
+A simple Scheme (R5RS) interpreter in Haskell (based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
 It implements a good enough subset of R5RS to make real programming possible.
@@ -36,9 +36,20 @@ It is very small, so the name might or might not be appropriate.
 
 You will need cabal for using zepto.
 
-After cloning via git, building is done via invoking `cabal install`.
+After cloning via git (using the `--recursive` flag to make sure you get all the
+submodules), building is done via invoking `cabal install`.
 Or `make`, because a plain old Makefile is included, too. After building you can
 run `make test` to check your installation.
+
+A typical installation workflow would look something like this:
+
+```bash
+git clone --recursive git://github.com/zepto-lang/zepto.git
+cd zepto
+make
+make test
+# And then see whether none of the tests yield #f
+```
 
 ## Introduction
 
