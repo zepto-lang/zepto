@@ -387,13 +387,18 @@ showError (NumArgs expected found) =
         let x = "Expected " ++ show expected ++
                 " args; found " ++ show (length found)
         in if length found /= 0
-              then x ++ "; values are " ++ unwords (map (\val -> show val ++ " (type: " ++
-                                                         typeString val ++ ") ")
-                                                        found)
+              then x ++ "; values are " ++ unwords (map extractStr found)
               else x
-showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++
-                                          ", found " ++ typeString found ++ " (value: " ++
-                                          show found ++ ")"
+    where extractStr val = let y = typeString val
+                           in if y /= "function"
+                                then show val ++ " (type: " ++ y ++ ") "
+                                else "<compiled function>"
+showError (TypeMismatch expected found) =
+        let x = typeString found
+            y = "Invalid type: expected " ++ expected ++ ", found " ++ x
+        in if x /= "function"
+              then y ++ " (value: " ++ show found ++ ")"
+              else y
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
