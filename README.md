@@ -5,11 +5,15 @@
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
 [![Build Status](https://travis-ci.org/zepto-lang/zepto.png?branch=master)](https://travis-ci.org/zepto-lang/zepto)
 
-A simple Scheme (R5RS) interpreter in Haskell (based on 
+A simple Scheme interpreter in Haskell (based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
-It implements a good enough subset of R5RS to make real programming possible.
-Features implemented include the full numeric tower, macros, lazy evaluation, 
+It implements a good enough subset of R5RS to make real programming possible,
+but does not strive for perfect compliance. I guess you could say it tries to
+be relaxed enough to not get into the way of other interesting things that may
+want to be implemented.
+Features included include but are not limited to the full numeric tower (with
+extensions even), macros, lazy evaluation, continuations,
 a minimal stdlib, many native primitives and help for those or for functions 
 provided via docstrings included in the function definition. And it actually 
 has a decent shell with completion and history.
