@@ -225,7 +225,7 @@ parseComments = do _ <- char ';'
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
-        <|> try parseNumber
+        <|> parseNumber
         <|> do _ <- try $ string "#("
                x <- parseVect
                _ <- char ')'
@@ -235,13 +235,12 @@ parseExpr = parseComments
                _ <- char '}'
                return x
         <|> parseSpliced
-        <|> try parseAtom
         <|> parseString
         <|> parseQuoted
         <|> try parseBool
         <|> parseQuasiquoted
         <|> parseUnquoted
-        <|> try parseChar
+        <|> parseChar
         <|> do _ <- char '('
                x <- try parseList <|> parseDottedList
                _ <- char ')'
@@ -250,6 +249,7 @@ parseExpr = parseComments
                x <- parseList
                _ <- char ']'
                return $ List [Atom "quote", x]
+        <|> try parseAtom
         <?> "Expression"
 
 readOrThrow :: Parser a -> String -> ThrowsError a
