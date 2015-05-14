@@ -233,7 +233,7 @@ evalCallCC _ = throwError $ NumArgs 1 []
 
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
-        fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
+        fileAsLib <- liftIO $ getDataFileName $ "zepto-stdlib/" ++ filename
         exists <- fex filename
         existsLib <- fex fileAsLib
         case (exists, existsLib) of

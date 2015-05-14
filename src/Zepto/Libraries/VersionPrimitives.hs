@@ -4,23 +4,23 @@ import Control.Monad.Except (throwError)
 
 import Zepto.Types
 
-version' :: [Int]
-version' = [0, 7, 0]
+version :: [Int]
+version = [0, 7, 1]
 
 versionStr :: String
-versionStr = intercalate "." $ fmap show version'
+versionStr = intercalate "." $ fmap show version
 
 majorVersion :: Int
-majorVersion = head version'
+majorVersion = head version
 
 minorVersion :: Int
-minorVersion = version' !! 1
+minorVersion = version !! 1
 
 patchVersion :: Int
-patchVersion = version' !! 2
+patchVersion = version !! 2
 
 getVersion :: [LispVal] -> ThrowsError LispVal
-getVersion [] = return $ List $ fmap (String . show) version'
+getVersion [] = return $ List $ fmap (String . show) version
 getVersion badList = throwError $ NumArgs 0 badList
 
 getVersionStr :: [LispVal] -> ThrowsError LispVal
