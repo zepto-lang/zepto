@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (assert-equal (lambda () (case (* 2 3) ((6) '(#t)) (else #f))) 
 			  '(#t))

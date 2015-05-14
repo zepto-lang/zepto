@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (assert-equal
     (lambda () (do ((vec (make-vector 5))

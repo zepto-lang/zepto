@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (assert-equal (lambda () (map (curry + 2) '(1 2 3 4))) 
 			  '(3 4 5 6))
@@ -18,7 +18,7 @@
 (assert-equal (lambda () (member (list 'a) '(b (a) c))) '((a) c))
 (assert-equal (lambda () (memv 101 '(100 101 102))) '(101 102))
 
-(assert-equal (lambda () (list-tail '(a b c d e f g) 5)) '(f g))
+(assert-equal (lambda () (indexed-tail '(a b c d e f g) 5)) '(f g))
 (assert-equal (lambda () (list-ref '(a b c d) 2)) 'c)
 
 (assert-equal (lambda () (append '(1 2 3 4 5) '(6 7 "eight" "nine"))) 

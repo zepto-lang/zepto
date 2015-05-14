@@ -9,11 +9,8 @@ import Data.Array
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
-import System.Process hiding (env)
 import System.Directory
-import System.Exit
 import System.IO
-import System.IO.Error
 
 import Paths_zepto
 import Zepto.Libraries.CharStrPrimitives
@@ -484,36 +481,6 @@ eval env conti (List (function : args)) = do
         argVals <- mapM (eval env (nullCont env)) args
         apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
-
-exitProc :: [LispVal] -> IOThrowsError LispVal
-exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
-                 return $ Nil ""
-exitProc [Number (NumI 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
-                                return $ Nil ""
-exitProc [Number (NumS 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
-                                return $ Nil ""
-exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $
-                                     exitWith $ ExitFailure $ fromInteger x
-                                return $ Nil ""
-exitProc [Number (NumS x)] = do _ <- liftIO $ tryIOError $ liftIO $
-                                     exitWith $ ExitFailure x
-                                return $ Nil ""
-exitProc [x] = throwError $ TypeMismatch "integer" x
-exitProc badArg = throwError $ NumArgs 1 badArg
-
-systemProc :: [LispVal] -> IOThrowsError LispVal
-systemProc [Atom s] = do
-        x <- liftIO $ tryIOError $ liftIO $ system s
-        case x of
-          Right _ -> return $ Number $ NumI 0
-          Left w -> return $ String $ show w
-systemProc [String s] = do
-        x <- liftIO $ tryIOError $ liftIO $ system s
-        case x of
-          Right _ -> return $ Number $ NumI 0
-          Left w -> return $ String $ show w
-systemProc [x] = throwError $ TypeMismatch "string" x
-systemProc badArg = throwError $ NumArgs 1 badArg
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename

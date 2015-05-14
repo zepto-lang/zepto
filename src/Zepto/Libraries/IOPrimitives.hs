@@ -2,8 +2,10 @@ module Zepto.Libraries.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
 import Data.List (find)
+import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
+import System.Process (system)
 
 import Zepto.Types
 
@@ -66,4 +68,34 @@ errorProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArg
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [String filename] = liftM String $ liftIO $ readFile filename
 readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+exitProc :: [LispVal] -> IOThrowsError LispVal
+exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
+                 return $ Nil ""
+exitProc [Number (NumI 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
+                                return $ Nil ""
+exitProc [Number (NumS 0)] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
+                                return $ Nil ""
+exitProc [Number (NumI x)] = do _ <- liftIO $ tryIOError $ liftIO $
+                                     exitWith $ ExitFailure $ fromInteger x
+                                return $ Nil ""
+exitProc [Number (NumS x)] = do _ <- liftIO $ tryIOError $ liftIO $
+                                     exitWith $ ExitFailure x
+                                return $ Nil ""
+exitProc [x] = throwError $ TypeMismatch "integer" x
+exitProc badArg = throwError $ NumArgs 1 badArg
+
+systemProc :: [LispVal] -> IOThrowsError LispVal
+systemProc [Atom s] = do
+        x <- liftIO $ tryIOError $ liftIO $ system s
+        case x of
+          Right _ -> return $ Number $ NumI 0
+          Left w -> return $ String $ show w
+systemProc [String s] = do
+        x <- liftIO $ tryIOError $ liftIO $ system s
+        case x of
+          Right _ -> return $ Number $ NumI 0
+          Left w -> return $ String $ show w
+systemProc [x] = throwError $ TypeMismatch "string" x
+systemProc badArg = throwError $ NumArgs 1 badArg
 
