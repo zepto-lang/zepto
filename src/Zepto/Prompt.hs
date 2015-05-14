@@ -299,6 +299,8 @@ until_ prompt action text = do result <- prompt text
                                , ("magenta", "35")
                                , ("cyan", "36")
                                , ("white", "37")
+                               , ("none", "0")
+                               , ("reset", "0")
                                ]
 
 -- | reads from the prompt
