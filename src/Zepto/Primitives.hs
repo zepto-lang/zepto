@@ -22,6 +22,7 @@ import Zepto.Libraries.CharStrPrimitives
 import Zepto.Libraries.ListPrimitives
 import Zepto.Libraries.LogMathPrimitives
 import Zepto.Libraries.TypeCheckPrimitives
+import Zepto.Libraries.VersionPrimitives
 import Zepto.Types
 import Zepto.Parser
 import Zepto.Variables
@@ -204,71 +205,6 @@ charToInteger [] = return $ Bool False
 charToInteger ([Character c]) = return $ Number $ NumI $ toInteger $ ord c
 charToInteger [notChar] = throwError $ TypeMismatch "character" notChar
 charToInteger args@(_ : _) = throwError $ NumArgs 1 args
-
-isString :: [LispVal] -> ThrowsError LispVal
-isString ([String _]) = return $ Bool True
-isString _ = return $ Bool False
-
-isPort :: [LispVal] -> ThrowsError LispVal
-isPort ([Port _]) = return $ Bool True
-isPort _ = return $ Bool False
-
--- Implement
-isInputPort :: [LispVal] -> ThrowsError LispVal
-isInputPort ([Port _]) = return $ Bool True
-isInputPort _ = return $ Bool False
-
--- Implement
-isOutputPort :: [LispVal] -> ThrowsError LispVal
-isOutputPort ([Port _]) = return $ Bool True
-isOutputPort _ = return $ Bool False
-
-isChar :: [LispVal] -> ThrowsError LispVal
-isChar ([Character _]) = return $ Bool True
-isChar _ = return $ Bool False
-
-isBoolean :: [LispVal] -> ThrowsError LispVal
-isBoolean ([Bool _]) = return $ Bool True
-isBoolean _ = return $ Bool False
-
-checkType :: [LispVal] -> ThrowsError LispVal
-checkType [x] = return $ String $ typeString x
-checkType badArgList = throwError $ NumArgs 1 badArgList
-
-version' :: [Int]
-version' = [0, 7, 0]
-
-versionStr :: String
-versionStr = intercalate "." $ fmap show version'
-
-majorVersion :: Int
-majorVersion = head version'
-
-minorVersion :: Int
-minorVersion = version' !! 1
-
-patchVersion :: Int
-patchVersion = version' !! 2
-
-getVersion :: [LispVal] -> ThrowsError LispVal
-getVersion [] = return $ List $ fmap (String . show) version'
-getVersion badList = throwError $ NumArgs 0 badList
-
-getVersionStr :: [LispVal] -> ThrowsError LispVal
-getVersionStr [] = return $ String versionStr
-getVersionStr badList = throwError $ NumArgs 0 badList
-
-getMajVersion :: [LispVal] -> ThrowsError LispVal
-getMajVersion [] = return $ Number $ NumI $ toInteger majorVersion
-getMajVersion badList = throwError $ NumArgs 0 badList
-
-getMinVersion :: [LispVal] -> ThrowsError LispVal
-getMinVersion [] = return $ Number $ NumI $ toInteger minorVersion
-getMinVersion badList = throwError $ NumArgs 0 badList
-
-getPatchVersion :: [LispVal] -> ThrowsError LispVal
-getPatchVersion [] = return $ Number $ NumI $ toInteger patchVersion
-getPatchVersion badList = throwError $ NumArgs 0 badList
 
 -- | searches all primitives for a possible completion
 evalString :: Env -> String -> IO String

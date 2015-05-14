@@ -1,4 +1,5 @@
 module Zepto.Libraries.TypeCheckPrimitives where
+import Control.Monad.Except (throwError)
 import Data.Complex (imagPart)
 
 import Zepto.Types
@@ -56,3 +57,34 @@ isSymbol _ = return $ Bool False
 isAtom :: [LispVal] -> ThrowsError LispVal
 isAtom ([Atom (':' : _)]) = return $ Bool True
 isAtom _ = return $ Bool False
+
+isString :: [LispVal] -> ThrowsError LispVal
+isString ([String _]) = return $ Bool True
+isString _ = return $ Bool False
+
+isPort :: [LispVal] -> ThrowsError LispVal
+isPort ([Port _]) = return $ Bool True
+isPort _ = return $ Bool False
+
+-- Implement
+isInputPort :: [LispVal] -> ThrowsError LispVal
+isInputPort ([Port _]) = return $ Bool True
+isInputPort _ = return $ Bool False
+
+-- Implement
+isOutputPort :: [LispVal] -> ThrowsError LispVal
+isOutputPort ([Port _]) = return $ Bool True
+isOutputPort _ = return $ Bool False
+
+isChar :: [LispVal] -> ThrowsError LispVal
+isChar ([Character _]) = return $ Bool True
+isChar _ = return $ Bool False
+
+isBoolean :: [LispVal] -> ThrowsError LispVal
+isBoolean ([Bool _]) = return $ Bool True
+isBoolean _ = return $ Bool False
+
+checkType :: [LispVal] -> ThrowsError LispVal
+checkType [x] = return $ String $ typeString x
+checkType badArgList = throwError $ NumArgs 1 badArgList
+
