@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (assert-equal (lambda () (id `(list ,(+ 1 2) 4)))
     '(list 3 4))

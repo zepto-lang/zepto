@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (define-syntax my-let 
   (syntax-rules ()

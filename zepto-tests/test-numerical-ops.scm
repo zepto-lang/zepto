@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 (assert-equal (lambda () (id 10e-1)) 1.0)
 (assert-equal (lambda () (id 14e1)) 140)

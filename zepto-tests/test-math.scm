@@ -1,4 +1,4 @@
-(load "scm-tests/unit.scm")
+(load "zepto-tests/unit.scm")
 
 
 (assert-equal (lambda () (exact? 1)) #t)
