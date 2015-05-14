@@ -216,7 +216,7 @@ until_ prompt action text = do result <- prompt text
                       | matches x "complete-license" =
                                 printFileContents "complete_license"
                       | matches x "easteregg" =
-                                printFileContents "grandeur"
+                                printFileContents "delusion_of_grandeur"
                       | matches x "ddate" = do
                                 ddate >>= putStrLn
                                 until_ prompt action text
