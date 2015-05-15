@@ -8,7 +8,7 @@
 A simple Scheme interpreter in Haskell (based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
-It implements a good enough subset of R5RS to make real programming possible,
+It implements a good enough subset of R<sup>5</sup>RS to make real programming possible,
 but does not strive for perfect compliance. I guess you could say it tries to
 be relaxed enough to not get into the way of other interesting things that may
 want to be implemented.
@@ -225,7 +225,7 @@ Multimedia (Audio, Video), separately optimizing functions concerned with
 audio and video programming through special primitives.
 
 Until I can do that, however, I want to implement a good (superset|subset|dialect) 
-of R5RS (and|or) Common Lisp.
+of R<sup>5</sup>RS (and|or) Common Lisp.
 
 ## Future
 

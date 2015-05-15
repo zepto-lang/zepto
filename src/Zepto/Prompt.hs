@@ -334,8 +334,8 @@ runFile args = do
                                                     List $ String <$> drop 1 args)]
         lib <- getDataFileName "zepto-stdlib/module.scm"
         _ <- loadFile env lib
-        runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
-            >>= hPutStrLn stderr
+        _ <- runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
+        exitWith ExitSuccess
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 

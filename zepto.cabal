@@ -2,7 +2,7 @@ Name:                zepto
 Version:             0.7.1
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:         
-  zepto is a relaxed implementation of the R5RS standard.
+  zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
   Implemented features include but are not limited to
   macros, continuations and the datatypes and libraries
   described in the standard.
