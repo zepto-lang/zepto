@@ -301,6 +301,7 @@ eval env conti (List [Atom "set-car!", Atom var, form]) = do
           set_car _ _ = return $ Nil "This should never happen"
 eval _ _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [Atom "define"]) = throwError $ NumArgs 2 []
+eval _ _ (List [Atom "ƒ"]) = throwError $ NumArgs 2 []
 eval _ _ (List [Atom "define", a@(Atom (':' : _)), _]) =
             throwError $ TypeMismatch "symbol" a
 eval env conti (List [Atom "define", Atom var, form]) = do
@@ -318,7 +319,20 @@ eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : String
 eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : b)) = do
         result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
+eval env conti (List (Atom "ƒ" : List (Atom var : p) : String doc : b)) =  do
+        result <- makeDocFunc env p b doc >>= defineVar env var
+        contEval env conti result
+eval env conti (List (Atom "ƒ" : List (Atom var : p) : b)) = do
+        result <- makeNormalFunc env p b >>= defineVar env var
+        contEval env conti result
+eval env conti (List (Atom "ƒ" : DottedList (Atom var : p) varargs : String doc : b)) = do
+        result <- makeVarargs varargs env p b doc >>= defineVar env var
+        contEval env conti result
+eval env conti (List (Atom "ƒ" : DottedList (Atom var : p) varargs : b)) = do
+        result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
+        contEval env conti result
 eval _ _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
+eval _ _ (List (Atom "ƒ" : x)) = throwError $ NumArgs 2 x
 eval env conti (List (Atom "lambda" : List p : b)) =  do
         result <- makeNormalFunc env p b
         contEval env conti result
