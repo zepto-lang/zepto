@@ -54,7 +54,7 @@ parseNumber = try parseComplex
 
 parseStandardNum :: Parser LispVal
 parseStandardNum = do num <- try parseReal <|> parseDigital1
-                      e <- optionMaybe $ string "e"
+                      e <- optionMaybe $ oneOf "eE"
                       case e of
                            Just _ -> do base <- parseDigital1
                                         return $ expt num base
