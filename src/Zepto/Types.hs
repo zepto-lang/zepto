@@ -372,7 +372,9 @@ showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer p _) = "<pointer " ++ p ++ ">"
 showVal (Nil _) = "nil"
 showVal (Cont _) = "<continuation>"
-showVal (ListComprehension expr _ _ _) = "<list comprehension: " ++ show expr ++ ">"
+showVal (ListComprehension expr filt _ _) = "<list comprehension: " ++
+                                            show expr ++ " : " ++
+                                            show filt ++ ">"
 
 -- | a show function for all LispErrors
 showError :: LispError -> String

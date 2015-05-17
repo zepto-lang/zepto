@@ -226,11 +226,11 @@ parseComments = do _ <- char ';'
 parseListComp :: Parser LispVal
 parseListComp = do _    <- char '['
                    ret  <- parseExpr
-                   _    <- char '|'
+                   _    <- string " | "
                    el   <- parseAtom
-                   _    <- string "->"
+                   _    <- string " <- "
                    exr  <- parseListBody
-                   comma <- optionMaybe $ char ','
+                   comma <- optionMaybe $ string ", "
                    case comma of
                      Just _ -> do
                         cond <- parseExpr

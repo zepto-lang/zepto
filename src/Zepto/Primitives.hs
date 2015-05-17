@@ -252,6 +252,11 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
+eval env conti (ListComprehension _ _ (Atom iter) _) = do
+         list <- contEval env conti =<< getVar env iter
+         case list of
+           List e -> return $ List e
+           _ -> throwError $ TypeMismatch "list" list
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
