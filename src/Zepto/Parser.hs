@@ -223,8 +223,27 @@ parseComments = do _ <- char ';'
                    _ <- many (noneOf "\n")
                    return $ Nil ""
 
+parseListComp :: Parser LispVal
+parseListComp = do _    <- char '['
+                   ret  <- parseExpr
+                   _    <- char '|'
+                   el   <- parseAtom
+                   _    <- string "->"
+                   exr  <- parseListBody
+                   comma <- optionMaybe $ char ','
+                   case comma of
+                     Just _ -> do
+                        cond <- parseExpr
+                        _ <- char ']'
+                        return $ ListComprehension ret el exr (Just cond)
+                     Nothing -> do
+                        _ <- char ']'
+                        return $ ListComprehension ret el exr Nothing
+    where parseListBody = parseExpr
+
 parseExpr :: Parser LispVal
 parseExpr = parseComments
+        <|> try parseListComp
         <|> parseNumber
         <|> do _ <- try $ string "#("
                x <- parseVect

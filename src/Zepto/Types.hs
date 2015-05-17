@@ -296,6 +296,7 @@ data LispVal = Atom String
              | Nil String
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Cont Continuation
+             | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
 
 data Continuation = Continuation { contClosure :: Env
                                  , cbody :: [LispVal]
@@ -371,6 +372,7 @@ showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer p _) = "<pointer " ++ p ++ ">"
 showVal (Nil _) = "nil"
 showVal (Cont _) = "<continuation>"
+showVal (ListComprehension expr _ _ _) = "<list comprehension: " ++ show expr ++ ">"
 
 -- | a show function for all LispErrors
 showError :: LispError -> String
@@ -425,6 +427,7 @@ typeString (Func _) = "function"
 typeString (Nil _) = "nil"
 typeString (Pointer _ _) = "pointer"
 typeString (Cont _) = "continuation"
+typeString (ListComprehension _ _ _ _) = "list comprehension"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
