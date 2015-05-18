@@ -1,5 +1,5 @@
 ![zepto banner](https://raw.githubusercontent.com/zepto-lang/logos/master/zepto_logo.png)
-![general version](http://img.shields.io/badge/version-0.7.1-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.7.2-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -13,7 +13,7 @@ but does not strive for perfect compliance. I guess you could say it tries to
 be relaxed enough to not get into the way of other interesting things that may
 want to be implemented.
 Features included include but are not limited to the full numeric tower (with
-extensions even), macros, lazy evaluation, continuations,
+extensions even), macros, lazy evaluation, continuations, list comprehensions,
 a minimal stdlib, many native primitives and help for those or for functions 
 provided via docstrings included in the function definition. And it actually 
 has a decent shell with completion and history.
@@ -133,6 +133,19 @@ multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
 And it autocompletes your newly created function, too!
+
+There are also List Comprehensions. They look like this:
+
+```clojure
+zepto> ; [do-this | for-every <- in, optional-check]
+zepto> [(+ x 1) | x <- [1 2 3 4]]
+(2 3 4 5)
+zepto> [(+ x 1) | x <- [1 2 3 4], (> x 1)]
+(3 4 5)
+```
+
+The whitespaces matter. The thing is symbol-heavy enough as it is,
+so give it at least a bit of space.
 
 Once you're done with the fiddling, just do:
 

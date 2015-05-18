@@ -5,7 +5,7 @@ import Control.Monad.Except (throwError)
 import Zepto.Types
 
 version :: [Int]
-version = [0, 7, 1]
+version = [0, 7, 2]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version
