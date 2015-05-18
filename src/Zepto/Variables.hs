@@ -21,13 +21,27 @@ mnamespace = 'm'
 vnamespace :: Char
 vnamespace = 'v'
 
+copyEnv :: Env -> IO Env
+copyEnv env = do
+        ptrs <- liftIO $ readIORef $ pointers env
+        ptrList <- newIORef ptrs
+        binds <- liftIO $ readIORef $ bindings env
+        bindingListT <- mapM addBind $ Data.Map.toList binds
+        bindingList <- newIORef $ Data.Map.fromList bindingListT
+        return $ Environment (parentEnv env) bindingList ptrList
+    where addBind (name, val) =
+            (liftIO $ readIORef val)
+              >>= newIORef
+                >>= (tuplify name)
+          tuplify x y = return (x, y)
+
 extendEnv :: Env -> [((Char, String), LispVal)] -> IO Env
 extendEnv envRef abindings = do
-        bindinglistT <- mapM addBinding abindings
+        bindinglistT <- mapM addBind abindings
         bindinglist <- newIORef $ Data.Map.fromList bindinglistT
         nullPointers <- newIORef $ Data.Map.fromList []
         return $ Environment (Just envRef) bindinglist nullPointers
-    where addBinding ((namespace, name), val) = do
+    where addBind ((namespace, name), val) = do
                 ref <- newIORef val
                 return (getVarName namespace name, ref)
 

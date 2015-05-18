@@ -11,6 +11,7 @@ import Control.Monad
 import Control.Monad.Except
 import System.Directory
 import System.IO
+import System.IO.Error (tryIOError)
 
 import Paths_zepto
 import Zepto.Libraries.CharStrPrimitives
@@ -252,11 +253,23 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
-eval env conti (ListComprehension _ _ (Atom iter) _) = do
+eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) _) = do
          list <- contEval env conti =<< getVar env iter
          case list of
-           List e -> return $ List e
+           List e -> do
+             l <- monadicMap filterAndApply e
+             return $ List l
            _ -> throwError $ TypeMismatch "list" list
+    where filterAndApply :: LispVal -> IOThrowsError LispVal
+          filterAndApply x = do
+            newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
+            case newenv of
+              Right envval -> do
+                  _ <- defineVar envval set x
+                  eval envval conti ret
+              Left _ -> return $ Nil ""
+          monadicMap :: Monad m => (LispVal -> m b) -> [LispVal] -> m [b]
+          monadicMap = mapM
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
