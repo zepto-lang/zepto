@@ -257,7 +257,7 @@ eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) _) = do
          list <- contEval env conti =<< getVar env iter
          case list of
            List e -> do
-             l <- monadicMap filterAndApply e
+             l <- mapM filterAndApply e
              return $ List l
            _ -> throwError $ TypeMismatch "list" list
     where filterAndApply :: LispVal -> IOThrowsError LispVal
@@ -268,8 +268,21 @@ eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) _) = do
                   _ <- defineVar envval set x
                   eval envval conti ret
               Left _ -> return $ Nil ""
-          monadicMap :: Monad m => (LispVal -> m b) -> [LispVal] -> m [b]
-          monadicMap = mapM
+eval env conti (ListComprehension ret@(List _) (Atom set) v@(List (Atom "quote":_)) _) = do
+         list <- eval env conti v
+         case list of
+           List e -> do
+              l <-mapM filterAndApply e
+              return $ List l
+           _ -> throwError $ TypeMismatch "list" list
+    where filterAndApply :: LispVal -> IOThrowsError LispVal
+          filterAndApply x = do
+            newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
+            case newenv of
+              Right envval -> do
+                  _ <- defineVar envval set x
+                  eval envval conti ret
+              Left _ -> return $ Nil ""
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
