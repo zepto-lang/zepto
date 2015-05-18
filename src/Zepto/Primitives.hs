@@ -253,12 +253,12 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
-eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) _) = do
+eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) cond) = do
          list <- contEval env conti =<< getVar env iter
          case list of
            List e -> do
              l <- mapM filterAndApply e
-             return $ List l
+             return $ List $ filter isNotNil l
            _ -> throwError $ TypeMismatch "list" list
     where filterAndApply :: LispVal -> IOThrowsError LispVal
           filterAndApply x = do
@@ -266,14 +266,22 @@ eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) _) = do
             case newenv of
               Right envval -> do
                   _ <- defineVar envval set x
-                  eval envval conti ret
+                  case cond of
+                    Nothing -> eval envval conti ret
+                    Just condition -> do
+                      t <- eval envval conti condition
+                      case t of
+                        Bool True -> eval envval conti ret
+                        _ -> return $ Nil ""
               Left _ -> return $ Nil ""
-eval env conti (ListComprehension ret@(List _) (Atom set) v@(List (Atom "quote":_)) _) = do
+          isNotNil (Nil _) = False
+          isNotNil _ = True
+eval env conti (ListComprehension ret@(List _) (Atom set) v@(List (Atom "quote":_)) cond) = do
          list <- eval env conti v
          case list of
            List e -> do
               l <-mapM filterAndApply e
-              return $ List l
+              return $ List $ filter isNotNil l
            _ -> throwError $ TypeMismatch "list" list
     where filterAndApply :: LispVal -> IOThrowsError LispVal
           filterAndApply x = do
@@ -281,8 +289,16 @@ eval env conti (ListComprehension ret@(List _) (Atom set) v@(List (Atom "quote":
             case newenv of
               Right envval -> do
                   _ <- defineVar envval set x
-                  eval envval conti ret
+                  case cond of
+                    Nothing -> eval envval conti ret
+                    Just condition -> do
+                      t <- eval envval conti condition
+                      case t of
+                        Bool True -> eval envval conti ret
+                        _ -> return $ Nil ""
               Left _ -> return $ Nil ""
+          isNotNil (Nil _) = False
+          isNotNil _ = True
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
