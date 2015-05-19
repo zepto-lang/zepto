@@ -270,6 +270,8 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
+eval _ _ (List [Vector x, Number (NumI i)]) = return $ x ! fromIntegral i
+eval _ _ (List [Vector x, Number (NumS i)]) = return $ x ! fromIntegral i
 eval env conti (ListComprehension ret (Atom set) (Atom iter) cond) = do
         list <- contEval env conti =<< getVar env iter
         case list of
@@ -290,6 +292,14 @@ eval env conti (ListComprehension ret (Atom set) v@(List (Atom "quote":_)) cond)
           isNotNil _ = True
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
+eval _ _ (List [List [Atom "quote", (List x)], v@(Number (NumI i))]) =
+        if length x > fromIntegral i
+          then return $ x !! fromIntegral i
+          else throwError $ BadSpecialForm "index too large" v
+eval _ _ (List [List [Atom "quote", (List x)], v@(Number (NumS i))]) =
+        if length x > i
+          then return $ x !! i
+          else throwError $ BadSpecialForm "index too large" v
 eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "quote", val]) = contEval env conti val
 eval _ _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
