@@ -14,13 +14,13 @@ import System.IO
 import System.IO.Error (tryIOError)
 
 import Paths_zepto
-import Zepto.Libraries.CharStrPrimitives
-import Zepto.Libraries.ConversionPrimitives
-import Zepto.Libraries.IOPrimitives
-import Zepto.Libraries.ListPrimitives
-import Zepto.Libraries.LogMathPrimitives
-import Zepto.Libraries.TypeCheckPrimitives
-import Zepto.Libraries.VersionPrimitives
+import Zepto.Primitives.CharStrPrimitives
+import Zepto.Primitives.ConversionPrimitives
+import Zepto.Primitives.IOPrimitives
+import Zepto.Primitives.ListPrimitives
+import Zepto.Primitives.LogMathPrimitives
+import Zepto.Primitives.TypeCheckPrimitives
+import Zepto.Primitives.VersionPrimitives
 import Zepto.Types
 import Zepto.Parser
 import Zepto.Variables
