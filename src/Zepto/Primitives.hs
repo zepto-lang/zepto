@@ -244,6 +244,21 @@ findFile' filename = do
         fex file = do ex <-liftIO $ doesFileExist file
                       return $ Bool ex
 
+filterAndApply :: String -> LispVal -> Maybe LispVal -> Env
+                  -> LispVal -> LispVal -> IOThrowsError LispVal
+filterAndApply set ret cond env conti x = do
+    newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
+    case newenv of
+      Right envval -> do
+          _ <- defineVar envval set x
+          case cond of
+            Nothing -> eval envval conti ret
+            Just condition -> do
+              t <- eval envval conti condition
+              case t of
+                Bool True -> eval envval conti ret
+                _ -> return $ Nil ""
+      Left _ -> return $ Nil ""
 
 -- | evaluates a parsed expression
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
@@ -253,51 +268,23 @@ eval env conti val@(Number _) = contEval env conti val
 eval env conti val@(Bool _) = contEval env conti val
 eval env conti val@(Character _) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
-eval env conti (ListComprehension ret@(List _) (Atom set) (Atom iter) cond) = do
-         list <- contEval env conti =<< getVar env iter
-         case list of
-           List e -> do
-             l <- mapM filterAndApply e
-             return $ List $ filter isNotNil l
-           _ -> throwError $ TypeMismatch "list" list
-    where filterAndApply :: LispVal -> IOThrowsError LispVal
-          filterAndApply x = do
-            newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
-            case newenv of
-              Right envval -> do
-                  _ <- defineVar envval set x
-                  case cond of
-                    Nothing -> eval envval conti ret
-                    Just condition -> do
-                      t <- eval envval conti condition
-                      case t of
-                        Bool True -> eval envval conti ret
-                        _ -> return $ Nil ""
-              Left _ -> return $ Nil ""
-          isNotNil (Nil _) = False
+eval env conti (ListComprehension ret (Atom set) (Atom iter) cond) = do
+        list <- contEval env conti =<< getVar env iter
+        case list of
+          List e -> do
+            l <- mapM (filterAndApply set ret cond env conti) e
+            return $ List $ filter isNotNil l
+          _ -> throwError $ TypeMismatch "list" list
+    where isNotNil (Nil _) = False
           isNotNil _ = True
-eval env conti (ListComprehension ret@(List _) (Atom set) v@(List (Atom "quote":_)) cond) = do
-         list <- eval env conti v
-         case list of
-           List e -> do
-              l <-mapM filterAndApply e
-              return $ List $ filter isNotNil l
-           _ -> throwError $ TypeMismatch "list" list
-    where filterAndApply :: LispVal -> IOThrowsError LispVal
-          filterAndApply x = do
-            newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
-            case newenv of
-              Right envval -> do
-                  _ <- defineVar envval set x
-                  case cond of
-                    Nothing -> eval envval conti ret
-                    Just condition -> do
-                      t <- eval envval conti condition
-                      case t of
-                        Bool True -> eval envval conti ret
-                        _ -> return $ Nil ""
-              Left _ -> return $ Nil ""
-          isNotNil (Nil _) = False
+eval env conti (ListComprehension ret (Atom set) v@(List (Atom "quote":_)) cond) = do
+        list <- eval env conti v
+        case list of
+          List e -> do
+            l <-mapM (filterAndApply set ret cond env conti) e
+            return $ List $ filter isNotNil l
+          _ -> throwError $ TypeMismatch "list" list
+    where isNotNil (Nil _) = False
           isNotNil _ = True
 eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
 eval env conti (Atom a) = contEval env conti =<< getVar env a
