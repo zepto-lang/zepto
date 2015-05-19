@@ -10,6 +10,9 @@
 (assert-equal (lambda () (string>? "ABCD" "abc")) #f)
 (assert-equal (lambda () (string-ci>? "ABCD" "abc")) #t)
 
+(assert-equal (lambda () (string-lower-case "FOO")) "foo")
+(assert-equal (lambda () (string-upper-case "bAr")) "BAR")
+
 (assert-equal (lambda () (typeof (nil))) "nil")
 (assert-equal (lambda () (typeof nil)) "primitive")
 
