@@ -9,8 +9,8 @@
 ;; Test cases for SRFI-9 (Record Types)
 ;;
 
-(load "zepto-tests/unit.scm")
-(load "stdlib/srfi/srfi-9.scm")
+(load "zepto-tests/unit.zp")
+(load "stdlib/srfi/srfi-9.zp")
 
 (define-record-type :pare
     (kons x y)

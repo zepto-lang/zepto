@@ -1,4 +1,4 @@
-(load "zepto-tests/unit.scm")
+(load "zepto-tests/unit.zp")
 
 (define (f return)
     (return 2)

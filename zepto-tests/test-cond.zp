@@ -1,4 +1,4 @@
-(load "zepto-tests/unit.scm")
+(load "zepto-tests/unit.zp")
 
 (assert-equal (lambda () (cond ((> 3 2) 'greater) ((< 3 2) 'less)))
 			  'greater)

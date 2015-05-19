@@ -1,4 +1,4 @@
-(load "zepto-tests/unit.scm")
+(load "zepto-tests/unit.zp")
 
 (assert-equal (lambda () (procedure? car)) #t)
 (assert-equal (lambda () (procedure? 1)) #f)
