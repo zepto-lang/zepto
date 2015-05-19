@@ -55,6 +55,9 @@ make test
 # And then see whether none of the tests yield #f
 ```
 
+There is also a [Vim plugin](https://github.com/zepto-lang/zepto-vim) 
+for all of you terminal hackers (sorry emacs).
+
 ## Introduction
 
 **DISCLAIMER:** This is really only a quickstart. If you plan on going
