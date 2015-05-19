@@ -31,3 +31,13 @@ charUpcase [Character c] = return $ Character $ toUpper c
 charUpcase [badType] = throwError $ TypeMismatch "character" badType
 charUpcase badArgList = throwError $ NumArgs 1 badArgList
 
+stringDowncase :: [LispVal] -> ThrowsError LispVal
+stringDowncase [String c] = return $ String $ map toLower c
+stringDowncase [badType] = throwError $ TypeMismatch "string" badType
+stringDowncase badArgList = throwError $ NumArgs 1 badArgList
+
+stringUpcase :: [LispVal] -> ThrowsError LispVal
+stringUpcase [String c] = return $ String $ map toUpper c
+stringUpcase [badType] = throwError $ TypeMismatch "string" badType
+stringUpcase badArgList = throwError $ NumArgs 1 badArgList
+
