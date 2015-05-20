@@ -10,6 +10,8 @@ ghc:
   - 7.6
   - 7.4
 
-script: 
+install:
     - cabal install
+
+script: 
     - make test | grep "#f"; [ $? == 1 ]
