@@ -1,5 +1,6 @@
 module Zepto.Primitives.CharStrPrimitives where
 import Data.Char
+import Data.List.Utils
 import Control.Monad.Except
 
 import Zepto.Types
@@ -41,3 +42,10 @@ stringUpcase [String c] = return $ String $ map toUpper c
 stringUpcase [badType] = throwError $ TypeMismatch "string" badType
 stringUpcase badArgList = throwError $ NumArgs 1 badArgList
 
+stringSub :: [LispVal] -> ThrowsError LispVal
+stringSub [String source, String pattern, String substitute] =
+  return $ String $ replace pattern substitute source
+stringSub [err@(_), String _, String _] = throwError $ TypeMismatch "string" err
+stringSub [String _, err@(_), String _] = throwError $ TypeMismatch "string" err
+stringSub [String _, String _, err@(_)] = throwError $ TypeMismatch "string" err
+stringSub badArgList = throwError $ NumArgs 3 badArgList

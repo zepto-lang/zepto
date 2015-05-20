@@ -43,6 +43,7 @@ Executable           zepto
                      directory,
                      filepath,
                      haskeline,
+                     MissingH,
                      mtl >= 2.2.1,
                      parsec,
                      process,
