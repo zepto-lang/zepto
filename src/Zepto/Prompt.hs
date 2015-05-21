@@ -77,7 +77,7 @@ completeFilename  = completeQuotedWord (Just '\\') "\"'" listFiles $
 
 fixPath :: String -> IO String
 fixPath "" = return "."
-fixPath ('~':c:path) | isPathSeparator c = do
+fixPath ('~' : c : path) | isPathSeparator c = do
       home <- getHomeDirectory
       return (home </> path)
 fixPath path = return path
@@ -100,7 +100,7 @@ listFiles path = liftIO $ do
                     else do
                         curfiles <- (map completion . filterPrefix) <$>
                             getDirectoryContents fixedDir
-                        return (stdfiles ++ curfiles)
+                        return (curfiles ++ stdfiles)
     forM allFiles $ \c -> do
             isDir <- doesDirectoryExist (fixedDir </> replacement c)
             return $ setReplacement fullName $ alterIfDir isDir c
