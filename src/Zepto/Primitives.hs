@@ -409,9 +409,15 @@ eval _ _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [Atom "load"]) = throwError $ NumArgs 1 []
 eval env conti (List [Atom "load", String file]) = do
         filename <- findFile' file
-        result <- load filename >>= liftM last . mapM (evl env (nullCont env))
+        result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
         contEval env conti result
-    where evl env2 cont2 val = macroEval env2 val >>= eval env2 cont2
+    where evl env' cont' val = macroEval env' val >>= eval env' cont'
+          checkLast x = if length x > 1
+                          then last x
+                          else error $
+                                "Parse Error while reading file '"
+                                ++ file
+                                ++ "' - file not a zepto file?"
 eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
