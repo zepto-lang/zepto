@@ -315,7 +315,7 @@ eval env conti (List [Atom "if", predicate, conseq]) = do
         result <- eval env conti predicate
         case result of
             Bool True -> eval env conti conseq
-            _         -> eval env conti $ List []
+            _         -> eval env conti $ Nil ""
 eval _ _ (List [Atom "if", x]) = throwError $ BadSpecialForm
                             ("if needs a predicate and a consequence "
                             ++ "plus an optional alternative clause")
