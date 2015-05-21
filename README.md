@@ -1,5 +1,5 @@
 ![zepto banner](https://raw.githubusercontent.com/zepto-lang/logos/master/zepto_logo.png)
-![general version](http://img.shields.io/badge/version-0.7.2-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.7.3-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -69,7 +69,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.7.1, compiled with GHC version 710
+zepto Version 0.7.3, compiled with GHC version 710
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
@@ -222,8 +222,8 @@ There are many libraries already imported at startup, such as
 two random number generators(one of which is cryptographically
 secure) and most of the functions you know from your ordinary
 Scheme. There are also a few opt-ins, namely a port of standard
-Common Lisp functions (importable via `(load "stdlib/comlist.scm)`)
-and a few sort functions (importable via `(load "stdlib/sort.scm")`).
+Common Lisp functions (importable via `(load "stdlib/comlist.zp)`)
+and a few sort functions (importable via `(load "stdlib/sort.zp")`).
 
 There is currently no complete, comprehensive documentation for those
 modules, but you can find out about single commands via aforementioned
