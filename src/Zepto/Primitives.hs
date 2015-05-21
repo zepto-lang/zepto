@@ -417,7 +417,7 @@ eval env conti (List [Atom "load", String file]) = do
                           else error $
                                 "Parse Error while reading file '"
                                 ++ file
-                                ++ "' - file not a zepto file?"
+                                ++ "' - is file not a zepto file?"
 eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
