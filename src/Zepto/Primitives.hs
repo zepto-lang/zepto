@@ -87,6 +87,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("real?", isReal, "check whether arg is a real number")
              , ("list?", unaryOp isList, "check whether arg is list")
              , ("null?", isNull, "check whether arg is null")
+             , ("nil?", isNil, "check whether arg is nil")
              , ("symbol?", isSymbol, "check whether arg is symbol")
              , ("atom?", isAtom, "check whether arg is atom")
              , ("vector?", unaryOp isVector, "check whether arg is vector")
@@ -351,6 +352,9 @@ eval _ _ (List [Atom "define"]) = throwError $ NumArgs 2 []
 eval _ _ (List [Atom "ƒ"]) = throwError $ NumArgs 2 []
 eval _ _ (List [Atom "define", a@(Atom (':' : _)), _]) =
             throwError $ TypeMismatch "symbol" a
+eval env conti (List [Atom "define", Atom "_", form]) = do
+        _ <- eval env (nullCont env) form
+        contEval env conti $ Nil ""
 eval env conti (List [Atom "define", Atom var, form]) = do
         result <- eval env (nullCont env) form >>= defineVar env var
         contEval env conti result

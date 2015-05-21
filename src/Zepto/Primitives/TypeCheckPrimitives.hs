@@ -48,7 +48,12 @@ isList _ = return $ Bool False
 
 isNull :: [LispVal] -> ThrowsError LispVal
 isNull ([List []]) = return $ Bool True
+isNull ([Nil _]) = return $ Bool True
 isNull _ = return $ Bool False
+
+isNil :: [LispVal] ->ThrowsError LispVal
+isNil ([Nil _]) = return $ Bool True
+isNil _ = return $ Bool False
 
 isSymbol :: [LispVal] -> ThrowsError LispVal
 isSymbol ([Atom _]) = return $ Bool True
