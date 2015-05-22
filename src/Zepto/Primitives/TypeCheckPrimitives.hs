@@ -18,6 +18,10 @@ isInteger ([Number (NumI _)]) = return $ Bool True
 isInteger ([Number (NumS _)]) = return $ Bool True
 isInteger _ = return $ Bool False
 
+isSmall :: [LispVal] -> ThrowsError LispVal
+isSmall ([Number (NumS _)]) = return $ Bool True
+isSmall _ = return $ Bool False
+
 isRational :: [LispVal] -> ThrowsError LispVal
 isRational ([Number (NumR _)]) = return $ Bool True
 isRational ([Number (NumS _)]) = return $ Bool True
