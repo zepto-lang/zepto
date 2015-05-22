@@ -22,6 +22,10 @@ isSmall :: [LispVal] -> ThrowsError LispVal
 isSmall ([Number (NumS _)]) = return $ Bool True
 isSmall _ = return $ Bool False
 
+isFloat :: [LispVal] -> ThrowsError LispVal
+isFloat ([Number (NumF _)]) = return $ Bool True
+isFloat _ = return $ Bool False
+
 isRational :: [LispVal] -> ThrowsError LispVal
 isRational ([Number (NumR _)]) = return $ Bool True
 isRational ([Number (NumS _)]) = return $ Bool True

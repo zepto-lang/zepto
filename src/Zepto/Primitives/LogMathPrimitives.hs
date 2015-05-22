@@ -114,6 +114,21 @@ numRound op [Number (NumR n)] = return $ Number $ NumI $ op $ fromRational n
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
+real :: [LispVal] -> ThrowsError LispVal
+real [Number (NumC x)] = return $ Number $ NumF $ realPart x
+real [val@(Number (NumF _))] = return val
+real [val@(Number (NumR _))] = return val
+real [val@(Number (NumI _))] = return val
+real [val@(Number (NumS _))] = return val
+real[x] = throwError $ TypeMismatch "number" x
+real badArgList = throwError $ NumArgs 1 badArgList
+
+imaginary :: [LispVal] -> ThrowsError LispVal
+imaginary [Number (NumC x)] = return $ Number $ NumF $ imagPart x
+imaginary [Number _] = return $ Number $ NumF $ 0
+imaginary [x] = throwError $ TypeMismatch "number" x
+imaginary badArgList = throwError $ NumArgs 1 badArgList
+
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [Number (NumI n)] = return $ Number $ NumF $ op $ fromInteger n
 numOp op [Number (NumS n)] = return $ Number $ NumF $ op $ fromIntegral n
