@@ -323,7 +323,7 @@ runSingleStatement :: String -> IO ()
 runSingleStatement statement = do
         env <- primitiveBindings
         lib <- getDataFileName "zepto-stdlib/module.zp"
-        _ <- loadFile env lib
+        _   <- loadFile env lib
         evalAndPrint env statement
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
@@ -333,7 +333,7 @@ runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
                                                     List $ String <$> drop 1 args)]
         lib <- getDataFileName "zepto-stdlib/module.zp"
-        _ <- loadFile env lib
+        _   <- loadFile env lib
         runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
           >>= putStrLn
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
@@ -344,7 +344,7 @@ runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "zepto-stdlib/module.zp"
-        _ <- loadFile env lib
+        _   <- loadFile env lib
         until_ (readPrompt env) (evaluation env) defaultPrompt
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
           evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
