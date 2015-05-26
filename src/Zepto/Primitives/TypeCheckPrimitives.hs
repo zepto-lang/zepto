@@ -64,6 +64,7 @@ isNil ([Nil _]) = return $ Bool True
 isNil _ = return $ Bool False
 
 isSymbol :: [LispVal] -> ThrowsError LispVal
+isAtom ([Atom (':' : _)]) = return $ Bool False
 isSymbol ([Atom _]) = return $ Bool True
 isSymbol _ = return $ Bool False
 
