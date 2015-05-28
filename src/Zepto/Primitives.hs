@@ -196,10 +196,10 @@ stringToNumber badArgList = throwError $ NumArgs 1 badArgList
 
 -- | searches all primitives for a possible completion
 evalString :: Env -> String -> IO String
-evalString env expr = runIOThrows $ liftM show $
-        liftThrows (readExpr expr) >>=
-        macroEval env >>=
-        eval env (nullCont env)
+evalString env expr =  runIOThrows $ liftM show $
+    liftThrows (readExpr expr) >>=
+    macroEval env >>=
+    eval env (nullCont env)
 
 contEval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =

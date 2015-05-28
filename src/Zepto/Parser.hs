@@ -243,7 +243,6 @@ parseListComp = do _    <- char '['
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
-        <|> try parseListComp
         <|> parseNumber
         <|> do _ <- try $ string "#("
                x <- parseVect
@@ -264,12 +263,12 @@ parseExpr = parseComments
                x <- try parseList <|> parseDottedList
                _ <- char ')'
                return x
+        <|> try parseListComp
         <|> do _ <- char '['
                x <- parseList
                _ <- char ']'
                return $ List [Atom "quote", x]
         <|> try parseAtom
-        <?> "Expression"
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
