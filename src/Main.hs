@@ -9,13 +9,13 @@ import Zepto.Primitives
 printUsage :: IO ()
 printUsage = do printVersion
                 putStrLn("\nUsage: " ++
-                         "\n\twithout arguments  - runs REPL" ++
-                         "\n\t-h/--help          - display this help message" ++
-                         "\n\t-S/--silent        - runs REPL without displaying header" ++
-                         "\n\t-s/--single        - runs single statement passed in as string" ++
-                         "\n\t<some scheme file> - run file" ++
+                         "\n\twithout arguments - runs REPL" ++
+                         "\n\t-h/--help         - display this help message" ++
+                         "\n\t-S/--silent       - runs REPL without displaying header" ++
+                         "\n\t-s/--single       - runs single statement passed in as string" ++
+                         "\n\t<some zepto file> - run file" ++
                          "\n\nMore information can be found on " ++
-                         "https://github.com/hellerve/zepto")
+                         "http://zepto.veitheller.de")
 
 -- |Prints the version
 printVersion :: IO ()
@@ -58,7 +58,10 @@ main = do args <- getArgs
               runSingleStatement (getOpt arg (makeArg "s" "single"))
             | hasIn arg (makeArg "v" "version") =
               printVersion
-            | otherwise = runFile arg
+            | noMeta (head arg) = runFile arg
+            | otherwise = do
+              putStrLn ("Unknown option: " ++ (head arg))
+              printUsage
           hasIn :: [String] -> [String] -> Bool
           hasIn x l = any (`elem` l) x
           makeArg :: String -> String -> [String]
@@ -70,3 +73,7 @@ main = do args <- getArgs
                                         else "(display \"Malformed input: option " ++
                                              x !! i ++ " takes additional argument\")"
                               _      -> "Internal error"
+          noMeta :: String -> Bool
+          noMeta ('-' : '-' : _) = False
+          noMeta ['-',_] = False
+          noMeta _ = True
