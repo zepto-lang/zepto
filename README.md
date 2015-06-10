@@ -248,7 +248,7 @@ of R<sup>5</sup>RS (and|or) Common Lisp.
 Features that are planned, but not yet implemented, include hashtables, 
 proper `call/cc`, better macros and a small compiler based on LLVM. 
 Both latter features will take a while for me to implement, though. If 
-you have any other features, you would like to see in the 
+you have any other features you would like to see in the 
 language/implementation, contact me. I'm not an experienced Scheme
 programmer myself, so any feedback is welcome.
 
