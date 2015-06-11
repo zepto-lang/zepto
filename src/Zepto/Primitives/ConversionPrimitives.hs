@@ -11,7 +11,6 @@ symbol2String [] = throwError $ NumArgs 1 []
 symbol2String args@(_ : _) = throwError $ NumArgs 1 args
 
 string2Symbol :: [LispVal] -> ThrowsError LispVal
-string2Symbol [] = return $ Bool False
 string2Symbol ([String s]) = return $ Atom s
 string2Symbol [notString] = throwError $ TypeMismatch "string" notString
 string2Symbol [] = throwError $ NumArgs 1 []
