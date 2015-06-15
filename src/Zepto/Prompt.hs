@@ -29,6 +29,9 @@ import Zepto.Variables
 defaultPrompt :: String
 defaultPrompt = "zepto> "
 
+defaultSecond :: String
+defaultSecond = ">>> "
+
 metaPrefix :: Char
 metaPrefix = ':'
 
@@ -312,7 +315,22 @@ readPrompt env text = do set <- addSettings env
             input <- getInputLine p
             case input of
                 Nothing -> return "(print \"\")"
-                Just strinput -> return strinput
+                Just strinput -> do
+                  inputL <- getMore [strinput]
+                  return $ unlines inputL
+          getMore p =
+            if notBalanced p
+              then do
+                inp <- getInputLine defaultSecond
+                case inp of
+                  Nothing -> return p
+                  Just i -> getMore $ p ++ [i]
+              else return p
+            where notBalanced x =
+                    let before = (sum $ map (count '(') x)::Integer
+                        after  = (sum $ map (count ')') x)::Integer
+                    in before > after
+                  count e = foldr (\x s -> if x == e then s+1 else s) 0
 
 -- | evaluate a line of code and print it
 evalAndPrint :: Env -> String -> IO ()
