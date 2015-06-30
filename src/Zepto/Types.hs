@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
 module Zepto.Types (LispNum(..),
+                    Simple(..),
                     LispVal(..),
                     Continuation(..),
                     LispFun(..),
@@ -20,12 +22,14 @@ module Zepto.Types (LispNum(..),
 import Data.Array
 import Data.Complex
 import Data.Fixed
+import Data.Hashable
 import Data.Ratio
 import Data.IORef
 import Control.Monad
 import Control.Monad.Except
 import System.IO
 import Text.ParserCombinators.Parsec.Error
+import qualified Data.HashMap.Strict
 import qualified Data.Map
 
 -- | an unpacker for any LispVal
@@ -277,17 +281,22 @@ data LispNum = NumI Integer
              | NumC (Complex Double)
              | NumR Rational
              | NumS Int
+    deriving Hashable
+
+data Simple = Atom String
+            | Number LispNum
+            | String String
+            | Character Char
+            | Bool Bool
+    deriving (Eq, Hashable)
 
 instance Show LispVal where show = showVal
 -- | a LispVal data type comprising all Lisp data types
-data LispVal = Atom String
+data LispVal = SimpleVal Simple
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Vector (Array Int LispVal)
-             | Number LispNum
-             | String String
-             | Character Char
-             | Bool Bool
+             | HashMap (Data.HashMap.Strict.HashMap Simple LispVal)
              | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
@@ -349,14 +358,15 @@ showNum (NumS contents) = show contents ++ "s"
 
 -- | a show function for all LispVals
 showVal :: LispVal -> String
-showVal (String contents) = contents
-showVal (Atom name) = name
-showVal (Bool True) = "#t"
-showVal (Bool False) = "#f"
-showVal (Character c) = show c
-showVal (Number n) = showNum n
+showVal (SimpleVal (String contents)) = contents
+showVal (SimpleVal (Atom name)) = name
+showVal (SimpleVal (Bool True)) = "#t"
+showVal (SimpleVal (Bool False)) = "#f"
+showVal (SimpleVal (Character c)) = show c
+showVal (SimpleVal (Number n)) = showNum n
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
+showVal (HashMap contents) = "#{" ++ unwordsList (Data.HashMap.Strict.elems contents) ++ "}"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (EvalFunc _) = "<eval primitive>"
@@ -408,19 +418,20 @@ showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
 
 typeString :: LispVal -> String
-typeString (Number (NumI _)) = "integer"
-typeString (Number (NumS _)) = "small integer"
-typeString (Number (NumF _)) = "float"
-typeString (Number (NumR _)) = "rational"
-typeString (Number (NumC _)) = "complex"
-typeString (Vector _) = "vector"
-typeString (Bool _) = "boolean"
-typeString (Character _) = "character"
-typeString (String _) = "string"
+typeString (SimpleVal (Number (NumI _))) = "integer"
+typeString (SimpleVal (Number (NumS _))) = "small integer"
+typeString (SimpleVal (Number (NumF _))) = "float"
+typeString (SimpleVal (Number (NumR _))) = "rational"
+typeString (SimpleVal (Number (NumC _))) = "complex"
+typeString (SimpleVal (Bool _)) = "boolean"
+typeString (SimpleVal (Character _)) = "character"
+typeString (SimpleVal (String _)) = "string"
+typeString (SimpleVal (Atom (':' : _))) = "atom"
+typeString (SimpleVal (Atom _)) = "symbol"
 typeString (List _) = "list"
 typeString (DottedList _ _) = "dotted list"
-typeString (Atom (':' : _)) = "atom"
-typeString (Atom _) = "symbol"
+typeString (Vector _) = "vector"
+typeString (HashMap _) = "hashmap"
 typeString (PrimitiveFunc _) = "primitive"
 typeString (IOFunc _) = "io primitive"
 typeString (EvalFunc _) = "eval primitive"
