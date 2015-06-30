@@ -121,7 +121,7 @@ completionSearch env (l, r) = complete' $ prepare l
         where getDefs :: IO [String]
               getDefs = do exports <- recExportsFromEnv env
                            return $ fmap getAtom exports
-              getAtom (Atom a) = a
+              getAtom (SimpleVal (Atom a)) = a
               getAtom _ = ""
               prepare x = reverse $ readIn x
               readIn (x : xs) | x == '(' = []
@@ -349,10 +349,11 @@ runSingleStatement statement = do
 runFile :: [String] -> IO ()
 runFile args = do
         env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
-                                                    List $ String <$> drop 1 args)]
+                                                    List $ fromSimple . String <$> drop 1 args)]
         lib <- getDataFileName "zepto-stdlib/module.zp"
         _   <- loadFile env lib
-        runIOThrows (liftM show $ eval env (nullCont env) (List [Atom "load", String $ head args]))
+        runIOThrows (liftM show $ eval env (nullCont env)
+          (List [fromSimple (Atom "load"), fromSimple $ String $ head args]))
           >>= putStrLn
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 

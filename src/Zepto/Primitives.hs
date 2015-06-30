@@ -12,6 +12,7 @@ import Control.Monad.Except
 import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
+import qualified Data.Map
 
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
@@ -113,6 +114,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("string-length", stringLength, "get length of string")
              , ("string-substitute", stringSub, "substitute pattern within string by string")
              , ("make-string", makeString, "make a new string")
+             , ("make-simple-list", list2Simple, "make a new simple list")
              , ("make-vector", makeVector, "create a vector")
              , ("make-small", makeSmall, "create a small integer")
              , ("char->integer", charToInteger, "makes integer from char")
@@ -170,27 +172,18 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  --, ("load-ffi", evalFFI, "load foreign function")
                  ]
 
-makeSmall :: [LispVal] -> ThrowsError LispVal
-makeSmall [Number (NumI n)] = return $ Number $ NumS $ fromInteger n
-makeSmall [badType] = throwError $ TypeMismatch "integer" badType
-makeSmall badArgList = throwError $ NumArgs 1 badArgList
-
-buildNil:: [LispVal] -> ThrowsError LispVal
-buildNil [] = return $ Nil ""
-buildNil badArgList = throwError $ NumArgs 0 badArgList
-
 stringToNumber :: [LispVal] -> ThrowsError LispVal
-stringToNumber [String s] = do
+stringToNumber [SimpleVal (String s)] = do
         result <- readExpr s
         case result of
-            n@(Number _) -> return n
-            _ -> return $ Bool False
-stringToNumber [String s, Number base] =
+            n@(SimpleVal (Number _)) -> return n
+            _ -> return $ fromSimple $ Bool False
+stringToNumber [SimpleVal (String s), (SimpleVal (Number base))] =
     case base of
-        2 -> stringToNumber [String $ "#b" ++ s]
-        8 -> stringToNumber [String $ "#o" ++ s]
-        10 -> stringToNumber [String s]
-        16 -> stringToNumber [String $ "#x" ++ s]
+        2 -> stringToNumber [fromSimple $ String $ "#b" ++ s]
+        8 -> stringToNumber [fromSimple $ String $ "#o" ++ s]
+        10 -> stringToNumber [fromSimple $ String s]
+        16 -> stringToNumber [fromSimple $ String $ "#x" ++ s]
         _ -> throwError $ Default $ "Invalid base: " ++ show base
 stringToNumber [badType] = throwError $ TypeMismatch "string" badType
 stringToNumber badArgList = throwError $ NumArgs 1 badArgList
@@ -265,154 +258,164 @@ filterAndApply set ret cond env conti x = do
             Just condition -> do
               t <- eval envval conti condition
               case t of
-                Bool True -> eval envval conti ret
-                _ -> return $ Nil ""
-      Left _ -> return $ Nil ""
+                SimpleVal (Bool True) -> eval envval conti ret
+                _ -> return $ fromSimple $ Nil ""
+      Left _ -> return $ fromSimple $ Nil ""
 
 -- | evaluates a parsed expression
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
-eval env conti val@(Nil _) = contEval env conti val
-eval env conti val@(String _) = contEval env conti val
-eval env conti val@(Number _) = contEval env conti val
-eval env conti val@(Bool _) = contEval env conti val
-eval env conti val@(Character _) = contEval env conti val
+eval env conti val@(SimpleVal (Nil _)) = contEval env conti val
+eval env conti val@(SimpleVal (String _)) = contEval env conti val
+eval env conti val@(SimpleVal (Number _)) = contEval env conti val
+eval env conti val@(SimpleVal (Bool _)) = contEval env conti val
+eval env conti val@(SimpleVal (Character _)) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
-eval _ _ (List [Vector x, Number (NumI i)]) = return $ x ! fromIntegral i
-eval _ _ (List [Vector x, Number (NumS i)]) = return $ x ! fromIntegral i
-eval env conti (ListComprehension ret (Atom set) (Atom iter) cond) = do
+eval env conti val@(HashMap _) = contEval env conti val
+eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
+eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
+eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
+                     i <- getVar env a
+                     eval env conti (List [Vector x, i])
+eval env conti (List [HashMap x, SimpleVal (Atom a)]) = do
+                     i <- getVar env a
+                     eval env conti (List [HashMap x, i])
+eval _ _ (List [HashMap x, SimpleVal i]) = if Data.Map.member i x
+                        then return $ x Data.Map.! i
+                        else return $ fromSimple $ Nil ""
+eval env conti (ListComprehension ret (SimpleVal (Atom set)) (SimpleVal (Atom iter)) cond) = do
         list <- contEval env conti =<< getVar env iter
         case list of
           List e -> do
             l <- mapM (filterAndApply set ret cond env conti) e
             return $ List $ filter isNotNil l
           _ -> throwError $ TypeMismatch "list" list
-    where isNotNil (Nil _) = False
+    where isNotNil (SimpleVal (Nil _)) = False
           isNotNil _ = True
-eval env conti (ListComprehension ret (Atom set) v@(List (Atom "quote":_)) cond) = do
+eval env conti (ListComprehension ret (SimpleVal (Atom set)) v@(List (SimpleVal (Atom "quote") : _)) cond) = do
         list <- eval env conti v
         case list of
           List e -> do
             l <-mapM (filterAndApply set ret cond env conti) e
             return $ List $ filter isNotNil l
           _ -> throwError $ TypeMismatch "list" list
-    where isNotNil (Nil _) = False
+    where isNotNil (SimpleVal (Nil _)) = False
           isNotNil _ = True
-eval env conti (Atom val@(':' : _)) = contEval env conti $ Atom val
-eval env conti (Atom a) = contEval env conti =<< getVar env a
-eval _ _ (List [List [Atom "quote", (List x)], v@(Number (NumI i))]) =
+eval env conti val@(SimpleVal (Atom (':' : _))) = contEval env conti val
+eval env conti (SimpleVal (Atom a)) = contEval env conti =<< getVar env a
+eval _ _ (List [List [SimpleVal (Atom "quote"), (List x)], v@(SimpleVal (Number (NumI i)))]) =
         if length x > fromIntegral i
           then return $ x !! fromIntegral i
           else throwError $ BadSpecialForm "index too large" v
-eval _ _ (List [List [Atom "quote", (List x)], v@(Number (NumS i))]) =
+eval _ _ (List [List [SimpleVal (Atom "quote"), (List x)], v@(SimpleVal (Number (NumS i)))]) =
         if length x > i
           then return $ x !! i
           else throwError $ BadSpecialForm "index too large" v
-eval _ _ (List [Atom "quote"]) = throwError $ NumArgs 1 []
-eval env conti (List [Atom "quote", val]) = contEval env conti val
-eval _ _ (List (Atom "quote" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "if"]) = throwError $ NumArgs 3 []
-eval env conti (List [Atom "if", p, conseq, alt]) = do
+eval _ _ (List [SimpleVal (Atom "quote")]) = throwError $ NumArgs 1 []
+eval env conti (List [SimpleVal (Atom "quote"), val]) = contEval env conti val
+eval _ _ (List (SimpleVal (Atom "quote") : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [SimpleVal (Atom "if")]) = throwError $ NumArgs 3 []
+eval env conti (List [SimpleVal (Atom "if"), p, conseq, alt]) = do
         result <- eval env conti p
         case result of
-            Bool False -> eval env conti alt
-            _          -> eval env conti conseq
-eval env conti (List [Atom "if", predicate, conseq]) = do
+            SimpleVal (Bool False) -> eval env conti alt
+            _                      -> eval env conti conseq
+eval env conti (List [SimpleVal (Atom "if"), predicate, conseq]) = do
         result <- eval env conti predicate
         case result of
-            Bool True -> eval env conti conseq
-            _         -> eval env conti $ Nil ""
-eval _ _ (List [Atom "if", x]) = throwError $ BadSpecialForm
+            SimpleVal (Bool True) -> eval env conti conseq
+            _                     -> eval env conti $ fromSimple $ Nil ""
+eval _ _ (List [SimpleVal (Atom "if"), x]) = throwError $ BadSpecialForm
                             ("if needs a predicate and a consequence "
                             ++ "plus an optional alternative clause")
                             x
-eval _ _ (List (Atom "if" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "set!"]) = throwError $ NumArgs 2 []
-eval env conti (List [Atom "set!", Atom var, form]) = do
+eval _ _ (List (SimpleVal (Atom "if") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "set!")]) = throwError $ NumArgs 2 []
+eval env conti (List [SimpleVal (Atom "set!"), SimpleVal (Atom var), form]) = do
         result <- eval env (nullCont env) form >>= setVar env var
         contEval env conti result
-eval _ _ (List [Atom "set!", x, _]) = throwError $ BadSpecialForm
+eval _ _ (List [SimpleVal (Atom "set!"), x, _]) = throwError $ BadSpecialForm
                             ("set takes a previously defined variable and "
                             ++ "its new value")
                             x
-eval _ _ (List (Atom "set!" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "set-cdr!"]) = throwError $ NumArgs 2 []
-eval env conti (List [Atom "set-cdr!", Atom var, form]) = do
-            resolved_var <- eval env (nullCont env) (Atom var)
+eval _ _ (List (SimpleVal (Atom "set!") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "set-cdr!")]) = throwError $ NumArgs 2 []
+eval env conti (List [SimpleVal (Atom "set-cdr!"), var@(SimpleVal (Atom name)), form]) = do
+            resolved_var <- eval env (nullCont env) var
             resolved_form <- eval env (nullCont env) form
             x <- set_cdr resolved_var resolved_form
-            contEval env conti =<< setVar env var x
+            contEval env conti =<< setVar env name x
     where set_cdr (List old) (List new_cdr) = return $ List $ head old : new_cdr
-          set_cdr _ _ = return $ Nil "This should never happen"
-eval _ _ (List (Atom "set-cdr!" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "set-car!"]) = throwError $ NumArgs 2 []
-eval env conti (List [Atom "set-car!", Atom var, form]) = do
-            resolved_var <- eval env (nullCont env) (Atom var)
+          set_cdr _ _ = return $ fromSimple $ Nil "This should never happen"
+eval _ _ (List (SimpleVal (Atom "set-cdr!") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "set-car!")]) = throwError $ NumArgs 2 []
+eval env conti (List [SimpleVal (Atom "set-car!"), var@(SimpleVal (Atom name)), form]) = do
+            resolved_var <- eval env (nullCont env) var
             resolved_form <- eval env (nullCont env) form
             x <- set_car resolved_var resolved_form
-            contEval env conti =<< setVar env var x
+            contEval env conti =<< setVar env name x
     where set_car (List old) new_car = return $ List $ new_car : tail old
-          set_car _ _ = return $ Nil "This should never happen"
-eval _ _ (List (Atom "set-car!" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "define"]) = throwError $ NumArgs 2 []
-eval _ _ (List [Atom "ƒ"]) = throwError $ NumArgs 2 []
-eval _ _ (List [Atom "define", a@(Atom (':' : _)), _]) =
+          set_car _ _ = return $ fromSimple $ Nil "This should never happen"
+eval _ _ (List (SimpleVal (Atom "set-car!") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "define")]) = throwError $ NumArgs 2 []
+eval _ _ (List [SimpleVal (Atom "ƒ")]) = throwError $ NumArgs 2 []
+eval _ _ (List [SimpleVal (Atom "define"), a@(SimpleVal (Atom (':' : _))), _]) =
             throwError $ TypeMismatch "symbol" a
-eval env conti (List [Atom "define", Atom "_", form]) = do
+eval env conti (List [SimpleVal (Atom "define"), SimpleVal (Atom "_"), form]) = do
         _ <- eval env (nullCont env) form
-        contEval env conti $ Nil ""
-eval env conti (List [Atom "define", Atom var, form]) = do
+        contEval env conti $ fromSimple $ Nil ""
+eval env conti (List [SimpleVal (Atom "define"), SimpleVal (Atom var), form]) = do
         result <- eval env (nullCont env) form >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "define" : List (Atom var : p) : String doc : b)) =  do
+eval env conti (List (SimpleVal (Atom "define") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
         result <- makeDocFunc env p b doc >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "define" : List (Atom var : p) : b)) = do
+eval env conti (List (SimpleVal (Atom "define") : List (SimpleVal (Atom var) : p) : b)) = do
         result <- makeNormalFunc env p b >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : String doc : b)) = do
+eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
         result <- makeVarargs varargs env p b doc >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "define" : DottedList (Atom var : p) varargs : b)) = do
+eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
         result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "ƒ" : List (Atom var : p) : String doc : b)) =  do
+eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
         result <- makeDocFunc env p b doc >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "ƒ" : List (Atom var : p) : b)) = do
+eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : b)) = do
         result <- makeNormalFunc env p b >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "ƒ" : DottedList (Atom var : p) varargs : String doc : b)) = do
+eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
         result <- makeVarargs varargs env p b doc >>= defineVar env var
         contEval env conti result
-eval env conti (List (Atom "ƒ" : DottedList (Atom var : p) varargs : b)) = do
+eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
         result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
-eval _ _ (List (Atom "define" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List (Atom "ƒ" : x)) = throwError $ NumArgs 2 x
-eval env conti (List (Atom "lambda" : List p : b)) =  do
+eval _ _ (List (SimpleVal (Atom "define") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List (SimpleVal (Atom "ƒ") : x)) = throwError $ NumArgs 2 x
+eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
         result <- makeNormalFunc env p b
         contEval env conti result
-eval env conti (List (Atom "λ" : List p : b)) =  do
+eval env conti (List (SimpleVal (Atom "λ") : List p : b)) =  do
         result <- makeNormalFunc env p b
         contEval env conti result
-eval env conti (List (Atom "lambda" : DottedList p varargs : b)) = do
+eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : b)) = do
         result <- makeVarargs varargs env p b "lambda"
         contEval env conti result
-eval env conti (List (Atom "λ" : DottedList p varargs : b)) = do
+eval env conti (List (SimpleVal (Atom "λ") : DottedList p varargs : b)) = do
         result <- makeVarargs varargs env p b "lambda"
         contEval env conti result
-eval env conti (List (Atom "lambda" : varargs@(Atom _) : b)) = do
+eval env conti (List (SimpleVal (Atom "lambda") : varargs@(SimpleVal (Atom _)) : b)) = do
         result <- makeVarargs varargs env [] b "lambda"
         contEval env conti result
-eval env conti (List (Atom "λ" : varargs@(Atom _) : b)) = do
+eval env conti (List (SimpleVal (Atom "λ") : varargs@(SimpleVal (Atom _)) : b)) = do
         result <- makeVarargs varargs env [] b "lambda"
         contEval env conti result
-eval _ _ (List [Atom "λ"]) = throwError $ NumArgs 2 []
-eval _ _ (List [Atom "lambda"]) = throwError $ NumArgs 2 []
-eval _ _ (List (Atom "λ" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List (Atom "lambda" : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [Atom "load"]) = throwError $ NumArgs 1 []
-eval env conti (List [Atom "load", String file]) = do
+eval _ _ (List [SimpleVal (Atom "λ")]) = throwError $ NumArgs 2 []
+eval _ _ (List [SimpleVal (Atom "lambda")]) = throwError $ NumArgs 2 []
+eval _ _ (List (SimpleVal (Atom "λ") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List (SimpleVal (Atom "lambda") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "load")]) = throwError $ NumArgs 1 []
+eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
         filename <- findFile' file
         result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
         contEval env conti result
@@ -423,58 +426,58 @@ eval env conti (List [Atom "load", String file]) = do
                                 "Parse Error while reading file '"
                                 ++ file
                                 ++ "' - is file not a zepto file?"
-eval _ _ (List [Atom "load", x]) = throwError $ TypeMismatch "string" x
-eval _ _ (List (Atom "load" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "help"]) = throwError $ NumArgs 1 []
-eval _ _ (List [Atom "doc"]) = throwError $ NumArgs 1 []
-eval _ _ (List [Atom "help", String val]) =
-        return $ String $ concat $
+eval _ _ (List [SimpleVal (Atom "load"), x]) = throwError $ TypeMismatch "string" x
+eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
+eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
+eval _ _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) =
+        return $ fromSimple $ String $ concat $
         fmap thirdElem (filter filterTuple primitives) ++
         fmap thirdElem (filter filterTuple ioPrimitives)
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [Atom "doc", String val]) =
-        return $ String $ concat $
+eval _ _ (List [SimpleVal (Atom "doc"), SimpleVal (String val)]) =
+        return $ fromSimple $ String $ concat $
         fmap thirdElem (filter filterTuple primitives) ++
         fmap thirdElem (filter filterTuple ioPrimitives)
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval env _ (List [Atom "help", Atom val]) = do
+eval env _ (List [SimpleVal (Atom "help"), SimpleVal (Atom val)]) = do
         let x = concat $
                 fmap thirdElem (filter filterTuple primitives) ++
                 fmap thirdElem (filter filterTuple ioPrimitives)
         if x == ""
             then getVar env val
-            else return $ String x
+            else return $ fromSimple $ String x
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval env _ (List [Atom "doc", Atom val]) = do
+eval env _ (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
         let x = concat $
                 fmap thirdElem (filter filterTuple primitives) ++
                 fmap thirdElem (filter filterTuple ioPrimitives)
         if x == ""
             then getVar env val
-            else return $ String x
+            else return $ fromSimple $ String x
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [Atom "help", x]) = throwError $ TypeMismatch "string/symbol" x
-eval _ _ (List (Atom "help" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "doc", x]) = throwError $ TypeMismatch "string/symbol" x
-eval _ _ (List (Atom "doc" : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [Atom "quasiquote"]) = throwError $ NumArgs 1 []
-eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote env val
+eval _ _ (List [SimpleVal (Atom "help"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval _ _ (List (SimpleVal (Atom "help") : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [SimpleVal (Atom "doc"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval _ _ (List (SimpleVal (Atom "doc") : x)) = throwError $ NumArgs 1 x
+eval _ _ (List [SimpleVal (Atom "quasiquote")]) = throwError $ NumArgs 1 []
+eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti =<<doUnQuote env val
     where doUnQuote :: Env -> LispVal -> IOThrowsError LispVal
           doUnQuote e v =
             case v of
-                List [Atom "unquote", s] -> eval e (nullCont e) s
+                List [SimpleVal (Atom "unquote"), s] -> eval e (nullCont e) s
                 List (x : xs) -> liftM List (unquoteListM e (x : xs))
                 DottedList xs x -> do
                     rxs <- unquoteListM e xs
@@ -488,11 +491,11 @@ eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote
                     let len = length (elems vec)
                     vList <- unquoteListM env $ elems vec
                     return $ Vector $ listArray (0, len) vList
-                _ -> eval e (nullCont e) (List [Atom "quote", v])
+                _ -> eval e (nullCont e) (List [SimpleVal (Atom "quote"), v])
           unquoteListM e = foldlM (unquoteListFld e) []
           unquoteListFld e (acc) v =
             case v of
-                List [Atom "unquote-splicing", x] -> do
+                List [SimpleVal (Atom "unquote-splicing"), x] -> do
                     value <- eval e (nullCont e) x
                     case value of
                         List t -> return (acc ++ t)
@@ -502,39 +505,39 @@ eval env conti (List [Atom "quasiquote", val]) = contEval env conti =<<doUnQuote
           foldlM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
           foldlM f v (x : xs) = f v x >>= \ a -> foldlM f a xs
           foldlM _ v [] = return v
-eval env conti (List [Atom "string-fill!", Atom var, character]) = do
+eval env conti (List [SimpleVal (Atom "string-fill!"), SimpleVal (Atom var), character]) = do
     str <- eval env (nullCont env) =<< getVar env var
     ch <- eval env (nullCont env) character
     result <- eval env (nullCont env) (fillStr(str, ch)) >>= setVar env var
     contEval env conti result
-  where fillStr (String str, Character ch) =
+  where fillStr (SimpleVal (String str), SimpleVal (Character ch)) =
             doFillStr (String "", Character ch, length str)
-        fillStr (_, _) = Nil "This should never happen"
+        fillStr (_, _) = fromSimple $ Nil "This should never happen"
         doFillStr (String str, Character ch, left) =
             if left == 0
-                then String str
+                then fromSimple $ String str
                 else doFillStr(String $ ch : str, Character ch, left - 1)
-        doFillStr (_, _, _) = Nil "This should never happen"
-eval env conti (List [Atom "string-set!", Atom var, i, character]) = do
+        doFillStr (_, _, _) = fromSimple $ Nil "This should never happen"
+eval env conti (List [SimpleVal (Atom "string-set!"), SimpleVal (Atom var), i, character]) = do
     idx <- eval env (nullCont env) i
     str <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (substr(str, character, idx)) >>= setVar env var
     contEval env conti result
-  where substr (String str, Character ch, Number (NumI j)) =
-                              String $ (take (fromInteger j) . drop 0) str ++
+  where substr (SimpleVal (String str), SimpleVal (Character ch), SimpleVal (Number (NumI j))) =
+                              fromSimple . String $ (take (fromInteger j) . drop 0) str ++
                                        [ch] ++
                                        (take (length str) . drop (fromInteger j + 1)) str
-        substr (_, _, _) = Nil "This should never happen"
-eval env conti (List [Atom "vector-set!", Atom var, i, object]) = do
+        substr (_, _, _) = fromSimple $ Nil "This should never happen"
+eval env conti (List [SimpleVal (Atom "vector-set!"), SimpleVal (Atom var), i, object]) = do
     idx <- eval env (nullCont env) i
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (updateVector vec idx obj) >>= setVar env var
     contEval env conti result
-  where updateVector (Vector vec) (Number (NumI idx)) obj = Vector $ vec//[(fromInteger idx, obj)]
-        updateVector _ _ _ = Nil "This should never happen"
-eval _ _ (List (Atom "vector-set!" : x)) = throwError $ NumArgs 2 x
-eval env conti (List [Atom "vector-fill!", Atom var, object]) = do
+  where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
+        updateVector _ _ _ = fromSimple $ Nil "This should never happen"
+eval _ _ (List (SimpleVal (Atom "vector-set!") : x)) = throwError $ NumArgs 2 x
+eval env conti (List [SimpleVal (Atom "vector-fill!"), SimpleVal (Atom var), object]) = do
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (fillVector vec obj) >>= setVar env var
@@ -542,16 +545,16 @@ eval env conti (List [Atom "vector-fill!", Atom var, object]) = do
   where fillVector (Vector vec) obj = do
           let l = replicate (lenVector vec) obj
           Vector $ listArray (0, length l - 1) l
-        fillVector _ _ = Nil "This should never happen"
+        fillVector _ _ = fromSimple $ Nil "This should never happen"
         lenVector v = length (elems v)
-eval _ _ (List (Atom "vector-fill!" : x)) = throwError $ NumArgs 2 x
-eval env conti (List (Atom "begin" : funs))
-                        | null funs = eval env conti $ Nil ""
+eval _ _ (List (SimpleVal (Atom "vector-fill!") : x)) = throwError $ NumArgs 2 x
+eval env conti (List (SimpleVal (Atom "begin") : funs))
+                        | null funs = eval env conti $ SimpleVal (Nil "")
                         | length funs == 1 = eval env conti (head funs)
                         | otherwise = do
                                     let fs = tail funs
                                     _ <- eval env conti (head funs)
-                                    eval env conti (List (Atom "begin" : fs))
+                                    eval env conti (List (SimpleVal (Atom "begin") : fs))
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
@@ -559,7 +562,7 @@ eval env conti (List (function : args)) = do
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 readAll :: [LispVal] -> IOThrowsError LispVal
-readAll [String filename] = liftM List $ load filename
+readAll [SimpleVal (String filename)] = liftM List $ load filename
 readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 load :: String -> IOThrowsError [LispVal]
@@ -571,7 +574,7 @@ load filename = do
 
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
-readProc [Atom ":stdin"] = readProc [Port stdin]
+readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
@@ -596,7 +599,7 @@ apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
                                     else continueWithContinuation env ebody conti
                                 _ -> continueWithContinuation env ebody conti
         continueWithContinuation env cebody continuation =
-            contEval env (Cont (Continuation env cebody continuation Nothing Nothing)) $ Nil ""
+            contEval env (Cont (Continuation env cebody continuation Nothing Nothing)) $ fromSimple $ Nil ""
         bindVarArgs arg env = case arg of
             Just argName -> liftIO $ extendEnv env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env

@@ -12,6 +12,7 @@ module Zepto.Types (LispNum(..),
                     showVal,
                     showError,
                     fromSimple,
+                    toSimple,
                     trapError,
                     extractValue,
                     typeString,
@@ -287,6 +288,7 @@ data Simple = Atom String
             | Character Char
             | Bool Bool
             | Nil String
+            | SimpleList [Simple]
     deriving (Eq, Ord)
 
 instance Show LispVal where show = showVal
@@ -362,6 +364,7 @@ showVal (SimpleVal (Bool True)) = "#t"
 showVal (SimpleVal (Bool False)) = "#f"
 showVal (SimpleVal (Character c)) = show c
 showVal (SimpleVal (Number n)) = showNum n
+showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map SimpleVal contents) ++")"
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
 showVal (HashMap contents) = "#{" ++ unwordsList (Data.Map.elems contents) ++ "}"
@@ -418,6 +421,10 @@ showError (Default err) = err
 fromSimple :: Simple -> LispVal
 fromSimple x = SimpleVal x
 
+toSimple :: LispVal -> Simple
+toSimple (SimpleVal x) = x
+toSimple _ = Nil ""
+
 typeString :: LispVal -> String
 typeString (SimpleVal (Number (NumI _))) = "integer"
 typeString (SimpleVal (Number (NumS _))) = "small integer"
@@ -430,6 +437,7 @@ typeString (SimpleVal (String _)) = "string"
 typeString (SimpleVal (Atom (':' : _))) = "atom"
 typeString (SimpleVal (Atom _)) = "symbol"
 typeString (SimpleVal (Nil _)) = "nil"
+typeString (SimpleVal (SimpleList _)) = "simple list"
 typeString (List _) = "list"
 typeString (DottedList _ _) = "dotted list"
 typeString (Vector _) = "vector"

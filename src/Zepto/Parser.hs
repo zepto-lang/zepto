@@ -244,7 +244,7 @@ parseListComp = do _    <- char '['
 
 parseHashMap :: Parser LispVal
 parseHashMap = do vals <- sepBy parseExpr spaces
-                  if length vals % 2 /= 0
+                  if mod (length vals) 2 /= 0
                     then pzero
                     else
                       case construct [] vals of
@@ -252,8 +252,7 @@ parseHashMap = do vals <- sepBy parseExpr spaces
                         Nothing -> pzero
     where construct :: [(Simple, LispVal)] -> [LispVal] -> Maybe [(Simple, LispVal)]
           construct acc [] = Just acc
-          construct acc (List [(SimpleVal a), b] : l) = construct (acc ++ [(a, b)]) l
-          construct acc (DottedList [(SimpleVal a)] b : l) = construct (acc ++ [(a, b)]) l
+          construct acc ((SimpleVal a) : b : l) = construct ((a, b) : acc) l
           construct _ (_ : _) = Nothing
 
 parseExpr :: Parser LispVal

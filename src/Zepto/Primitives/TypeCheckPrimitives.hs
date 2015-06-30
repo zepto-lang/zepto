@@ -48,6 +48,10 @@ isProcedure ([IOFunc _]) = return $ fromSimple $ Bool True
 isProcedure ([Cont _]) = return $ fromSimple $ Bool True
 isProcedure _ = return $ fromSimple $ Bool False
 
+isSimple :: [LispVal] -> ThrowsError LispVal
+isSimple [SimpleVal _] = return $ fromSimple $ Bool True
+isSimple _ = return $ fromSimple $ Bool False
+
 isVector, isList :: LispVal -> ThrowsError LispVal
 isVector (Vector _) = return $ fromSimple $ Bool True
 isVector _ = return $ fromSimple $ Bool False

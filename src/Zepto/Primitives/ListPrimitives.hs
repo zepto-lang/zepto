@@ -26,11 +26,11 @@ cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
 makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
-makeVector [Number n] = makeVector [Number n, List []]
-makeVector [Number (NumI n), a] = do
+makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
+makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
     return $ Vector $ listArray (0, length l - 1) l
-makeVector [Number (NumS n), a] = do
+makeVector [SimpleVal (Number (NumS n)), a] = do
     let l = replicate n a
     return $ Vector $ listArray (0, length l - 1) l
 makeVector [badType] = throwError $ TypeMismatch "integer" badType
@@ -41,12 +41,12 @@ buildVector (o:os) = do
     return $ Vector $ listArray (0, length l - 1) l
 buildVector badArgList = throwError $ NumArgs 1 badArgList
 
-vectorLength [Vector v] = return $ Number $ NumI $ toInteger $ length (elems v)
+vectorLength [Vector v] = return $ fromSimple $ Number $ NumI $ toInteger $ length (elems v)
 vectorLength [badType] = throwError $ TypeMismatch "vector" badType
 vectorLength badArgList = throwError $ NumArgs 1 badArgList
 
-vectorRef [Vector v, Number (NumI n)] = return $ v ! fromInteger n
-vectorRef [Vector v, Number (NumS n)] = return $ v ! n
+vectorRef [Vector v, SimpleVal (Number (NumI n))] = return $ v ! fromInteger n
+vectorRef [Vector v, SimpleVal (Number (NumS n))] = return $ v ! n
 vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
 vectorRef badArgList = throwError $ NumArgs 2 badArgList
 
@@ -59,18 +59,18 @@ listToVector [badType] = throwError $ TypeMismatch "list" badType
 listToVector badArgList = throwError $ NumArgs 1 badArgList
 
 buildString :: [LispVal] -> ThrowsError LispVal
-buildString [List []] = return $ String ""
-buildString [Character c] = return $ String [c]
-buildString (Character c:rest) = do
+buildString [List []] = return $ fromSimple $ String ""
+buildString [SimpleVal (Character c)] = return $ fromSimple $ String [c]
+buildString (SimpleVal (Character c) : rest) = do
     cs <- buildString rest
     case cs of
-        String s -> return $ String $ c : s
+        SimpleVal (String s) -> return $ fromSimple $ String $ c : s
         badType -> throwError $ TypeMismatch "character" badType
 buildString [badType] = throwError $ TypeMismatch "character" badType
 buildString badArgList = throwError $ NumArgs 1 badArgList
 
 makeString :: [LispVal] -> ThrowsError LispVal
-makeString [Number n] = return $ _makeString n ' ' ""
+makeString [SimpleVal (Number n)] = return $ fromSimple $ _makeString n ' ' ""
     where _makeString count ch s =
             if count == 0
                 then String s
@@ -78,51 +78,51 @@ makeString [Number n] = return $ _makeString n ' ' ""
 makeString badArgList = throwError $ NumArgs 1 badArgList
 
 stringLength :: [LispVal] -> ThrowsError LispVal
-stringLength [String s] = return $ Number $ foldr (const (+1)) 0 s
+stringLength [SimpleVal (String s)] = return $ fromSimple $ Number $ foldr (const (+1)) 0 s
 stringLength [badType] = throwError $ TypeMismatch "string" badType
 stringLength badArgList = throwError $ NumArgs 1 badArgList
 
-stringRef [String v, Number (NumI n)] =
+stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =
         if n >= 0
-           then return $ Character $ v !! fromInteger n
-           else return $ Character $ v !! ((length v) - fromInteger n)
-stringRef [String v, Number (NumS n)] =
+           then return $ fromSimple $ Character $ v !! fromInteger n
+           else return $ fromSimple $ Character $ v !! ((length v) - fromInteger n)
+stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
         if n >= 0
-           then return $ Character $ v !! n
-           else return $ Character $ v !! ((length v) - n)
+           then return $ fromSimple $ Character $ v !! n
+           else return $ fromSimple $ Character $ v !! ((length v) - n)
 stringRef [badType] = throwError $ TypeMismatch "string integer" badType
 stringRef badArgList = throwError $ NumArgs 2 badArgList
 
-stringFind [String v, Character x] =
+stringFind [SimpleVal (String v), SimpleVal (Character x)] =
         case findIndex (\m -> x == m) v of
-           Just n -> return $ Number $ NumI $ toInteger n
-           _      -> return $ Number $ NumI $ -1
-stringFind [badType, Character _] = throwError $ TypeMismatch "string" badType
-stringFind [String _, badType] = throwError $ TypeMismatch "character" badType
+           Just n -> return $ SimpleVal $ Number $ NumI $ toInteger n
+           _      -> return $ SimpleVal $ Number $ NumI $ -1
+stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
+stringFind [SimpleVal (String _), badType] = throwError $ TypeMismatch "character" badType
 stringFind badArgList = throwError $ NumArgs 2 badArgList
 
 substring :: [LispVal] -> ThrowsError LispVal
-substring [String s, Number (NumI start), Number (NumI end)] = do
+substring [SimpleVal (String s), SimpleVal (Number (NumI start)), SimpleVal (Number (NumI end))] = do
     let len = fromInteger $ end - start
     let begin = fromInteger start
-    return $ String $ (take len . drop begin) s
-substring [String s, Number (NumS start), Number (NumS end)] = do
+    return $ fromSimple $ String $ (take len . drop begin) s
+substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Number (NumS end))] = do
     let len = end - start
-    return $ String $ (take len . drop start) s
+    return $ fromSimple $ String $ (take len . drop start) s
 substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
 stringExtend :: [LispVal] -> ThrowsError LispVal
-stringExtend v@(String _ : _) = extend' v
+stringExtend v@(SimpleVal (String _) : _) = extend' v
   where extend' :: [LispVal] -> ThrowsError LispVal
-        extend' [Character s] = return $ String [s]
-        extend' [String s] = return $ String s
+        extend' [SimpleVal (Character s)] = return $ fromSimple $ String [s]
+        extend' [SimpleVal (String s)] = return $ fromSimple $ String s
         extend' [s] = throwError $ TypeMismatch "string/character" s
-        extend' (String st : sts) = do
+        extend' (SimpleVal (String st) : sts) = do
           rest <- extend' sts
           case rest of
-              String s -> return $ String $ st ++ s
-              Character c -> return $ String $ st ++ [c]
+              SimpleVal (String s) -> return $ fromSimple $ String $ st ++ s
+              SimpleVal (Character c) -> return $ fromSimple $ String $ st ++ [c]
               elsewise -> throwError $
                             TypeMismatch "string/character" elsewise
         extend' _ = throwError $ InternalError "this should not happen"
@@ -176,8 +176,8 @@ vectorAppend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
 allAppend :: [LispVal] -> ThrowsError LispVal
-allAppend v@[String _, _] = stringExtend v
-allAppend v@(String _ : _) = stringExtend v
+allAppend v@[SimpleVal (String _), _] = stringExtend v
+allAppend v@(SimpleVal (String _) : _) = stringExtend v
 allAppend v@[List _, _] = listAppend v
 allAppend v@(List _ : _) = listAppend v
 allAppend v@[Vector _, _] = vectorAppend v
@@ -230,8 +230,8 @@ vectorExtend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
 allExtend :: [LispVal] -> ThrowsError LispVal
-allExtend v@[String _, _] = stringExtend v
-allExtend v@(String _ : _) = stringExtend v
+allExtend v@[SimpleVal (String _), _] = stringExtend v
+allExtend v@(SimpleVal (String _) : _) = stringExtend v
 allExtend v@[List _, _] = listExtend v
 allExtend v@(List _ : _) = listExtend v
 allExtend v@[Vector _, _] = vectorExtend v
