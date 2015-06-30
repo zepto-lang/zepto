@@ -17,6 +17,7 @@ import qualified Data.Map
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
 import Zepto.Primitives.ConversionPrimitives
+import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
 import Zepto.Primitives.LogMathPrimitives
@@ -138,6 +139,9 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("list-extend", listExtend, "extend list")
              , ("vector-extend", vectorExtend, "extend vector")
              , ("++", allExtend, "extend collection")
+             , ("hash-keys", hashKeys, "get keys from hashmap")
+             , ("hash-values", hashVals, "get vals from hashmap")
+             , ("hash-contains?", inHash, "find out whether hashtable contains key")
              , ("zepto-version", getVersion, "gets the version as a list")
              , ("zepto-version-str", getVersionStr, "gets the version as a string")
              , ("zepto-major-version", getMajVersion, "gets the major version number")
