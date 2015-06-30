@@ -8,7 +8,7 @@ import Zepto.Types
 isObject :: LispVal -> Bool
 isObject (List _) = True
 isObject (DottedList _ _) = True
-isObject (String _) = True
+isObject (SimpleVal (String _)) = True
 isObject (Vector _) = True
 isObject (Pointer _ _) = True
 isObject _ = False
@@ -59,8 +59,8 @@ exportsFromEnv env = do
         binds <- liftIO $ readIORef $ bindings env
         return $ getExports [] $ fst $ unzip $ Data.Map.toList binds
     where
-        getExports acc (('m':'_':b) : bs) = getExports (Atom b:acc) bs
-        getExports acc (('v':'_':b) : bs) = getExports (Atom b:acc) bs
+        getExports acc (('m':'_':b) : bs) = getExports (SimpleVal (Atom b):acc) bs
+        getExports acc (('v':'_':b) : bs) = getExports (SimpleVal (Atom b):acc) bs
         getExports acc (_ : bs) = getExports acc bs
         getExports acc [] = acc
 
@@ -149,10 +149,10 @@ updatePointers envRef namespace var = do
           _ <- pointToNewVar pEnv namespace pVar ps
           existingValue <- getNamespacedVar envRef namespace var
           setNamespacedVar pEnv namespace pVar existingValue
-        [] -> return $ Nil ""
+        [] -> return $ SimpleVal $ Nil ""
         _ -> throwError $ InternalError
                "non-pointer value found in updatePointers"
-    Nothing -> return $ Nil ""
+    Nothing -> return $ SimpleVal $ Nil ""
  where
   movePointers :: Env -> Char -> String -> [LispVal] -> IOThrowsError LispVal
   movePointers envRef' namespace' var' ptrs = do
@@ -161,15 +161,15 @@ updatePointers envRef namespace var = do
       Just ps' -> do
         ps <- liftIO $ readIORef ps'
         liftIO $ writeIORef ps' $ ps ++ ptrs
-        return $ Nil ""
+        return $ SimpleVal $ Nil ""
       Nothing -> do
         valueRef <- liftIO $ newIORef ptrs
         liftIO $ writeIORef (pointers envRef') (Data.Map.insert (getVarName namespace var') valueRef env)
-        return $ Nil ""
+        return $ SimpleVal $ Nil ""
   pointToNewVar pEnv namespace' pVar' (Pointer v e : ps) = do
     _ <- setNamespacedVarDirect e namespace' v (Pointer pVar' pEnv)
     pointToNewVar pEnv namespace' pVar' ps
-  pointToNewVar _ _ _ [] = return $ Nil ""
+  pointToNewVar _ _ _ [] = return $ SimpleVal $ Nil ""
   pointToNewVar _ _ _ _ = throwError $ InternalError "pointToNewVar"
 
 -- | defines a variable to an environment in a specific namespace
