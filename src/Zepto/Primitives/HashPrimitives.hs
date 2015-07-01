@@ -29,4 +29,5 @@ makeHash l = case keyVal l [] of
               Left x  -> throwError $ TypeMismatch "simple value" x
     where keyVal [] acc = Right acc
           keyVal ((SimpleVal x) : y : r) acc = keyVal r $ (x, y) : acc
+          keyVal ((HashMap x) : r) acc = keyVal r $ acc ++ toList x
           keyVal (x : _)  _ = Left x
