@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
 module Zepto.Types (LispNum(..),
                     Simple(..),
                     LispVal(..),

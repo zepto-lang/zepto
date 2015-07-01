@@ -43,7 +43,6 @@ Executable           zepto
                      directory,
                      filepath,
                      haskeline,
-                     hashable,
                      MissingH,
                      mtl >= 2.2.1,
                      parsec,
@@ -51,8 +50,7 @@ Executable           zepto
                      random,
                      split,
                      time,
-                     transformers >= 0.4.2,
-                     unordered-containers
+                     transformers >= 0.4.2
     Extensions:      ExistentialQuantification 
                      CPP
     ghc-options:     -Wall 
