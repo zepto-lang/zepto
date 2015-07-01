@@ -23,6 +23,7 @@ inHash [x, _] = throwError $ TypeMismatch "hashmap and simple value" x
 inHash badArgList = throwError $ NumArgs 2 badArgList
 
 makeHash :: [LispVal] -> ThrowsError LispVal
+makeHash [List x] = makeHash x
 makeHash l = case keyVal l [] of
               Right x -> return $ HashMap $ fromList x
               Left x  -> throwError $ TypeMismatch "simple value" x
