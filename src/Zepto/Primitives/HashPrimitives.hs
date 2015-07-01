@@ -21,3 +21,11 @@ inHash [x, SimpleVal _] = throwError $ TypeMismatch "hashmap" x
 inHash [HashMap _, e] = throwError $ TypeMismatch "simple value" e
 inHash [x, _] = throwError $ TypeMismatch "hashmap and simple value" x
 inHash badArgList = throwError $ NumArgs 2 badArgList
+
+makeHash :: [LispVal] -> ThrowsError LispVal
+makeHash l = case keyVal l [] of
+              Right x -> return $ HashMap $ fromList x
+              Left x  -> throwError $ TypeMismatch "simple value" x
+    where keyVal [] acc = Right acc
+          keyVal ((SimpleVal x) : y : r) acc = keyVal r $ (x, y) : acc
+          keyVal (x : _)  _ = Left x

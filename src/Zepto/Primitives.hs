@@ -118,6 +118,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("make-simple-list", list2Simple, "make a new simple list")
              , ("make-vector", makeVector, "create a vector")
              , ("make-small", makeSmall, "create a small integer")
+             , ("make-hash", makeHash, "create a hashmap")
              , ("char->integer", charToInteger, "makes integer from char")
              , ("vector->list", vectorToList, "makes list from vector")
              , ("list->vector", listToVector, "makes vector from list")
@@ -277,9 +278,14 @@ eval env conti val@(Vector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
 eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
+eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
+                     throwError $ TypeMismatch "integer" wrong
 eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
                      i <- getVar env a
                      eval env conti (List [Vector x, i])
+eval _ _ (List [HashMap x, SimpleVal i@(Atom (':' : _))]) = if Data.Map.member i x
+                        then return $ x Data.Map.! i
+                        else return $ fromSimple $ Nil ""
 eval env conti (List [HashMap x, SimpleVal (Atom a)]) = do
                      i <- getVar env a
                      eval env conti (List [HashMap x, i])
@@ -562,7 +568,10 @@ eval env conti (List (SimpleVal (Atom "begin") : funs))
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
-        apply conti func argVals
+        case func of
+          HashMap _ -> eval env conti (List (func : args))
+          Vector _  -> eval env conti (List (func : args))
+          _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 readAll :: [LispVal] -> IOThrowsError LispVal
