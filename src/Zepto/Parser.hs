@@ -59,10 +59,12 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
                       e <- optionMaybe $ oneOf "eE"
                       case e of
                            Just _ -> do base <- parseDigital1
-                                        return $ expt num base
+                                        case expt num base of
+                                          Just v  -> return v
+                                          Nothing -> fail $ "unexpectedly failed number parse: digit parser likely broken"
                            Nothing -> return num
-                where expt (SimpleVal (Number x)) (SimpleVal (Number y)) = fromSimple $ Number $ x * convert y
-                      expt _ _ = fromSimple $ Nil ""
+                where expt (SimpleVal (Number x)) (SimpleVal (Number y)) = Just $ fromSimple $ Number $ x * convert y
+                      expt _ _ = Nothing
                       convert x = NumF $ 10 ** fromIntegral x
 
 parseComplex :: Parser LispVal
@@ -297,8 +299,8 @@ parseExpr = parseComments
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
-    Left err -> throwError $ ParseErr err
-    Right val -> return val
+      Left err -> throwError $ ParseErr err
+      Right val -> return $ val
 
 -- | read a single expression
 readExpr :: String -> ThrowsError LispVal
@@ -306,4 +308,11 @@ readExpr = readOrThrow parseExpr
 
 -- | read a list of expressions
 readExprList :: String -> ThrowsError [LispVal]
-readExprList = readOrThrow (endBy parseExpr spaces)
+readExprList s = do x <- readOrThrow (endBy parseExpr spaces) (trim s)
+                    return $ trimNil [] x
+    where trim (x:xs) | isSpace x = trim xs
+                      | otherwise = x:xs
+          trim x = x
+          trimNil acc [] = acc
+          trimNil acc (SimpleVal (Nil _) : xs) = trimNil acc xs
+          trimNil acc (x : xs) = trimNil (acc ++ [x]) xs
