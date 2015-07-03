@@ -1,4 +1,5 @@
 module Zepto.Parser(readExpr, readExprList) where
+
 import Control.Monad
 import Control.Monad.Except
 import Data.Array
@@ -245,15 +246,21 @@ parseListComp = do _    <- char '['
 parseHashMap :: Parser LispVal
 parseHashMap = do vals <- sepBy parseExpr spaces
                   if mod (length vals) 2 /= 0
-                    then pzero
+                    then fail "Number of keys/vals must be balanced"
                     else
                       case construct [] vals of
-                        Just m -> return $ HashMap $ Data.Map.fromList m
-                        Nothing -> pzero
-    where construct :: [(Simple, LispVal)] -> [LispVal] -> Maybe [(Simple, LispVal)]
-          construct acc [] = Just acc
+                        Right m -> do
+                          case duplicate (map fst m) of
+                            Just d  ->  fail $ "Duplicate key: " ++ show d
+                            Nothing -> return $ HashMap $ Data.Map.fromList m
+                        Left x  -> fail $ "All values must be simple (offending clause: " ++ show x ++ ")"
+    where construct :: [(Simple, LispVal)] -> [LispVal] -> Either LispVal [(Simple, LispVal)]
+          construct acc [] = Right acc
           construct acc ((SimpleVal a) : b : l) = construct ((a, b) : acc) l
-          construct _ (_ : _) = Nothing
+          construct _ (x : _) = Left x
+          duplicate :: [Simple] -> Maybe LispVal
+          duplicate [] = Nothing
+          duplicate (x:xs) = if elem x xs then Just (fromSimple x) else duplicate xs
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
