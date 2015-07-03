@@ -187,10 +187,10 @@ parseVect = do vals <- sepBy parseExpr spaces
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
                x <- oneOf "tf"
-               return $ case x of
-                        't' -> fromSimple $ Bool True
-                        'f' -> fromSimple $ Bool False
-                        _   -> error "This will never happen."
+               case x of
+                 't' -> return $ fromSimple $ Bool True
+                 'f' -> return $ fromSimple $ Bool False
+                 _   -> fail "This will never happen."
 
 parseChar :: Parser LispVal
 parseChar = do
@@ -208,12 +208,15 @@ parseChar = do
     "return"    -> return $ fromSimple $ Character '\n'
     "space"     -> return $ fromSimple $ Character ' '
     "tab"       -> return $ fromSimple $ Character '\t'
-    _ -> case c : r of
+    _ -> case pchr of
         [ch] -> return $ fromSimple $ Character ch
         ('x' : hexs) -> do
             rv <- parseHexScalar hexs
             return $ fromSimple $ Character rv
-        _ -> pzero
+        _ -> fail $ "Unable to parse as char: " ++
+                    pchr ++
+                    "; either pass single character (e.g. #\\1) or" ++
+                    " hexadecimal compound (e.g. #\\xf00)"
 
 parseHexScalar :: Monad m => String -> m Char
 parseHexScalar num = do
