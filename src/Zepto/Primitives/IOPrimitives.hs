@@ -53,6 +53,7 @@ writeProc fun [obj, Port port] = do
       case out of
           Left _ -> throwError $ Default "IO Error writing to port"
           Right _ -> return $ fromSimple $ Nil ""
+writeProc _ [] = throwError $ NumArgs 1 []
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 print' :: Handle -> LispVal -> IO ()
