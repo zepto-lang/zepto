@@ -1,6 +1,7 @@
 override CARGS+=-j2
 #Installs
 all:
+	git submodule foreach git pull
 	cabal install $(CARGS)
 
 #Runs all tests
