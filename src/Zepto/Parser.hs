@@ -311,7 +311,7 @@ readExpr = readOrThrow parseExpr
 
 -- | read a list of expressions
 readExprList :: String -> ThrowsError [LispVal]
-readExprList s = do x <- readOrThrow (endBy parseExpr spaces) (trim s)
+readExprList s = do x <- readOrThrow (endBy parseExpr spaces) (trim (s ++ "\n"))
                     return $ trimNil [] x
     where trim (x:xs) | isSpace x = trim xs
                       | otherwise = x:xs
