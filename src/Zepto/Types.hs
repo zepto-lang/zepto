@@ -366,7 +366,8 @@ showVal (SimpleVal (Number n)) = showNum n
 showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map SimpleVal contents) ++")"
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
-showVal (HashMap contents) = "#{" ++ unwordsList (Data.Map.elems contents) ++ "}"
+showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (Data.Map.keys contents))
+                                                     (Data.Map.elems contents)) ++ "}"
 showVal (PrimitiveFunc _) = "<primitive>"
 showVal (IOFunc _) = "<IO primitive>"
 showVal (EvalFunc _) = "<eval primitive>"
@@ -452,6 +453,9 @@ typeString (ListComprehension _ _ _ _) = "list comprehension"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
+
+unwordsMap :: [(LispVal, LispVal)] -> String
+unwordsMap = unwords . fmap (\(x, y) -> showVal x ++ ": " ++ showVal y ++ ", ")
 
 -- | traps an error and shows it
 trapError :: (MonadError e m, Show e) =>  m String -> m String
