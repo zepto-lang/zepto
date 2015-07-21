@@ -28,9 +28,13 @@ number2String [notNumber] = throwError $ TypeMismatch "number" notNumber
 number2String [] = throwError $ NumArgs 1 []
 number2String args@(_ : _) = throwError $ NumArgs 1 args
 
-buildNil:: [LispVal] -> ThrowsError LispVal
+buildNil :: [LispVal] -> ThrowsError LispVal
 buildNil [] = return $ fromSimple $ Nil ""
 buildNil badArgList = throwError $ NumArgs 0 badArgList
+
+buildInf :: [LispVal] -> ThrowsError LispVal
+buildInf [] = return $ fromSimple $ Number $ NumF $ 1 / 0
+buildInf badArgList = throwError $ NumArgs 0 badArgList
 
 list2Simple :: [LispVal] -> ThrowsError LispVal
 list2Simple [] = return $ fromSimple $ SimpleList []
