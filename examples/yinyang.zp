@@ -1,5 +1,6 @@
+(load "zpcont.zp")
 (let* ((yin
-         ((lambda (cc) (display #\@) cc) (call-with-current-continuation (lambda (c) c))))
+         ((lambda (cc) (begin (display "@") cc)) (get/cc)))
        (yang
-         ((lambda (cc) (display #\*) cc) (call-with-current-continuation (lambda (c) c)))))
+         ((lambda (cc) (begin (display "*") cc)) (get/cc))))
     (yin yang))
