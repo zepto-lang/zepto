@@ -279,6 +279,7 @@ eval env conti val@(SimpleVal (Bool _)) = contEval env conti val
 eval env conti val@(SimpleVal (Character _)) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
+eval env conti val@(HashComprehension _ _ _ _) = contEval env conti val
 eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =

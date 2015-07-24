@@ -248,6 +248,26 @@ parseListComp = do _    <- char '['
                         return $ ListComprehension ret el exr Nothing
     where parseListBody = parseExpr
 
+parseHashComp :: Parser LispVal
+parseHashComp = do _    <- string "#{"
+                   ret  <- parseExpr
+                   _    <- string " | "
+                   k    <- parseAtom
+                   _    <- char ' '
+                   v    <- parseAtom
+                   _    <- string " <- "
+                   exr  <- parseHashBody
+                   comma <- optionMaybe $ string ", "
+                   case comma of
+                     Just _ -> do
+                        cond <- parseExpr
+                        _ <- char '}'
+                        return $ HashComprehension ret (k, v) exr (Just cond)
+                     Nothing -> do
+                        _ <- char '}'
+                        return $ HashComprehension ret (k, v) exr Nothing
+    where parseHashBody = parseExpr
+
 parseHashMap :: Parser LispVal
 parseHashMap = do vals <- sepBy parseExpr spaces
                   if mod (length vals) 2 /= 0
@@ -285,6 +305,7 @@ parseExpr = parseComments
         <|> parseQuasiquoted
         <|> parseUnquoted
         <|> parseChar
+        <|> try parseHashComp
         <|> do _ <- try $ string "#{"
                x <- try parseHashMap
                _ <- char '}'
