@@ -250,7 +250,9 @@ parseListComp = do _    <- char '['
 
 parseHashComp :: Parser LispVal
 parseHashComp = do _    <- string "#{"
-                   ret  <- parseExpr
+                   kret <- parseExpr
+                   _    <- char ' '
+                   vret <- parseExpr
                    _    <- string " | "
                    k    <- parseAtom
                    _    <- char ' '
@@ -262,10 +264,10 @@ parseHashComp = do _    <- string "#{"
                      Just _ -> do
                         cond <- parseExpr
                         _ <- char '}'
-                        return $ HashComprehension ret (k, v) exr (Just cond)
+                        return $ HashComprehension (kret, vret) (k, v) exr (Just cond)
                      Nothing -> do
                         _ <- char '}'
-                        return $ HashComprehension ret (k, v) exr Nothing
+                        return $ HashComprehension (kret, vret) (k, v) exr Nothing
     where parseHashBody = parseExpr
 
 parseHashMap :: Parser LispVal

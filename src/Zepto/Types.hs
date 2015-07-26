@@ -305,7 +305,7 @@ data LispVal = SimpleVal Simple
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Cont Continuation
              | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
-             | HashComprehension LispVal (LispVal, LispVal) LispVal (Maybe LispVal)
+             | HashComprehension (LispVal, LispVal) (LispVal, LispVal) LispVal (Maybe LispVal)
 
 data Continuation = Continuation { contClosure :: Env
                                  , cbody :: [LispVal]
@@ -387,9 +387,10 @@ showVal (Cont _) = "<continuation>"
 showVal (ListComprehension expr filt _ _) = "<list comprehension: " ++
                                             show expr ++ " : " ++
                                             show filt ++ ">"
-showVal (HashComprehension expr (k, v) _ _) = "<hash comprehension: " ++
-                                              show expr ++ " : " ++
-                                              show k ++ ", " ++ show v ++ ">"
+showVal (HashComprehension (kexpr, vexpr) (k, v) _ _) = "<hash comprehension: " ++
+                                                        show kexpr ++ ", " ++ show vexpr ++
+                                                        " : " ++ show k ++ ", " ++
+                                                        show v ++ ">"
 
 -- | a show function for all LispErrors
 showError :: LispError -> String
