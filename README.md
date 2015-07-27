@@ -5,7 +5,7 @@
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
 [![Build Status](https://travis-ci.org/zepto-lang/zepto.png?branch=master)](https://travis-ci.org/zepto-lang/zepto)
 
-A simple Scheme interpreter in Haskell (based on 
+A simple Scheme interpreter in Haskell (originally based on 
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
 It implements a good enough subset of R<sup>5</sup>RS to make real programming possible,
@@ -245,8 +245,8 @@ of R<sup>5</sup>RS (and|or) Common Lisp.
 
 ## Future
 
-Features that are planned, but not yet implemented, include hashtables, 
-proper `call/cc`, better macros and a small compiler based on LLVM. 
+Features that are planned, but not yet implemented, include proper `call/cc`,
+better macros and a small compiler based on LLVM. 
 Both latter features will take a while for me to implement, though. If 
 you have any other features you would like to see in the 
 language/implementation, contact me. I'm not an experienced Scheme
