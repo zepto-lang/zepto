@@ -106,3 +106,6 @@ checkType :: [LispVal] -> ThrowsError LispVal
 checkType [x] = return $ fromSimple $ String $ typeString x
 checkType badArgList = throwError $ NumArgs 1 badArgList
 
+isHash :: [LispVal] -> ThrowsError LispVal
+isHash ([HashMap _]) = return $ fromSimple $ Bool True
+isHash _ = return $ fromSimple $ Bool False
