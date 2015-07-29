@@ -11,7 +11,7 @@ hashKeys [x] = throwError $ TypeMismatch "hashmap" x
 hashKeys badArgList = throwError $ NumArgs 1 badArgList
 
 hashVals :: [LispVal] -> ThrowsError LispVal
-hashVals [HashMap x] = return $ List $ map ((!) x) (keys x)
+hashVals [HashMap x] = return $ List $ elems x
 hashVals [x] = throwError $ TypeMismatch "hashmap" x
 hashVals badArgList = throwError $ NumArgs 1 badArgList
 

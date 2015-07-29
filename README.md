@@ -1,5 +1,5 @@
 ![zepto banner](https://raw.githubusercontent.com/zepto-lang/logos/master/zepto_logo.png)
-![general version](http://img.shields.io/badge/version-0.8.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.8.1-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 ![Scheme Compliance](http://img.shields.io/badge/R5RS Compliance-Okay-green.svg)
@@ -138,7 +138,7 @@ multiply two values; source: (lambda ("fst" "snd") ...)
 
 And it autocompletes your newly created function, too!
 
-There are also List Comprehensions. They look like this:
+There are also List and Hash Comprehensions. They look like this:
 
 ```clojure
 zepto> ; [do-this | for-every <- in, optional-check]
@@ -146,6 +146,9 @@ zepto> [(+ x 1) | x <- [1 2 3 4]]
 (2 3 4 5)
 zepto> [(+ x 1) | x <- [1 2 3 4], (> x 1)]
 (3 4 5)
+zepto> ; The filtering in Hash Comprehensions is a bit buggy
+zepto> #{(+ k 1) (* v 1.0) | k v <- #{1 2 3 4}}
+#{2: 2.0, 4: 4.0, }
 ```
 
 The whitespaces matter. The thing is symbol-heavy enough as it is,

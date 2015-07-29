@@ -271,6 +271,10 @@ filterAndApply set ret cond env conti x = do
                 _ -> return $ fromSimple $ Nil ""
       Left _ -> return $ fromSimple $ Nil ""
 
+isNotNil :: LispVal -> Bool
+isNotNil (SimpleVal (Nil _)) = False
+isNotNil _ = True
+
 -- | evaluates a parsed expression
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 eval env conti val@(SimpleVal (Nil _)) = contEval env conti val
@@ -280,7 +284,6 @@ eval env conti val@(SimpleVal (Bool _)) = contEval env conti val
 eval env conti val@(SimpleVal (Character _)) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
-eval env conti val@(HashComprehension _ _ _ _) = contEval env conti val
 eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
@@ -297,6 +300,32 @@ eval env conti (List [HashMap x, SimpleVal (Atom a)]) = do
 eval _ _ (List [HashMap x, SimpleVal i]) = if Data.Map.member i x
                         then return $ x Data.Map.! i
                         else return $ fromSimple $ Nil ""
+eval env conti (HashComprehension (keyexpr, valexpr) ((SimpleVal (Atom key)), (SimpleVal (Atom val))) (SimpleVal (Atom iter)) cond) = do
+        hash <- contEval env conti =<< getVar env iter
+        case hash of
+          HashMap e -> do
+            keys <- mapM (filterAndApply key keyexpr cond env conti)
+                     (map fromSimple $ Data.Map.keys e)
+            vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
+            return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
+          _ -> throwError $ TypeMismatch "hash-map" hash
+    where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
+          buildTuples [] [] l = l
+          buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
+          buildTuples _ _ _ = error $ "Hash comprehension failed: internal error while building new hash-map"
+eval env conti (HashComprehension (keyexpr, valexpr) ((SimpleVal (Atom key)), (SimpleVal (Atom val))) v@(HashMap _) cond) = do
+        hash <- contEval env conti v
+        case hash of
+          HashMap e -> do
+            keys <- mapM (filterAndApply key keyexpr cond env conti)
+                     (map fromSimple $ Data.Map.keys e)
+            vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
+            return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
+          _ -> throwError $ TypeMismatch "hash-map" hash
+    where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
+          buildTuples [] [] l = l
+          buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
+          buildTuples _ _ _ = error $ "Hash comprehension failed: internal error while building new hash-map"
 eval env conti (ListComprehension ret (SimpleVal (Atom set)) (SimpleVal (Atom iter)) cond) = do
         list <- contEval env conti =<< getVar env iter
         case list of
@@ -304,8 +333,6 @@ eval env conti (ListComprehension ret (SimpleVal (Atom set)) (SimpleVal (Atom it
             l <- mapM (filterAndApply set ret cond env conti) e
             return $ List $ filter isNotNil l
           _ -> throwError $ TypeMismatch "list" list
-    where isNotNil (SimpleVal (Nil _)) = False
-          isNotNil _ = True
 eval env conti (ListComprehension ret (SimpleVal (Atom set)) v@(List (SimpleVal (Atom "quote") : _)) cond) = do
         list <- eval env conti v
         case list of
@@ -313,8 +340,6 @@ eval env conti (ListComprehension ret (SimpleVal (Atom set)) v@(List (SimpleVal 
             l <-mapM (filterAndApply set ret cond env conti) e
             return $ List $ filter isNotNil l
           _ -> throwError $ TypeMismatch "list" list
-    where isNotNil (SimpleVal (Nil _)) = False
-          isNotNil _ = True
 eval env conti val@(SimpleVal (Atom (':' : _))) = contEval env conti val
 eval env conti (SimpleVal (Atom a)) = contEval env conti =<< getVar env a
 eval _ _ (List [List [SimpleVal (Atom "quote"), (List x)], v@(SimpleVal (Number (NumI i)))]) =
