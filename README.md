@@ -41,7 +41,8 @@ It is very small, so the name might or might not be appropriate.
 You will need cabal for using zepto.
 
 After cloning via git (using the `--recursive` flag to make sure you get all the
-submodules), building is done via invoking `cabal install`.
+submodules), building is done via invoking `cabal install` after pulling the latest
+version of all linked submodules.
 Or `make`, because a plain old Makefile is included, too. After building you can
 run `make test` to check your installation.
 
