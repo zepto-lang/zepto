@@ -161,9 +161,9 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
                , ("write", writeProc hPrint, "write to file")
-             --  , ("peek-char", peekCharProc, "peek char from file")
-             --  , ("read-char", readCharProc, "read char from file")
-             --  , ("write-char", writeCharProc hPrint, "write char to file")
+               , ("peek-char", readCharProc hGetChar, "peek char from file")
+               , ("read-char", readCharProc hLookAhead, "read char from file")
+               , ("write-char", writeCharProc, "write char to file")
                , ("display", writeProc print', "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
@@ -632,6 +632,19 @@ readProc [] = readProc [Port stdin]
 readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+readCharProc :: (Handle -> IO Char) -> [LispVal] -> IOThrowsError LispVal
+readCharProc fun [] = readCharProc fun [Port stdin]
+readCharProc fun [Port p] = do
+    liftIO $ hSetBuffering p NoBuffering
+    input <-  liftIO $ tryIOError (liftIO $ fun p)
+    liftIO $ hSetBuffering p LineBuffering
+    case input of
+        Left _ -> throwError $ Default "IO error while reading from port"
+        Right inpChr -> return $ fromSimple $ Character inpChr
+readCharProc _ args = if length args == 1
+                         then throwError $ TypeMismatch "port" $ List args
+                         else throwError $ NumArgs 1 args
 
 apply :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
 apply _ c@(Cont (Continuation env _ _ _ _)) args =

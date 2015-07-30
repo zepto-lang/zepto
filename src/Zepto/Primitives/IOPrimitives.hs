@@ -48,13 +48,26 @@ writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, SimpleVal (Atom ":stdout")] = writeProc fun [obj, Port stdout]
 writeProc fun [obj, SimpleVal (Atom ":stderr")] = writeProc fun [obj, Port stderr]
-writeProc fun [obj, Port port] = do
+writeProc fun [obj@(SimpleVal (Character _)), Port port] = do
       out <- liftIO $ tryIOError (liftIO $ fun port obj)
       case out of
           Left _ -> throwError $ Default "IO Error writing to port"
           Right _ -> return $ fromSimple $ Nil ""
 writeProc _ [] = throwError $ NumArgs 1 []
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+writeCharProc :: [LispVal] -> IOThrowsError LispVal
+writeCharProc [obj] = writeCharProc [obj, Port stdout]
+writeCharProc [obj, SimpleVal (Atom ":stdout")] = writeCharProc [obj, Port stdout]
+writeCharProc [obj, SimpleVal (Atom ":stderr")] = writeCharProc [obj, Port stderr]
+writeCharProc [obj, Port port] = do
+      out <- liftIO $ tryIOError (liftIO $ hPutStr port (show obj))
+      case out of
+          Left _ -> throwError $ Default "IO Error writing to port"
+          Right _ -> return $ fromSimple $ Nil ""
+writeCharProc [wrong, _] = throwError $ TypeMismatch "char" wrong
+writeCharProc [] = throwError $ NumArgs 1 []
+writeCharProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 print' :: Handle -> LispVal -> IO ()
 print' port obj =
