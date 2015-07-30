@@ -363,7 +363,8 @@ runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
         lib <- getDataFileName "zepto-stdlib/module.zp"
-        _   <- loadFile env lib
+        ret <- loadFile env lib
+        _   <- putStrLn ret
         until_ (readPrompt env) (evaluation env) defaultPrompt
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
           evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
