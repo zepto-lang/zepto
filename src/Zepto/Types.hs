@@ -16,6 +16,7 @@ module Zepto.Types (LispNum(..),
                     extractValue,
                     typeString,
                     nullEnv,
+                    globalEnv,
                     nullCont,
                     liftThrows,
                     runIOThrows
@@ -348,6 +349,15 @@ data Env = Environment {
 type ThrowsError = Either LispError
 -- | a IOThrowsError type containing either an error or an IO
 type IOThrowsError = ExceptT LispError IO
+
+globalEnv :: Maybe Env -> Env -> Env
+globalEnv (Just prev) Environment{parentEnv=Nothing} = prev
+globalEnv Nothing val@(Environment{parentEnv=Nothing}) = val
+globalEnv _ val@(Environment{parentEnv=Just parent})=globalEnv (Just val) parent
+
+--globalEnv :: Env -> Env
+--globalEnv val@(Environment{parentEnv=Nothing}) = val
+--globalEnv Environment{parentEnv=Just parent}=globalEnv parent
 
 showNum :: LispNum -> String
 showNum (NumF contents) = show contents

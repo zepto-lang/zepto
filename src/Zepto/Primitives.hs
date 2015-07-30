@@ -161,6 +161,9 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
                , ("write", writeProc hPrint, "write to file")
+             --  , ("peek-char", peekCharProc, "peek char from file")
+             --  , ("read-char", readCharProc, "read char from file")
+             --  , ("write-char", writeCharProc hPrint, "write char to file")
                , ("display", writeProc print', "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
@@ -454,6 +457,18 @@ eval _ _ (List [SimpleVal (Atom "λ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "lambda")]) = throwError $ NumArgs 2 []
 eval _ _ (List (SimpleVal (Atom "λ") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List (SimpleVal (Atom "lambda") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List [SimpleVal (Atom "global-load")]) = throwError $ NumArgs 1 []
+eval env conti (List [SimpleVal (Atom "global-load"), SimpleVal (String file)]) = do
+        let glob = globalEnv Nothing env
+        filename <- findFile' file
+        result <- load filename >>= liftM checkLast . mapM (evl glob (nullCont env))
+        contEval env conti result
+    where evl env' cont' val = macroEval env' val >>= eval env' cont'
+          checkLast [] = fromSimple $ Nil ""
+          checkLast [x] = x
+          checkLast x = last x
+eval _ _ (List [SimpleVal (Atom "global-load"), x]) = throwError $ TypeMismatch "string" x
+eval _ _ (List (SimpleVal (Atom "global-load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "load")]) = throwError $ NumArgs 1 []
 eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
         filename <- findFile' file
