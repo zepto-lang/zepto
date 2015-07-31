@@ -13,8 +13,8 @@ printUsage = do printVersion
                          "\n\t-h/--help         - display this help message" ++
                          "\n\t-S/--silent       - runs REPL without displaying the header" ++
                          "\n\t-s/--single       - runs single statement passed in as string" ++
-                         "\n\t<some zepto file> - run file" ++
-                         "\n\nMore information can be found on " ++
+                         "\n\t<zepto file>      - run file" ++
+                         "\n\nMore information can be found at " ++
                          "http://zepto.veitheller.de")
 
 -- |Prints the version
