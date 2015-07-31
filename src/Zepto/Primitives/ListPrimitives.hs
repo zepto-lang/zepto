@@ -125,6 +125,7 @@ stringExtend v@(SimpleVal (String _) : _) = extend' v
               SimpleVal (Character c) -> return $ fromSimple $ String $ st ++ [c]
               elsewise -> throwError $
                             TypeMismatch "string/character" elsewise
+        extend' (a : _) = throwError $ TypeMismatch "string/character" a
         extend' _ = throwError $ InternalError "this should not happen"
 stringExtend [badType] = throwError $ NumArgs 2 [badType]
 stringExtend (badType : _) = throwError $ TypeMismatch "string" badType
