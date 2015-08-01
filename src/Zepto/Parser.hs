@@ -110,11 +110,11 @@ parseReal = do neg <- optionMaybe $ string "-"
                     Nothing -> (return . fromSimple . Number . NumF . read) (before ++ "." ++ after)
 
 parseDigital1 :: Parser LispVal
-parseDigital1 = do neg <- optionMaybe $ string "-"
+parseDigital1 = do neg <- optionMaybe ((string "-") <|> (string "+"))
                    x <- many1 digit
                    case neg of
-                      Just _ -> (return . fromSimple . Number . NumI . read) ("-" ++ x)
-                      Nothing -> (return . fromSimple . Number . NumI . read) x
+                      Just "-" -> (return . fromSimple . Number . NumI . read) ("-" ++ x)
+                      _        -> (return . fromSimple . Number . NumI . read) x
 
 parseDigital2 :: Parser LispVal
 parseDigital2 = do _ <- try $ string "#d"
