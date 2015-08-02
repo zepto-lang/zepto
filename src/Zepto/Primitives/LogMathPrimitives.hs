@@ -1,5 +1,6 @@
 module Zepto.Primitives.LogMathPrimitives where
 import Data.Array (elems)
+import Data.Bits (shift)
 import Data.Char
 import Control.Monad.Except
 import Data.Complex
@@ -118,6 +119,15 @@ makeSmall :: [LispVal] -> ThrowsError LispVal
 makeSmall [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumS $ fromInteger n
 makeSmall [badType] = throwError $ TypeMismatch "integer" badType
 makeSmall badArgList = throwError $ NumArgs 1 badArgList
+
+arithmeticShift :: [LispVal] -> ThrowsError LispVal
+arithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ shift n (fromInteger s)
+arithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ shift n s
+arithmeticShift [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ shift n s
+arithmeticShift [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
+arithmeticShift [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
+arithmeticShift [badType, _] = throwError $ TypeMismatch "integer" badType
+arithmeticShift badArgList = throwError $ NumArgs 2 badArgList
 
 real :: [LispVal] -> ThrowsError LispVal
 real [SimpleVal (Number (NumC x))] = return $ fromSimple $ Number $ NumF $ realPart x
