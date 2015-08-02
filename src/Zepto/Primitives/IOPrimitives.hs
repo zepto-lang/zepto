@@ -5,7 +5,7 @@ import Data.List (find)
 import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
-import System.Process (system)
+import System.Process (readProcessWithExitCode)
 
 import Zepto.Types
 
@@ -100,16 +100,46 @@ exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
 
 systemProc :: [LispVal] -> IOThrowsError LispVal
-systemProc [SimpleVal (Atom s)] = do
-        x <- liftIO $ tryIOError $ liftIO $ system s
-        case x of
-          Right _ -> return $ fromSimple $ Number $ NumI 0
-          Left w -> return $ fromSimple $ String $ show w
 systemProc [SimpleVal (String s)] = do
-        x <- liftIO $ tryIOError $ liftIO $ system s
+        x <- liftIO $ tryIOError $ liftIO $ readProcessWithExitCode s [] ""
         case x of
-          Right _ -> return $ fromSimple $ Number $ NumI 0
-          Left w -> return $ fromSimple $ String $ show w
+          Right el ->
+            case fst3 el of
+              ExitSuccess -> return $ List $ (fromSimple $ Number $ NumI 0) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+              ExitFailure w -> return $ List $ (fromSimple $ Number $ NumI $ fromIntegral w) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+          Left w -> throwError $ Default $ show w
+systemProc [SimpleVal (String s), List given] = do
+        let margs = unpackList given
+        case margs of
+          Right args -> do
+            x <- liftIO $ tryIOError $ liftIO $ readProcessWithExitCode s args ""
+            case x of
+              Right el ->
+                case fst3 el of
+                  ExitSuccess -> return $ List $ (fromSimple $ Number $ NumI 0) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+                  ExitFailure w -> return $ List $ (fromSimple $ Number $ NumI $ fromIntegral w) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+              Left w -> throwError $ Default $ show w
+          Left err -> throwError $ TypeMismatch "string" err
+    where unpackList :: [LispVal] -> Either LispVal [String]
+          unpackList pack =
+            if all isString pack
+              then Right $ map (unpack') pack
+              else Left $ notString pack
+          isString (SimpleVal (String _)) = True
+          isString _ = False
+          unpack' (SimpleVal (String e)) = e
+          unpack' _ = ""
+          notString [] = fromSimple $ Nil ""
+          notString (SimpleVal (String _):l) = notString l
+          notString (err:_) = err
 systemProc [x] = throwError $ TypeMismatch "string" x
 systemProc badArg = throwError $ NumArgs 1 badArg
 
+fst3 :: (a, b, c) -> a
+fst3 (x, _, _) = x
+
+snd3 :: (a, b, c) -> b
+snd3 (_, x, _) = x
+
+thd3 :: (a, b, c) -> c
+thd3 (_, _, x) = x
