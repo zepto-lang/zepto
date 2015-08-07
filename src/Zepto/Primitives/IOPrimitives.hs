@@ -6,6 +6,7 @@ import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
 import System.Process (readProcessWithExitCode)
+import System.Clock
 
 import Zepto.Types
 
@@ -98,6 +99,12 @@ exitProc [SimpleVal (Number (NumS x))] = do _ <- liftIO $ tryIOError $ liftIO $
                                             return $ fromSimple $ Nil ""
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
+
+timeProc :: [LispVal] -> IOThrowsError LispVal
+timeProc [] = do x <- liftIO $ getTime Realtime
+                 return $ List [makeNum (sec x), makeNum (nsec x)]
+    where makeNum n = fromSimple $ Number $ NumI $ fromIntegral n
+timeProc badArg = throwError $ NumArgs 0 badArg
 
 systemProc :: [LispVal] -> IOThrowsError LispVal
 systemProc [SimpleVal (String s)] = do

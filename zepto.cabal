@@ -40,6 +40,7 @@ Source-Repository head
 Executable           zepto
     Build-Depends:   array,
                      base,
+                     clock,
                      containers,
                      directory,
                      filepath,

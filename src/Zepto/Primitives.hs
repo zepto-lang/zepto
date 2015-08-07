@@ -171,6 +171,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
                , ("system", systemProc, "call a system command")
+               , ("unix-timestamp", timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
                , ("escape-sequence", escapeProc, "send escape sequence to shell")
                , ("color", colorProc, "colorize output")
                ]
