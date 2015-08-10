@@ -10,7 +10,7 @@
 ;;
 
 (load "zepto-tests/unit.zp")
-(load "stdlib/srfi/srfi-9.zp")
+(require-extension '(srfi 9))
 
 (define-record-type :pare
     (kons x y)

@@ -168,7 +168,7 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (dl@(DottedLi
                            else transformRule localEnv 0 (List $ ellipsisList ++ result) (List $ tail ts) (List [])
                List [SimpleVal (Nil _), List _] -> transformRule localEnv 0 (List result) (List $ tail ts) (List [])
                List t -> transformRule localEnv (ellipsisIndex + 1) (List $ result ++ t) transform (List ellipsisList)
-               _ -> throwError $ Default "Unexpected error in transformRule"
+               x -> throwError $ Default $ "Unexpected error in transformRule: " ++ show x
      else do lst <- transformDottedList localEnv ellipsisIndex (List []) (List [dl]) (List ellipsisList)
              case lst of
                   List [SimpleVal (Nil _), List _] -> return lst
@@ -196,7 +196,7 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (SimpleVal (A
                                           List v -> if length v > (ellipsisIndex - 1)
                                                        then return $ v !! (ellipsisIndex - 1)
                                                        else return $ fromSimple $ Nil ""
-                                          _ -> throwError $ Default "Unexpected error in transformRule"
+                                          x -> throwError $ Default $ "Unexpected error in transformRule: " ++ show x
                                 else return var
                      else return $ fromSimple $ Atom a
              case t of

@@ -352,9 +352,9 @@ runFile args = do
                                                     List $ fromSimple . String <$> drop 1 args)]
         lib <- getDataFileName "zepto-stdlib/module.zp"
         _   <- loadFile env lib
-        runIOThrows (liftM show $ eval env (nullCont env)
+        _ <- runIOThrows (liftM show $ eval env (nullCont env)
           (List [fromSimple (Atom "load"), fromSimple $ String $ head args]))
-          >>= putStrLn
+        return ()
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 
