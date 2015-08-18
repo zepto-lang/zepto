@@ -28,7 +28,7 @@ makeHash l = case keyVal l [] of
               Right x -> return $ HashMap $ fromList x
               Left x  -> throwError $ TypeMismatch "simple value/hashmap/list" x
     where keyVal [] acc = Right acc
-          keyVal ((List [x, y]) : r) acc = keyVal (x : y : r) acc
-          keyVal ((SimpleVal x) : y : r) acc = keyVal r $ (x, y) : acc
-          keyVal ((HashMap x) : r) acc = keyVal r $ acc ++ toList x
+          keyVal (List [x, y] : r) acc = keyVal (x : y : r) acc
+          keyVal (SimpleVal x : y : r) acc = keyVal r $ (x, y) : acc
+          keyVal (HashMap x : r) acc = keyVal r $ acc ++ toList x
           keyVal (x : _)  _ = Left x

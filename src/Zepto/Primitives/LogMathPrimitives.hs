@@ -141,7 +141,7 @@ real badArgList = throwError $ NumArgs 1 badArgList
 
 imaginary :: [LispVal] -> ThrowsError LispVal
 imaginary [SimpleVal (Number (NumC x))] = return $ fromSimple $ Number $ NumF $ imagPart x
-imaginary [SimpleVal (Number _)] = return $ fromSimple $ Number $ NumF $ 0
+imaginary [SimpleVal (Number _)] = return $ fromSimple $ Number $ NumF 0
 imaginary [x] = throwError $ TypeMismatch "number" x
 imaginary badArgList = throwError $ NumArgs 1 badArgList
 
@@ -186,7 +186,7 @@ numPow [SimpleVal (Number (NumI n)), wrong@(SimpleVal (Number (NumI base)))] =
         else throwError $ TypeMismatch "positive" wrong
 numPow [SimpleVal (Number (NumS n)), wrong@(SimpleVal (Number (NumI base)))] =
     if base > -1
-        then return $ fromSimple $ Number $ NumI $ (fromIntegral n) ^ base
+        then return $ fromSimple $ Number $ NumI $ fromIntegral n ^ base
         else throwError $ TypeMismatch "positive" wrong
 numPow [SimpleVal (Number (NumI n)), wrong@(SimpleVal (Number (NumS base)))] =
     if base > -1

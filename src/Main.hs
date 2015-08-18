@@ -60,7 +60,7 @@ main = do args <- getArgs
               printVersion
             | noMeta (head arg) = runFile arg
             | otherwise = do
-              putStrLn ("Unknown option: " ++ (head arg))
+              putStrLn ("Unknown option: " ++ head arg)
               printUsage
           hasIn :: [String] -> [String] -> Bool
           hasIn x l = any (`elem` l) x

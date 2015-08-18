@@ -223,7 +223,7 @@ transformDottedList localEnv ellipsisIndex (List result) (List (DottedList ds d 
                             SimpleVal (String "pair") -> transformRule localEnv ellipsisIndex (List $ result ++ [DottedList lst rst]) (List ts) (List ellipsisList)
                             _ -> transformRule localEnv ellipsisIndex (List $ result ++ [List $ lst ++ [rst]]) (List ts) (List ellipsisList)
                     _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
-            SimpleVal (Nil _) -> return $ List [(fromSimple (Nil "")), List ellipsisList]
+            SimpleVal (Nil _) -> return $ List [fromSimple (Nil ""), List ellipsisList]
             _ -> throwError $ BadSpecialForm "Macro transform error processing pair" $ DottedList ds d
 transformDottedList _ _ _ _ _ = throwError $ Default "Unexpected error in transformDottedList"
 

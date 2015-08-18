@@ -61,7 +61,7 @@ parseStandardNum = do num <- try parseReal <|> parseDigital1
                            Just _ -> do base <- parseDigital1
                                         case expt num base of
                                           Just v  -> return v
-                                          Nothing -> fail $ "unexpectedly failed number parse: digit parser likely broken"
+                                          Nothing -> fail "unexpectedly failed number parse: digit parser likely broken"
                            Nothing -> return num
                 where expt (SimpleVal (Number x)) (SimpleVal (Number y)) = Just $ fromSimple $ Number $ x * convert y
                       expt _ _ = Nothing
@@ -110,7 +110,7 @@ parseReal = do neg <- optionMaybe $ string "-"
                     Nothing -> (return . fromSimple . Number . NumF . read) (before ++ "." ++ after)
 
 parseDigital1 :: Parser LispVal
-parseDigital1 = do neg <- optionMaybe ((string "-") <|> (string "+"))
+parseDigital1 = do neg <- optionMaybe (string "-" <|> string "+")
                    x <- many1 digit
                    case neg of
                       Just "-" -> (return . fromSimple . Number . NumI . read) ("-" ++ x)
@@ -276,18 +276,18 @@ parseHashMap = do vals <- sepBy parseExpr spaces
                     then fail "Number of keys/vals must be balanced"
                     else
                       case construct [] vals of
-                        Right m -> do
+                        Right m ->
                           case duplicate (map fst m) of
                             Just d  ->  fail $ "Duplicate key: " ++ show d
                             Nothing -> return $ HashMap $ Data.Map.fromList m
                         Left x  -> fail $ "All values must be simple (offending clause: " ++ show x ++ ")"
     where construct :: [(Simple, LispVal)] -> [LispVal] -> Either LispVal [(Simple, LispVal)]
           construct acc [] = Right acc
-          construct acc ((SimpleVal a) : b : l) = construct ((a, b) : acc) l
+          construct acc (SimpleVal a : b : l) = construct ((a, b) : acc) l
           construct _ (x : _) = Left x
           duplicate :: [Simple] -> Maybe LispVal
           duplicate [] = Nothing
-          duplicate (x:xs) = if elem x xs then Just (fromSimple x) else duplicate xs
+          duplicate (x:xs) = if x `elem` xs then Just (fromSimple x) else duplicate xs
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
@@ -326,7 +326,7 @@ parseExpr = parseComments
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
       Left err -> throwError $ ParseErr err
-      Right val -> return $ val
+      Right val -> return val
 
 -- | read a single expression
 readExpr :: String -> ThrowsError LispVal

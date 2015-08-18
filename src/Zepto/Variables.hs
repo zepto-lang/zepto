@@ -30,9 +30,9 @@ copyEnv env = do
         bindingList <- newIORef $ Data.Map.fromList bindingListT
         return $ Environment (parentEnv env) bindingList ptrList
     where addBind (name, val) =
-            (liftIO $ readIORef val)
+            liftIO (readIORef val)
               >>= newIORef
-                >>= (tuplify name)
+                >>= tuplify name
           tuplify x y = return (x, y)
 
 extendEnv :: Env -> [((Char, String), LispVal)] -> IO Env

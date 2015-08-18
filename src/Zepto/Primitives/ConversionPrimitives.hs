@@ -40,8 +40,8 @@ list2Simple :: [LispVal] -> ThrowsError LispVal
 list2Simple [] = return $ fromSimple $ SimpleList []
 list2Simple [List x] = if all simple x
                         then return $ fromSimple $ SimpleList $ map toSimple x
-                        else throwError $ BadSpecialForms "expected simple elements" $
-                             (filter (\e -> not $ simple e) x)
+                        else throwError $ BadSpecialForms "expected simple elements"
+                             (filter (not . simple) x)
     where simple (SimpleVal _) = True
           simple _ = False
 list2Simple [notList] = throwError $ TypeMismatch "list" notList

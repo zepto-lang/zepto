@@ -191,7 +191,7 @@ stringToNumber [SimpleVal (String s)] = do
         case result of
             n@(SimpleVal (Number _)) -> return n
             _ -> return $ fromSimple $ Bool False
-stringToNumber [SimpleVal (String s), (SimpleVal (Number base))] =
+stringToNumber [SimpleVal (String s), SimpleVal (Number base)] =
     case base of
         2 -> stringToNumber [fromSimple $ String $ "#b" ++ s]
         8 -> stringToNumber [fromSimple $ String $ "#o" ++ s]
@@ -305,32 +305,32 @@ eval env conti (List [HashMap x, SimpleVal (Atom a)]) = do
 eval _ _ (List [HashMap x, SimpleVal i]) = if Data.Map.member i x
                         then return $ x Data.Map.! i
                         else return $ fromSimple $ Nil ""
-eval env conti (HashComprehension (keyexpr, valexpr) ((SimpleVal (Atom key)), (SimpleVal (Atom val))) (SimpleVal (Atom iter)) cond) = do
+eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) (SimpleVal (Atom iter)) cond) = do
         hash <- contEval env conti =<< getVar env iter
         case hash of
           HashMap e -> do
-            keys <- mapM (filterAndApply key keyexpr cond env conti)
-                     (map fromSimple $ Data.Map.keys e)
+            keys <- mapM (filterAndApply key keyexpr cond env conti . fromSimple)
+                     (Data.Map.keys e)
             vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
             return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
           _ -> throwError $ TypeMismatch "hash-map" hash
     where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
           buildTuples [] [] l = l
           buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
-          buildTuples _ _ _ = error $ "Hash comprehension failed: internal error while building new hash-map"
-eval env conti (HashComprehension (keyexpr, valexpr) ((SimpleVal (Atom key)), (SimpleVal (Atom val))) v@(HashMap _) cond) = do
+          buildTuples _ _ _ = error "Hash comprehension failed: internal error while building new hash-map"
+eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) v@(HashMap _) cond) = do
         hash <- contEval env conti v
         case hash of
           HashMap e -> do
-            keys <- mapM (filterAndApply key keyexpr cond env conti)
-                     (map fromSimple $ Data.Map.keys e)
+            keys <- mapM (filterAndApply key keyexpr cond env conti . fromSimple)
+                     (Data.Map.keys e)
             vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
             return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
           _ -> throwError $ TypeMismatch "hash-map" hash
     where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
           buildTuples [] [] l = l
           buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
-          buildTuples _ _ _ = error $ "Hash comprehension failed: internal error while building new hash-map"
+          buildTuples _ _ _ = error "Hash comprehension failed: internal error while building new hash-map"
 eval env conti (ListComprehension ret (SimpleVal (Atom set)) (SimpleVal (Atom iter)) cond) = do
         list <- contEval env conti =<< getVar env iter
         case list of
@@ -347,11 +347,11 @@ eval env conti (ListComprehension ret (SimpleVal (Atom set)) v@(List (SimpleVal 
           _ -> throwError $ TypeMismatch "list" list
 eval env conti val@(SimpleVal (Atom (':' : _))) = contEval env conti val
 eval env conti (SimpleVal (Atom a)) = contEval env conti =<< getVar env a
-eval _ _ (List [List [SimpleVal (Atom "quote"), (List x)], v@(SimpleVal (Number (NumI i)))]) =
+eval _ _ (List [List [SimpleVal (Atom "quote"), List x], v@(SimpleVal (Number (NumI i)))]) =
         if length x > fromIntegral i
           then return $ x !! fromIntegral i
           else throwError $ BadSpecialForm "index too large" v
-eval _ _ (List [List [SimpleVal (Atom "quote"), (List x)], v@(SimpleVal (Number (NumS i)))]) =
+eval _ _ (List [List [SimpleVal (Atom "quote"), List x], v@(SimpleVal (Number (NumS i)))]) =
         if length x > i
           then return $ x !! i
           else throwError $ BadSpecialForm "index too large" v

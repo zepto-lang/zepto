@@ -19,7 +19,7 @@ escapeProc badArgList = throwError $ NumArgs 1 badArgList
 colorProc :: [LispVal] -> IOThrowsError LispVal
 colorProc [SimpleVal (Atom (':' : s))] =
         case lookupColor s of
-           Just found -> escapeProc $ [SimpleVal (Number (NumI $ snd found))]
+           Just found -> escapeProc [SimpleVal (Number (NumI $ snd found))]
            _          -> throwError $ BadSpecialForm "Color not found" $ fromSimple $ String s
     where lookupColor color = find (\t -> color == fst t) colors
           colors = [ ("black", 30)
@@ -112,8 +112,8 @@ systemProc [SimpleVal (String s)] = do
         case x of
           Right el ->
             case fst3 el of
-              ExitSuccess -> return $ List $ (fromSimple $ Number $ NumI 0) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
-              ExitFailure w -> return $ List $ (fromSimple $ Number $ NumI $ fromIntegral w) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+              ExitSuccess -> return $ List $ fromSimple (Number $ NumI 0) : fromSimple (String $ snd3 el) : [fromSimple $ String $ thd3 el]
+              ExitFailure w -> return $ List $ fromSimple (Number $ NumI $ fromIntegral w) : fromSimple (String $ snd3 el) : [fromSimple $ String $ thd3 el]
           Left w -> throwError $ Default $ show w
 systemProc [SimpleVal (String s), List given] = do
         let margs = unpackList given
@@ -123,14 +123,14 @@ systemProc [SimpleVal (String s), List given] = do
             case x of
               Right el ->
                 case fst3 el of
-                  ExitSuccess -> return $ List $ (fromSimple $ Number $ NumI 0) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
-                  ExitFailure w -> return $ List $ (fromSimple $ Number $ NumI $ fromIntegral w) : (fromSimple $ String $ snd3 el) : [(fromSimple $ String $ thd3 el)]
+                  ExitSuccess -> return $ List $ fromSimple (Number $ NumI 0) : fromSimple (String $ snd3 el) : [fromSimple $ String $ thd3 el]
+                  ExitFailure w -> return $ List $ fromSimple (Number $ NumI $ fromIntegral w) : fromSimple (String $ snd3 el) : [fromSimple $ String $ thd3 el]
               Left w -> throwError $ Default $ show w
           Left err -> throwError $ TypeMismatch "string" err
     where unpackList :: [LispVal] -> Either LispVal [String]
           unpackList pack =
             if all isString pack
-              then Right $ map (unpack') pack
+              then Right $ map unpack' pack
               else Left $ notString pack
           isString (SimpleVal (String _)) = True
           isString _ = False

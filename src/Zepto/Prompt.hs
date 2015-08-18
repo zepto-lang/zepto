@@ -225,10 +225,10 @@ until_ prompt action text = do result <- prompt text
                                 until_ prompt action text
                       | setter x "quit" || setter x "exit" =
                                 let code = read $ getOpt x
-                                in do
+                                in
                                   if code == 0
-                                    then exitter (liftIO $ tryIOError $ liftIO $
-                                              exitWith $ ExitSuccess)
+                                    then exitter (liftIO $ tryIOError $ liftIO
+                                              exitSuccess)
                                     else exitter (liftIO $ tryIOError $ liftIO $
                                               exitWith $ ExitFailure code)
                       | matches x "quit" || matches x "exit" || matches x "q" = do

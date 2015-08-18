@@ -407,16 +407,16 @@ showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form ++
                                           " (type: " ++ typeString form ++ ")"
-showError (BadSpecialForms message forms) = message ++ ": " ++ (init $
-                                           init $ unwords $
-                                           map (\form -> show form ++
-                                                " (type: " ++ typeString form ++
-                                                "), ") forms)
+showError (BadSpecialForms message forms) = message ++ ": " ++ init (
+                                         init $ unwords $
+                                         map (\form -> show form ++
+                                              " (type: " ++ typeString form ++
+                                              "), ") forms)
 showError (NotFunction message func) = message ++ ": " ++ show func
 showError (NumArgs expected found) =
-        let x = "Expected " ++ show expected ++
-                " args; found " ++ show (length found)
-        in if length found /= 0
+      let x = "Expected " ++ show expected ++
+              " args; found " ++ show (length found)
+      in if not (null found)
               then x ++ "; values are " ++ unwords (map extractStr found)
               else x
     where extractStr val = let y = typeString val
@@ -434,7 +434,7 @@ showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
 
 fromSimple :: Simple -> LispVal
-fromSimple x = SimpleVal x
+fromSimple = SimpleVal
 
 toSimple :: LispVal -> Simple
 toSimple (SimpleVal x) = x
@@ -464,8 +464,8 @@ typeString (Port _) = "port"
 typeString (Func _) = "function"
 typeString (Pointer _ _) = "pointer"
 typeString (Cont _) = "continuation"
-typeString (ListComprehension _ _ _ _) = "list comprehension"
-typeString (HashComprehension _ _ _ _) = "hash comprehension"
+typeString (ListComprehension{}) = "list comprehension"
+typeString (HashComprehension{}) = "hash comprehension"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal

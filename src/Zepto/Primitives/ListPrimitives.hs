@@ -13,7 +13,7 @@ car badArgList = throwError $ NumArgs 1 badArgList
 
 cdr :: [LispVal] -> ThrowsError LispVal
 cdr [List (_ : xs)] = return $ List xs
-cdr [DottedList [_] x] = return $ x
+cdr [DottedList [_] x] = return x
 cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg] = throwError $ TypeMismatch "pair" badArg
 cdr badArgList = throwError $ NumArgs 1 badArgList
@@ -85,11 +85,11 @@ stringLength badArgList = throwError $ NumArgs 1 badArgList
 stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =
         if n >= 0
            then return $ fromSimple $ Character $ v !! fromInteger n
-           else return $ fromSimple $ Character $ v !! ((length v) - fromInteger n)
+           else return $ fromSimple $ Character $ v !! (length v - fromInteger n)
 stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
         if n >= 0
            then return $ fromSimple $ Character $ v !! n
-           else return $ fromSimple $ Character $ v !! ((length v) - n)
+           else return $ fromSimple $ Character $ v !! (length v - n)
 stringRef [badType] = throwError $ TypeMismatch "string integer" badType
 stringRef badArgList = throwError $ NumArgs 2 badArgList
 
@@ -138,12 +138,12 @@ listAppend (vec@(List _) : t) = append' [vec] t
         append' [List x] (st : sts) = do
           rest <- append' [] sts
           case rest of
-              List s -> return $ List $ x ++ [st] ++ s
+              List s -> return $ List $ x ++ (st : s)
               elsewise -> throwError $ TypeMismatch "list/element" elsewise
         append' [] (st : sts) = do
           rest <- append' [] sts
           case rest of
-              List s -> return $ List $ [st] ++ s
+              List s -> return $ List $ st : s
               elsewise -> throwError $ TypeMismatch "list/element" elsewise
         append' [] [] = return $ List []
         append' _ _ = throwError $ InternalError "This should not happen"
