@@ -334,7 +334,7 @@ readPrompt env text = do set <- addSettings env
 
 -- | evaluate a line of code and print it
 evalAndPrint :: Env -> String -> IO ()
-evalAndPrint env expr = evalString env expr >>= putStrLn
+evalAndPrint env expr = evalString env expr >>= putStrLn . (++) "=> "
 
 -- | run a single statement
 runSingleStatement :: String -> IO ()
@@ -342,7 +342,8 @@ runSingleStatement statement = do
         env <- primitiveBindings
         lib <- getDataFileName "zepto-stdlib/module.zp"
         _   <- loadFile env lib
-        evalAndPrint env statement
+        _ <- evalString env statement
+        return ()
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 -- | run a file
