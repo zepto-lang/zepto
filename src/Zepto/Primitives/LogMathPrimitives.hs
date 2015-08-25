@@ -17,12 +17,19 @@ eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]
 eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(IOFunc _), y@(IOFunc _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [SimpleVal (SimpleList arg1), SimpleVal (SimpleList arg2)] =
+        return $ fromSimple $ Bool $ (length arg1 == length arg2) &&
+                                     and (zipWith (curry eqvPair) arg1 arg2)
+    where eqvPair (x, y) = case eqv [fromSimple x, fromSimple y] of
+                                  Left _ -> False
+                                  Right (SimpleVal (Bool val)) -> val
+                                  _ -> False
 eqv [List arg1, List arg2] = return $ fromSimple $ Bool $ (length arg1 == length arg2) &&
                                   and (zipWith (curry eqvPair) arg1 arg2)
-                                  where eqvPair (x, y) = case eqv[x, y] of
-                                                            Left _ -> False
-                                                            Right (SimpleVal (Bool val)) -> val
-                                                            _ -> False
+    where eqvPair (x, y) = case eqv[x, y] of
+                              Left _ -> False
+                              Right (SimpleVal (Bool val)) -> val
+                              _ -> False
 eqv [Vector arg1, Vector arg2] = eqv [List (elems arg1), List (elems arg2)]
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
