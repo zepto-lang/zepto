@@ -276,6 +276,16 @@ filterAndApply set ret cond env conti x = do
                 _ -> return $ fromSimple $ Nil ""
       Left _ -> return $ fromSimple $ Nil ""
 
+internalApply :: String -> LispVal -> Env -> LispVal
+                 -> LispVal -> IOThrowsError LispVal
+internalApply set ret env conti x = do
+    newenv <- liftIO $ tryIOError $ liftIO $ copyEnv env
+    case newenv of
+      Right envval -> do
+          _ <- defineVar envval set x
+          eval envval conti ret
+      Left _ -> return $ fromSimple $ Nil ""
+
 isNotNil :: LispVal -> Bool
 isNotNil (SimpleVal (Nil _)) = False
 isNotNil _ = True
@@ -311,12 +321,14 @@ eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), Simp
           HashMap e -> do
             keys <- mapM (filterAndApply key keyexpr cond env conti . fromSimple)
                      (Data.Map.keys e)
-            vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
+            vals <- mapM (internalApply val valexpr env conti) (Data.Map.elems e)
             return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
           _ -> throwError $ TypeMismatch "hash-map" hash
-    where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
+    where buildTuples :: [Simple] -> [LispVal] -> [(Simple, LispVal)] -> [(Simple, LispVal)]
           buildTuples [] [] l = l
-          buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
+          buildTuples (ax:al) (bx:bl) x = case ax of
+            Nil "" -> buildTuples al bl x
+            _      -> buildTuples al bl (x ++ [(ax,bx)])
           buildTuples _ _ _ = error "Hash comprehension failed: internal error while building new hash-map"
 eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) v@(HashMap _) cond) = do
         hash <- contEval env conti v
@@ -324,12 +336,14 @@ eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), Simp
           HashMap e -> do
             keys <- mapM (filterAndApply key keyexpr cond env conti . fromSimple)
                      (Data.Map.keys e)
-            vals <- mapM (filterAndApply val valexpr cond env conti) (Data.Map.elems e)
+            vals <- mapM (internalApply val valexpr env conti) (Data.Map.elems e)
             return $ HashMap $ Data.Map.fromList $ buildTuples (map toSimple keys) vals []
           _ -> throwError $ TypeMismatch "hash-map" hash
-    where buildTuples :: [a] -> [b] -> [(a,b)] -> [(a,b)]
+    where buildTuples :: [Simple] -> [LispVal] -> [(Simple, LispVal)] -> [(Simple, LispVal)]
           buildTuples [] [] l = l
-          buildTuples (ax:al) (bx:bl) x = buildTuples al bl (x ++ [(ax,bx)])
+          buildTuples (ax:al) (bx:bl) x = case ax of
+            Nil "" -> buildTuples al bl x
+            _      -> buildTuples al bl (x ++ [(ax,bx)])
           buildTuples _ _ _ = error "Hash comprehension failed: internal error while building new hash-map"
 eval env conti (ListComprehension ret (SimpleVal (Atom set)) (SimpleVal (Atom iter)) cond) = do
         list <- contEval env conti =<< getVar env iter

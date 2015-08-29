@@ -146,9 +146,10 @@ zepto> [(+ x 1) | x <- [1 2 3 4]]
 (2 3 4 5)
 zepto> [(+ x 1) | x <- [1 2 3 4], (> x 1)]
 (3 4 5)
-zepto> ; The filtering in Hash Comprehensions is a bit buggy
 zepto> #{(+ k 1) (* v 1.0) | k v <- #{1 2 3 4}}
 #{2: 2.0, 4: 4.0, }
+zepto> #{(+ k 1) v | k v <- #{1 2 3 4}, (= k 1)}
+#{2: 2, }
 ```
 
 The whitespaces matter. The thing is symbol-heavy enough as it is,
