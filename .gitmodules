@@ -1,6 +1,7 @@
 [submodule "zepto-stdlib"]
 	path = zepto-stdlib
 	url = https://github.com/zepto-lang/zepto-stdlib
+  ignore = dirty
 [submodule "wiki"]
 	path = wiki
 	url = https://github.com/zepto-lang/zepto-wiki
