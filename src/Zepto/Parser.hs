@@ -3,9 +3,11 @@ module Zepto.Parser(readExpr, readExprList) where
 import Control.Monad
 import Control.Monad.Except
 import Data.Array
+import Data.ByteString (pack)
 import Data.Char
 import Data.Complex
 import Data.Ratio
+import Data.Word (Word8)
 import Numeric
 import Text.ParserCombinators.Parsec hiding (spaces)
 import qualified Data.Map
@@ -184,6 +186,14 @@ parseVect :: Parser LispVal
 parseVect = do vals <- sepBy parseExpr spaces
                return $ Vector (listArray (0, length vals -1) vals)
 
+parseByteVect :: Parser LispVal
+parseByteVect = do vals <- sepBy parseNumber spaces
+                   return $ ByteVector $ pack $ map toB vals
+    where toB :: LispVal -> Word8
+          toB (SimpleVal (Number (NumI x))) = fromInteger x :: Word8
+          toB (SimpleVal (Number (NumS x))) = fromIntegral x :: Word8
+          toB _ = 0
+
 parseBool :: Parser LispVal
 parseBool = do _ <- string "#"
                x <- oneOf "tf"
@@ -298,6 +308,14 @@ parseExpr = parseComments
                return x
         <|> do _ <- char '{'
                x <- parseVect
+               _ <- char '}'
+               return x
+        <|> do _ <- try $ string "#b("
+               x <- parseByteVect
+               _ <- char ')'
+               return x
+        <|> do _ <- try $ string "b{"
+               x <- parseByteVect
                _ <- char '}'
                return x
         <|> parseSpliced

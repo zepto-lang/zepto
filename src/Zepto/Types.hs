@@ -22,6 +22,7 @@ module Zepto.Types (LispNum(..),
                     runIOThrows
                     ) where
 import Data.Array
+import Data.ByteString (ByteString, unpack)
 import Data.Complex
 import Data.Fixed
 import Data.Ratio
@@ -297,6 +298,7 @@ data LispVal = SimpleVal Simple
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Vector (Array Int LispVal)
+             | ByteVector ByteString
              | HashMap (Data.Map.Map Simple LispVal)
              | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
              | IOFunc  ([LispVal] -> IOThrowsError LispVal)
@@ -377,6 +379,7 @@ showVal (SimpleVal (Number n)) = showNum n
 showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map SimpleVal contents) ++")"
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
+showVal (ByteVector contents) = "#b(" ++ unwords (map show (unpack contents)) ++ ")"
 showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (Data.Map.keys contents))
                                                      (Data.Map.elems contents)) ++ "}"
 showVal (PrimitiveFunc _) = "<primitive>"
@@ -466,6 +469,7 @@ typeString (Pointer _ _) = "pointer"
 typeString (Cont _) = "continuation"
 typeString (ListComprehension{}) = "list comprehension"
 typeString (HashComprehension{}) = "hash comprehension"
+typeString (ByteVector _) = "bytevector"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
