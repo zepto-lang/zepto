@@ -16,5 +16,8 @@
 (assert-equal (lambda () (eqv? '#("Num" "Num" "Num") '#("Num" "Num" 2))) #f)
 (assert-equal (lambda () (eqv? '#("1" "2" "3") '#(1 2 3))) #f)
 
+(assert-equal (lambda () (eqv? b{1 2 3} b{1 2 3})) #t)
+(assert-equal (lambda () (eqv? b{1 2 3} b{1 2 4})) #f)
+
 (unit-test-handler-results)
 (unit-test-all-passed)
