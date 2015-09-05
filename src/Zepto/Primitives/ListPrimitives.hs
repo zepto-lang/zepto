@@ -3,6 +3,8 @@ import Data.Array (elems, listArray, (!))
 import Data.List (findIndex)
 import Control.Monad.Except
 
+import qualified Data.ByteString as BS (length, index)
+
 import Zepto.Types
 
 car :: [LispVal] -> ThrowsError LispVal
@@ -25,7 +27,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, buildVector, vectorLength, vectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, buildVector, vectorLength, byteVectorLength, vectorRef, byteVectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -45,10 +47,21 @@ vectorLength [Vector v] = return $ fromSimple $ Number $ NumI $ toInteger $ leng
 vectorLength [badType] = throwError $ TypeMismatch "vector" badType
 vectorLength badArgList = throwError $ NumArgs 1 badArgList
 
+byteVectorLength [ByteVector v] = return $ fromSimple $ Number $ NumI $ toInteger $ BS.length v
+byteVectorLength [badType] = throwError $ TypeMismatch "bytevector" badType
+byteVectorLength badArgList = throwError $ NumArgs 1 badArgList
+
 vectorRef [Vector v, SimpleVal (Number (NumI n))] = return $ v ! fromInteger n
 vectorRef [Vector v, SimpleVal (Number (NumS n))] = return $ v ! n
 vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
 vectorRef badArgList = throwError $ NumArgs 2 badArgList
+
+byteVectorRef [ByteVector v, SimpleVal (Number (NumI n))] =
+        return $ fromSimple $ Number $ NumI $ fromIntegral $ BS.index v (fromInteger n)
+byteVectorRef [ByteVector v, SimpleVal (Number (NumS n))] =
+        return $ fromSimple $ Number $ NumI $ fromIntegral $ BS.index v n
+byteVectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
+byteVectorRef badArgList = throwError $ NumArgs 2 badArgList
 
 vectorToList [Vector v] = return $ List $ elems v
 vectorToList [badType] = throwError $ TypeMismatch "vector" badType

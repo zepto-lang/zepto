@@ -16,6 +16,7 @@ eqv [SimpleVal (Atom arg1), SimpleVal (Atom arg2)] = return $ fromSimple $ Bool 
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
 eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [(ByteVector x), (ByteVector y)] = return $ fromSimple $ Bool $ x == y
 eqv [x@(IOFunc _), y@(IOFunc _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [SimpleVal (SimpleList arg1), SimpleVal (SimpleList arg2)] =
         return $ fromSimple $ Bool $ (length arg1 == length arg2) &&
@@ -96,7 +97,7 @@ strCIBoolBinop = boolBinop unpackCIStr
 
 unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryOp f [v] = f v
-unaryOp _ _ = throwError $ InternalError "Internal error in unaryOp"
+unaryOp _ l = throwError $ NumArgs 1 l
 
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (SimpleVal (Number n)) = return n
