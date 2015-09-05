@@ -310,7 +310,7 @@ parseExpr = parseComments
                x <- parseVect
                _ <- char '}'
                return x
-        <|> do _ <- try $ string "#b("
+        <|> do _ <- try $ string "b("
                x <- parseByteVect
                _ <- char ')'
                return x

@@ -379,7 +379,7 @@ showVal (SimpleVal (Number n)) = showNum n
 showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map SimpleVal contents) ++")"
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
-showVal (ByteVector contents) = "#b(" ++ unwords (map show (unpack contents)) ++ ")"
+showVal (ByteVector contents) = "b{" ++ unwords (map show (unpack contents)) ++ "}"
 showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (Data.Map.keys contents))
                                                      (Data.Map.elems contents)) ++ "}"
 showVal (PrimitiveFunc _) = "<primitive>"
