@@ -1,9 +1,10 @@
 module Zepto.Primitives.ListPrimitives where
 import Data.Array (elems, listArray, (!))
 import Data.List (findIndex)
+import Data.Word (Word8)
 import Control.Monad.Except
 
-import qualified Data.ByteString as BS (length, index)
+import qualified Data.ByteString as BS (length, index, replicate)
 
 import Zepto.Types
 
@@ -27,7 +28,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, buildVector, vectorLength, byteVectorLength, vectorRef, byteVectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, makeByteVector, buildVector, vectorLength, byteVectorLength, vectorRef, byteVectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -42,6 +43,18 @@ buildVector (o:os) = do
     let l = o:os
     return $ Vector $ listArray (0, length l - 1) l
 buildVector badArgList = throwError $ NumArgs 1 badArgList
+
+makeByteVector [n@(SimpleVal (Number _))] = makeByteVector [n, fromSimple $ Number $ NumI 0]
+makeByteVector [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI x))] =
+    return $ ByteVector $ BS.replicate (fromInteger n) (fromInteger x :: Word8)
+makeByteVector [SimpleVal (Number (NumS n)), SimpleVal (Number (NumI x))] =
+    return $ ByteVector $ BS.replicate n (fromInteger x :: Word8)
+makeByteVector [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS x))] =
+    return $ ByteVector $ BS.replicate (fromInteger n) (fromIntegral x :: Word8)
+makeByteVector [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS x))] =
+    return $ ByteVector $ BS.replicate n (fromIntegral x :: Word8)
+makeByteVector [badType] = throwError $ TypeMismatch "integer" badType
+makeByteVector badArgList = throwError $ NumArgs 1 badArgList
 
 vectorLength [Vector v] = return $ fromSimple $ Number $ NumI $ toInteger $ length (elems v)
 vectorLength [badType] = throwError $ TypeMismatch "vector" badType
