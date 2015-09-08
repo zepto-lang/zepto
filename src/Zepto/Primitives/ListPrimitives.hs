@@ -4,7 +4,7 @@ import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
 
-import qualified Data.ByteString as BS (length, index, replicate, singleton, cons, append, empty)
+import qualified Data.ByteString as BS (length, index, replicate, singleton, cons, append, empty, pack)
 
 import Zepto.Types
 
@@ -28,7 +28,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, vectorLength, byteVectorLength, vectorRef, byteVectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, makeByteVector, buildVector, buildByteVector, vectorLength, byteVectorLength, vectorRef, byteVectorRef, vectorToList, listToVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -39,10 +39,22 @@ makeVector [SimpleVal (Number (NumS n)), a] = do
 makeVector [badType] = throwError $ TypeMismatch "integer" badType
 makeVector badArgList = throwError $ NumArgs 1 badArgList
 
-buildVector (o:os) = do
-    let l = o:os
-    return $ Vector $ listArray (0, length l - 1) l
-buildVector badArgList = throwError $ NumArgs 1 badArgList
+buildVector l = return $ Vector $ listArray (0, length l - 1) l
+
+buildByteVector l = case verify l of
+  Right x  -> return $ ByteVector $ BS.pack x
+  Left err -> throwError $ TypeMismatch "integer" err
+  where verify :: [LispVal] -> Either LispVal [Word8]
+        verify [] = Right []
+        verify (SimpleVal (Number (NumI x)) : xs) =
+          case verify xs of
+            Right z  -> Right ((fromInteger x :: Word8) : z)
+            Left err -> Left err
+        verify (SimpleVal (Number (NumS x)) : xs) =
+          case verify xs of
+            Right z  -> Right ((fromIntegral x :: Word8) : z)
+            Left err -> Left err
+        verify (x : _) = Left x
 
 makeByteVector [n@(SimpleVal (Number _))] = makeByteVector [n, fromSimple $ Number $ NumI 0]
 makeByteVector [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI x))] =
