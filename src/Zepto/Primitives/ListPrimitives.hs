@@ -4,7 +4,7 @@ import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
 
-import qualified Data.ByteString as BS (length, index, replicate)
+import qualified Data.ByteString as BS (length, index, replicate, singleton, cons, append, empty)
 
 import Zepto.Types
 
@@ -202,6 +202,31 @@ vectorAppend [badType] = throwError $ NumArgs 2 [badType]
 vectorAppend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
+byteVectorAppend :: [LispVal] -> ThrowsError LispVal
+byteVectorAppend t = append' t
+  where append' :: [LispVal] -> ThrowsError LispVal
+        append' [x@(ByteVector _)] = return x
+        append' [] = return $ ByteVector $ BS.empty
+        append' [SimpleVal (Number (NumI n))] = return $ ByteVector $ BS.singleton (fromInteger n :: Word8)
+        append' [SimpleVal (Number (NumS n))] = return $ ByteVector $ BS.singleton (fromIntegral n :: Word8)
+        append' [x] = throwError $ TypeMismatch "bytevector/element" x
+        append' (ByteVector st : sts) = do
+          rest <- append' sts
+          case rest of
+              ByteVector s -> return $ ByteVector $ BS.append st s
+              elsewise -> throwError $ TypeMismatch "bytevector/element" elsewise
+        append' (SimpleVal (Number (NumI st)) : sts) = do
+          rest <- append' sts
+          case rest of
+              ByteVector s -> return $ ByteVector $ BS.cons (fromInteger st :: Word8) s
+              elsewise -> throwError $ TypeMismatch "bytevector/element" elsewise
+        append' (SimpleVal (Number (NumS st)) : sts) = do
+          rest <- append' sts
+          case rest of
+              ByteVector s -> return $ ByteVector $ BS.cons (fromIntegral st :: Word8) s
+              elsewise -> throwError $ TypeMismatch "bytevector/element" elsewise
+        append' (x : _) = throwError $ TypeMismatch "bytevector/element" x
+
 allAppend :: [LispVal] -> ThrowsError LispVal
 allAppend v@[SimpleVal (String _), _] = stringExtend v
 allAppend v@(SimpleVal (String _) : _) = stringExtend v
@@ -209,14 +234,16 @@ allAppend v@[List _, _] = listAppend v
 allAppend v@(List _ : _) = listAppend v
 allAppend v@[Vector _, _] = vectorAppend v
 allAppend v@(Vector _ : _) = vectorAppend v
+allAppend v@[ByteVector _, _] = byteVectorAppend v
+allAppend v@(ByteVector _ : _) = byteVectorAppend v
 allAppend [badType] = throwError $ NumArgs 2 [badType]
-allAppend (badType : _) = throwError $ TypeMismatch "string/list/vector" badType
+allAppend (badType : _) = throwError $ TypeMismatch "string/list/vector/byte-vector" badType
 allAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
 listExtend :: [LispVal] -> ThrowsError LispVal
 listExtend l@(List _ : _) = append' l
   where append' :: [LispVal] -> ThrowsError LispVal
-        append' [List v] = return $ List v
+        append' [v@(List _)] = return v
         append' [v] = return $ List [v]
         append' [] = return $ List []
         append' (List st : sts) = do
@@ -236,7 +263,7 @@ listExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgL
 vectorExtend :: [LispVal] -> ThrowsError LispVal
 vectorExtend v@(Vector _: _) = append' v
   where append' :: [LispVal] -> ThrowsError LispVal
-        append' [Vector x] = return $ Vector x
+        append' [x@(Vector _)] = return x
         append' [x] = return $ Vector $ listArray (0, 0) [x]
         append' (Vector st : sts) = do
           rest <- append' sts
@@ -263,6 +290,8 @@ allExtend v@[List _, _] = listExtend v
 allExtend v@(List _ : _) = listExtend v
 allExtend v@[Vector _, _] = vectorExtend v
 allExtend v@(Vector _ : _) = vectorExtend v
+allExtend v@[ByteVector _, _] = byteVectorAppend v
+allExtend v@(ByteVector _ : _) = byteVectorAppend v
 allExtend [badType] = throwError $ NumArgs 2 [badType]
-allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector" badType
+allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector/bytevector" badType
 allExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
