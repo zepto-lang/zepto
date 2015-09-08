@@ -8,6 +8,8 @@ import System.IO.Error (tryIOError)
 import System.Process (readProcessWithExitCode)
 import System.Clock
 
+import qualified Data.ByteString as BS (readFile)
+
 import Zepto.Types
 
 escapeProc :: [LispVal] -> IOThrowsError LispVal
@@ -78,11 +80,17 @@ print' port obj =
 
 errorProc :: [LispVal] -> IOThrowsError LispVal
 errorProc [obj] = liftIO $ hPrint stderr obj >> return (fromSimple (Nil ""))
-errorProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+errorProc badArgs = throwError $ NumArgs 1 badArgs
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ readFile filename
-readContents badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+readContents [x] = throwError $ TypeMismatch "string" x
+readContents badArgs = throwError $ NumArgs 1 badArgs
+
+readBinaryContents :: [LispVal] -> IOThrowsError LispVal
+readBinaryContents [SimpleVal (String filename)] = liftM (ByteVector) $ liftIO $ BS.readFile filename
+readBinaryContents [x] = throwError $ TypeMismatch "string" x
+readBinaryContents badArgs = throwError $ NumArgs 1 badArgs
 
 exitProc :: [LispVal] -> IOThrowsError LispVal
 exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess

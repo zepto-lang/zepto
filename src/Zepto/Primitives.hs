@@ -177,6 +177,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("display", writeProc print', "print to stdout")
                , ("error", errorProc, "write to stderr")
                , ("read-contents", readContents, "read contents of file")
+               , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
                , ("system", systemProc, "call a system command")
