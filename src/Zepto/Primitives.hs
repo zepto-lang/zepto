@@ -6,6 +6,7 @@ module Zepto.Primitives(primitives
                        , evalString
                        ) where
 import Data.Array
+import Data.ByteString (hPut)
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -169,7 +170,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-input-file", closePort, "close a file opened for reading")
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("read", readProc, "read from file")
-               , ("write", writeProc hPrint, "write to file")
+               , ("write", writeProc printInternal, "write to file")
                , ("peek-char", readCharProc hGetChar, "peek char from file")
                , ("read-char", readCharProc hLookAhead, "read char from file")
                , ("write-char", writeCharProc, "write char to file")
@@ -192,6 +193,12 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  --, ("call-with-values", evalCallWValues, "call with values"),
                  --, ("load-ffi", evalFFI, "load foreign function")
                  ]
+
+printInternal :: Handle -> LispVal -> IO ()
+printInternal handle val =
+    case val of
+      ByteVector x -> hPut handle x
+      _            -> hPrint handle val
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
 stringToNumber [SimpleVal (String s)] = do
