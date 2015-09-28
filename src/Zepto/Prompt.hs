@@ -342,20 +342,21 @@ runSingleStatement statement = do
         env <- primitiveBindings
         lib <- getDataFileName "zepto-stdlib/module.zp"
         _   <- loadFile env lib
-        _ <- evalString env statement
-        return ()
+        evalString env statement >>= putStrLn
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 -- | run a file
 runFile :: [String] -> IO ()
 runFile args = do
-        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "args"),
+        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "zepto:args"),
                                                     List $ fromSimple . String <$> drop 1 args)]
+                                 >>= flip extendEnv[((vnamespace, "zepto:name"),
+                                                    fromSimple $ String $ head args)]
         lib <- getDataFileName "zepto-stdlib/module.zp"
         _   <- loadFile env lib
-        _ <- runIOThrows (liftM show $ eval env (nullCont env)
+        smt <- runIOThrows (liftM show $ eval env (nullCont env)
           (List [fromSimple (Atom "load"), fromSimple $ String $ head args]))
-        return ()
+        putStrLn smt
     where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 

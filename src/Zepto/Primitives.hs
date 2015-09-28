@@ -156,11 +156,11 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("hash-keys", hashKeys, "get keys from hashmap")
              , ("hash-values", hashVals, "get vals from hashmap")
              , ("hash-contains?", inHash, "find out whether hashtable contains key")
-             , ("zepto-version", getVersion, "gets the version as a list")
-             , ("zepto-version-str", getVersionStr, "gets the version as a string")
-             , ("zepto-major-version", getMajVersion, "gets the major version number")
-             , ("zepto-minor-version", getMinVersion, "gets the minor version number")
-             , ("zepto-patch-version", getPatchVersion, "gets the patch version number")
+             , ("zepto:version", getVersion, "gets the version as a list")
+             , ("zepto:version-str", getVersionStr, "gets the version as a string")
+             , ("zepto:major-version", getMajVersion, "gets the major version number")
+             , ("zepto:minor-version", getMinVersion, "gets the minor version number")
+             , ("zepto:patch-version", getPatchVersion, "gets the patch version number")
              ]
 
 -- | a list of all io-bound primitives
