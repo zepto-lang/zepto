@@ -1,11 +1,10 @@
 module Zepto.Primitives.VersionPrimitives where
 import Data.List (intercalate)
-import Control.Monad.Except (throwError)
 
 import Zepto.Types
 
 version :: [Int]
-version = [0, 8, 4]
+version = [0, 8, 5]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version
@@ -19,23 +18,17 @@ minorVersion = version !! 1
 patchVersion :: Int
 patchVersion = version !! 2
 
-getVersion :: [LispVal] -> ThrowsError LispVal
-getVersion [] = return $ List $ fmap (fromSimple . String . show) version
-getVersion badList = throwError $ NumArgs 0 badList
+getVersion :: ThrowsError LispVal
+getVersion = return $ List $ fmap (fromSimple . String . show) version
 
-getVersionStr :: [LispVal] -> ThrowsError LispVal
-getVersionStr [] = return $ fromSimple $ String versionStr
-getVersionStr badList = throwError $ NumArgs 0 badList
+getVersionStr :: ThrowsError LispVal
+getVersionStr = return $ fromSimple $ String versionStr
 
-getMajVersion :: [LispVal] -> ThrowsError LispVal
-getMajVersion [] = return $ fromSimple $ Number $ NumI $ toInteger majorVersion
-getMajVersion badList = throwError $ NumArgs 0 badList
+getMajVersion :: ThrowsError LispVal
+getMajVersion = return $ fromSimple $ Number $ NumI $ toInteger majorVersion
 
-getMinVersion :: [LispVal] -> ThrowsError LispVal
-getMinVersion [] = return $ fromSimple $ Number $ NumI $ toInteger minorVersion
-getMinVersion badList = throwError $ NumArgs 0 badList
+getMinVersion :: ThrowsError LispVal
+getMinVersion = return $ fromSimple $ Number $ NumI $ toInteger minorVersion
 
-getPatchVersion :: [LispVal] -> ThrowsError LispVal
-getPatchVersion [] = return $ fromSimple $ Number $ NumI $ toInteger patchVersion
-getPatchVersion badList = throwError $ NumArgs 0 badList
-
+getPatchVersion :: ThrowsError LispVal
+getPatchVersion = return $ fromSimple $ Number $ NumI $ toInteger patchVersion

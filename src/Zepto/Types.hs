@@ -484,8 +484,9 @@ trapError action = catchError action (return . show)
 -- | extracts a value from a possible error
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
-extractValue (Left _) = error("This should not be happening. " ++
-                              "Please consider reporting this incident.")
+extractValue (Left x) = error("This should not be happening. " ++
+                           "Please consider reporting this incident: " ++
+                           show x)
 
 -- | returns a new empty environment
 nullEnv :: IO Env

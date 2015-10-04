@@ -67,6 +67,13 @@ numericBinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError Lisp
 numericBinop _ singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
 
+numericBinopErr :: (LispNum -> LispNum -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+numericBinopErr op [x, y] = do
+    a <- unpackNum x
+    b <- unpackNum y
+    op a b
+numericBinopErr _ l = throwError $ NumArgs 2 l
+
 numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
 numericMinop _ [SimpleVal (Number l)] = return $ fromSimple $ Number $ negate l
 numericMinop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
@@ -98,6 +105,18 @@ strCIBoolBinop = boolBinop unpackCIStr
 unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryOp f [v] = f v
 unaryOp _ l = throwError $ NumArgs 1 l
+
+unaryIOOp :: (LispVal -> IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
+unaryIOOp f [v] = f v
+unaryIOOp _ l = throwError $ NumArgs 1 l
+
+noArg :: (ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+noArg f [] = f
+noArg _ l = throwError $ NumArgs 0 l
+
+noIOArg :: (IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
+noIOArg f [] = f
+noIOArg _ l = throwError $ NumArgs 0 l
 
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (SimpleVal (Number n)) = return n
@@ -138,20 +157,18 @@ arithmeticShift [SimpleVal (Number _), badType] = throwError $ TypeMismatch "int
 arithmeticShift [badType, _] = throwError $ TypeMismatch "integer" badType
 arithmeticShift badArgList = throwError $ NumArgs 2 badArgList
 
-real :: [LispVal] -> ThrowsError LispVal
-real [SimpleVal (Number (NumC x))] = return $ fromSimple $ Number $ NumF $ realPart x
-real [val@(SimpleVal (Number (NumF _)))] = return val
-real [val@(SimpleVal (Number (NumR _)))] = return val
-real [val@(SimpleVal (Number (NumI _)))] = return val
-real [val@(SimpleVal (Number (NumS _)))] = return val
-real[x] = throwError $ TypeMismatch "number" x
-real badArgList = throwError $ NumArgs 1 badArgList
+real :: LispVal -> ThrowsError LispVal
+real (SimpleVal (Number (NumC x))) = return $ fromSimple $ Number $ NumF $ realPart x
+real val@(SimpleVal (Number (NumF _))) = return val
+real val@(SimpleVal (Number (NumR _))) = return val
+real val@(SimpleVal (Number (NumI _))) = return val
+real val@(SimpleVal (Number (NumS _))) = return val
+real x = throwError $ TypeMismatch "number" x
 
-imaginary :: [LispVal] -> ThrowsError LispVal
-imaginary [SimpleVal (Number (NumC x))] = return $ fromSimple $ Number $ NumF $ imagPart x
-imaginary [SimpleVal (Number _)] = return $ fromSimple $ Number $ NumF 0
-imaginary [x] = throwError $ TypeMismatch "number" x
-imaginary badArgList = throwError $ NumArgs 1 badArgList
+imaginary :: LispVal -> ThrowsError LispVal
+imaginary (SimpleVal (Number (NumC x))) = return $ fromSimple $ Number $ NumF $ imagPart x
+imaginary (SimpleVal (Number _)) = return $ fromSimple $ Number $ NumF 0
+imaginary x = throwError $ TypeMismatch "number" x
 
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumF $ op $ fromInteger n
@@ -187,58 +204,57 @@ numLog [SimpleVal (Number (NumC n)), SimpleVal (Number (NumS base))] =
 numLog [x] = throwError $ TypeMismatch "number" x
 numLog badArgList = throwError $ NumArgs 1 badArgList
 
-numPow :: [LispVal] -> ThrowsError LispVal
-numPow [SimpleVal (Number (NumI n)), wrong@(SimpleVal (Number (NumI base)))] =
+numPow :: LispNum -> LispNum -> ThrowsError LispVal
+numPow (NumI n) wrong@(NumI base) =
     if base > -1
         then return $ fromSimple $ Number $ NumI $ n ^ base
-        else throwError $ TypeMismatch "positive" wrong
-numPow [SimpleVal (Number (NumS n)), wrong@(SimpleVal (Number (NumI base)))] =
+        else throwError $ TypeMismatch "positive" (fromSimple $ Number wrong)
+numPow (NumS n) wrong@(NumI base) =
     if base > -1
         then return $ fromSimple $ Number $ NumI $ fromIntegral n ^ base
-        else throwError $ TypeMismatch "positive" wrong
-numPow [SimpleVal (Number (NumI n)), wrong@(SimpleVal (Number (NumS base)))] =
+        else throwError $ TypeMismatch "positive" (fromSimple $ Number wrong)
+numPow (NumI n) wrong@(NumS base) =
     if base > -1
         then return $ fromSimple $ Number $ NumI $ n ^ (fromIntegral base::Integer)
-        else throwError $ TypeMismatch "positive" wrong
-numPow [SimpleVal (Number (NumS n)), wrong@(SimpleVal (Number (NumS base)))] =
+        else throwError $ TypeMismatch "positive" (fromSimple $ Number wrong)
+numPow (NumS n) wrong@(NumS base) =
     if base > -1
         then return $ fromSimple $ Number $ NumS $ n ^ base
-        else throwError $ TypeMismatch "positive" wrong
-numPow [SimpleVal (Number (NumF n)), SimpleVal (Number (NumI base))] =
+        else throwError $ TypeMismatch "positive" (fromSimple $ Number wrong)
+numPow (NumF n) (NumI base) =
     return $ fromSimple $ Number $ NumF $ n ** fromIntegral base
-numPow [SimpleVal (Number (NumI n)), SimpleVal (Number (NumF base))] =
+numPow (NumI n) (NumF base) =
     return $ fromSimple $ Number $ NumF $ fromIntegral n ** base
-numPow [SimpleVal (Number (NumF n)), SimpleVal (Number (NumF base))] =
+numPow (NumF n) (NumF base) =
     return $ fromSimple $ Number $ NumF $ n ** base
-numPow [SimpleVal (Number (NumC n)), SimpleVal (Number (NumI base))] =
+numPow (NumC n) (NumI base) =
     return $ fromSimple $ Number $ NumC $ n ** fromIntegral base
-numPow [SimpleVal (Number (NumC n)), SimpleVal (Number (NumF base))] =
+numPow (NumC n) (NumF base) =
     return $ fromSimple $ Number $ NumC $ n ** (base :+ 0)
-numPow [SimpleVal (Number (NumR n)), SimpleVal (Number (NumR base))] =
+numPow (NumR n) (NumR base) =
     return $ fromSimple $ Number $ NumF $ fromRational n ** fromRational base
-numPow [SimpleVal (Number (NumR n)), SimpleVal (Number (NumI base))] =
+numPow (NumR n) (NumI base) =
     return $ fromSimple $ Number $ NumF $ fromRational n ** fromIntegral base
-numPow [SimpleVal (Number (NumI n)), SimpleVal (Number (NumR base))] =
+numPow (NumI n) (NumR base) =
     return $ fromSimple $ Number $ NumF $ fromIntegral n ** fromRational base
-numPow [SimpleVal (Number (NumR n)), SimpleVal (Number (NumF base))] =
+numPow (NumR n) (NumF base) =
     return $ fromSimple $ Number $ NumF $ fromRational n ** base
-numPow [SimpleVal (Number (NumF n)), SimpleVal (Number (NumR base))] =
+numPow (NumF n) (NumR base) =
     return $ fromSimple $ Number $ NumF $ n ** fromRational base
-numPow [SimpleVal (Number (NumC n)), SimpleVal (Number (NumR base))] =
+numPow (NumC n) (NumR base) =
     return $ fromSimple $ Number $ NumC $ n ** (fromRational base :+ 0)
-numPow [SimpleVal (Number (NumF n)), SimpleVal (Number (NumS base))] =
+numPow (NumF n) (NumS base) =
     return $ fromSimple $ Number $ NumF $ n ** fromIntegral base
-numPow [SimpleVal (Number (NumS n)), SimpleVal (Number (NumF base))] =
+numPow (NumS n) (NumF base) =
     return $ fromSimple $ Number $ NumF $ fromIntegral n ** base
-numPow [SimpleVal (Number (NumR n)), SimpleVal (Number (NumS base))] =
+numPow (NumR n) (NumS base) =
     return $ fromSimple $ Number $ NumF $ fromRational n ** fromIntegral base
-numPow [SimpleVal (Number (NumS n)), SimpleVal (Number (NumR base))] =
+numPow (NumS n) (NumR base) =
     return $ fromSimple $ Number $ NumF $ fromIntegral n ** fromRational base
-numPow [SimpleVal (Number (NumC n)), SimpleVal (Number (NumS base))] =
+numPow (NumC n) (NumS base) =
     return $ fromSimple $ Number $ NumC $ n ** fromIntegral base
-numPow [SimpleVal (Number _), x] = throwError $ TypeMismatch "number" x
-numPow [x, SimpleVal (Number _)] = throwError $ TypeMismatch "number(not complex)" x
-numPow badArgList = throwError $ NumArgs 2 badArgList
+numPow _ a@(NumC _) =
+    throwError $ TypeMismatch "number (no complex)" (fromSimple $ Number a)
 
 numSqrt :: [LispVal] -> ThrowsError LispVal
 numSqrt [SimpleVal (Number (NumI n))] = if n >= 0 then return $ fromSimple $ Number $ NumF $ sqrt $ fromInteger n
