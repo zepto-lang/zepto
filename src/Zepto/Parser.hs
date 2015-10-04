@@ -318,6 +318,11 @@ parseExpr = parseComments
                x <- parseByteVect
                _ <- char '}'
                return x
+        <|> do _ <- try $ string "#u8("
+               x <- parseByteVect
+               _ <- char ')'
+               return x
+        <|> parseSpliced
         <|> parseSpliced
         <|> parseString
         <|> parseQuoted

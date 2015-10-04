@@ -242,7 +242,8 @@ evalFun _ = throwError $ NumArgs 1 []
 
 evalApply :: [LispVal] -> IOThrowsError LispVal
 evalApply [conti@(Cont _), fun, List args] = apply conti fun args
-evalApply [_, _,  arg] = throwError $ TypeMismatch "list" arg
+evalApply (conti@(Cont _) : fun : args) = apply conti fun args
+evalApply [_, _, arg] = throwError $ TypeMismatch "list" arg
 evalApply (_ : args) = throwError $ NumArgs 2 args
 evalApply _ = throwError $ NumArgs 2 []
 
