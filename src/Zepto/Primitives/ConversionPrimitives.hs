@@ -34,3 +34,7 @@ list2Simple (List x) = if all simple x
     where simple (SimpleVal _) = True
           simple _ = False
 list2Simple notList = throwError $ TypeMismatch "list" notList
+
+simple2List :: LispVal -> ThrowsError LispVal
+simple2List (SimpleVal (SimpleList x)) = return $ List $ map fromSimple x
+simple2List notList = throwError $ TypeMismatch "list" notList
