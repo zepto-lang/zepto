@@ -19,7 +19,7 @@
 (assert-equal (lambda () (memv 101 '(100 101 102))) '(101 102))
 
 (assert-equal (lambda () (indexed-tail '(a b c d e f g) 5)) '(f g))
-(assert-equal (lambda () (list-ref '(a b c d) 2)) 'c)
+(assert-equal (lambda () (list:ref '(a b c d) 2)) 'c)
 
 (assert-equal (lambda () (extend '(1 2 3 4 5) '(6 7 "eight" "nine"))) 
               '(1 2 3 4 5 6 7 "eight" "nine"))
