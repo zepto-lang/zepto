@@ -592,7 +592,7 @@ eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti 
           foldlM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
           foldlM f v (x : xs) = f v x >>= \ a -> foldlM f a xs
           foldlM _ v [] = return v
-eval env conti (List [SimpleVal (Atom "string-fill!"), SimpleVal (Atom var), character]) = do
+eval env conti (List [SimpleVal (Atom "string:fill!"), SimpleVal (Atom var), character]) = do
     str <- eval env (nullCont env) =<< getVar env var
     ch <- eval env (nullCont env) character
     result <- eval env (nullCont env) (fillStr(str, ch)) >>= setVar env var
@@ -605,7 +605,7 @@ eval env conti (List [SimpleVal (Atom "string-fill!"), SimpleVal (Atom var), cha
                 then fromSimple $ String str
                 else doFillStr(String $ ch : str, Character ch, left - 1)
         doFillStr (_, _, _) = fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "string-set!"), SimpleVal (Atom var), i, character]) = do
+eval env conti (List [SimpleVal (Atom "string:set!"), SimpleVal (Atom var), i, character]) = do
     idx <- eval env (nullCont env) i
     str <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (substr(str, character, idx)) >>= setVar env var
@@ -615,7 +615,7 @@ eval env conti (List [SimpleVal (Atom "string-set!"), SimpleVal (Atom var), i, c
                                        [ch] ++
                                        (take (length str) . drop (fromInteger j + 1)) str
         substr (_, _, _) = fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "vector-set!"), SimpleVal (Atom var), i, object]) = do
+eval env conti (List [SimpleVal (Atom "vector:set!"), SimpleVal (Atom var), i, object]) = do
     idx <- eval env (nullCont env) i
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
@@ -623,8 +623,8 @@ eval env conti (List [SimpleVal (Atom "vector-set!"), SimpleVal (Atom var), i, o
     contEval env conti result
   where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = fromSimple $ Nil "This should never happen"
-eval _ _ (List (SimpleVal (Atom "vector-set!") : x)) = throwError $ NumArgs 2 x
-eval env conti (List [SimpleVal (Atom "vector-fill!"), SimpleVal (Atom var), object]) = do
+eval _ _ (List (SimpleVal (Atom "vector:set!") : x)) = throwError $ NumArgs 2 x
+eval env conti (List [SimpleVal (Atom "vector:fill!"), SimpleVal (Atom var), object]) = do
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
     result <- eval env (nullCont env) (fillVector vec obj) >>= setVar env var
@@ -634,7 +634,7 @@ eval env conti (List [SimpleVal (Atom "vector-fill!"), SimpleVal (Atom var), obj
           Vector $ listArray (0, length l - 1) l
         fillVector _ _ = fromSimple $ Nil "This should never happen"
         lenVector v = length (elems v)
-eval _ _ (List (SimpleVal (Atom "vector-fill!") : x)) = throwError $ NumArgs 2 x
+eval _ _ (List (SimpleVal (Atom "vector:fill!") : x)) = throwError $ NumArgs 2 x
 eval env conti (List (SimpleVal (Atom "begin") : funs))
                         | null funs = eval env conti $ SimpleVal (Nil "")
                         | length funs == 1 = eval env conti (head funs)
