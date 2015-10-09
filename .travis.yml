@@ -10,11 +10,10 @@ ghc:
   - 7.6
   - 7.4
 
+before_install:
+  - git submodule update --init --recursive
+
 install:
-    - cd zepto-stdlib
-    - git submodule init
-    - git submodule foreach git pull
-    - cd ..
     - cabal install
 
 script: 
