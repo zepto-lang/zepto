@@ -547,8 +547,8 @@ eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
           checkLast [] = fromSimple $ Nil ""
           checkLast [x] = x
           checkLast x = last x
-eval env conti (List [SimpleVal (Atom "load"), (SimpleVal (Atom maybefile))]) = do
-        f <- getVar env maybefile
+eval env conti (List [SimpleVal (Atom "load"), maybefile]) = do
+        f <- eval env conti maybefile
         case f of
           (SimpleVal (String file)) -> do
             filename <- findFile' file
@@ -559,8 +559,6 @@ eval env conti (List [SimpleVal (Atom "load"), (SimpleVal (Atom maybefile))]) = 
           checkLast [] = fromSimple $ Nil ""
           checkLast [x] = x
           checkLast x = last x
-eval _ _ (List [SimpleVal (Atom "load"), x]) = throwError $ TypeMismatch "string" x
-eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) =
