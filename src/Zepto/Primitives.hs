@@ -547,6 +547,18 @@ eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
           checkLast [] = fromSimple $ Nil ""
           checkLast [x] = x
           checkLast x = last x
+eval env conti (List [SimpleVal (Atom "load"), (SimpleVal (Atom maybefile))]) = do
+        f <- getVar env maybefile
+        case f of
+          (SimpleVal (String file)) -> do
+            filename <- findFile' file
+            result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
+            contEval env conti result
+          othr -> throwError $ TypeMismatch "string" othr
+    where evl env' cont' val = macroEval env' val >>= eval env' cont'
+          checkLast [] = fromSimple $ Nil ""
+          checkLast [x] = x
+          checkLast x = last x
 eval _ _ (List [SimpleVal (Atom "load"), x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
