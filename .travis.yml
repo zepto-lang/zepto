@@ -12,6 +12,7 @@ ghc:
 
 install:
     - cd zepto-stdlib
+    - git submodule init
     - git submodule foreach git pull
     - cd ..
     - cabal install
