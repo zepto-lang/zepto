@@ -11,7 +11,9 @@ ghc:
   - 7.4
 
 install:
-    - cd zepto-stdlib && git submodule foreach git pull
+    - cd zepto-stdlib
+    - git submodule foreach git pull
+    - cd ..
     - cabal install
 
 script: 
