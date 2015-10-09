@@ -13,6 +13,7 @@ eqv [SimpleVal (Number arg1), SimpleVal (Number arg2)] = return $ fromSimple $ B
 eqv [SimpleVal (String arg1), SimpleVal (String arg2)] = return $ fromSimple $ Bool $ arg1 == arg2
 eqv [SimpleVal (Character arg1), SimpleVal (Character arg2)] = return $ fromSimple $ Bool $ arg1 == arg2
 eqv [SimpleVal (Atom arg1), SimpleVal (Atom arg2)] = return $ fromSimple $ Bool $ arg1 == arg2
+eqv [SimpleVal (Nil _), SimpleVal (Nil _)] = return $ fromSimple $ Bool True
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
 eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ fromSimple $ Bool $ show x == show y
