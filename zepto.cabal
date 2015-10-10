@@ -29,8 +29,13 @@ Tested-with:         GHC == 7.10.1,
 Extra-Source-Files:  README.md
                      LICENSE
 Data-Files:          zepto-stdlib/*.zp
-                     zepto-stdlib/srfi/*.zp
-                     zepto-stdlib/module/module.zp
+                     zepto-stdlib/argparse/*.zp
+                     zepto-stdlib/bench/*.zp
+                     zepto-stdlib/json/*.zp
+                     zepto-stdlib/minitest/*.zp
+                     zepto-stdlib/module/*.zp
+                     zepto-stdlib/querystring/*.zp
+                     zepto-stdlib/slugify/*.zp
                      assets/*.as
 Cabal-Version:       >= 1.2 
 
