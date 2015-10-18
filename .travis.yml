@@ -18,4 +18,5 @@ install:
 
 script: 
     #- make test | grep "#f"; [ $? == 1 ]
+    - zepto
     - make test
