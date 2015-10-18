@@ -559,6 +559,7 @@ eval env conti (List [SimpleVal (Atom "load"), maybefile]) = do
           checkLast [] = fromSimple $ Nil ""
           checkLast [x] = x
           checkLast x = last x
+eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) =
