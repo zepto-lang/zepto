@@ -441,7 +441,7 @@ showError (Historial cs err) = showCallHistory cs ++ "\n" ++ show err
 
 showCallHistory :: [(LispVal, String)] -> String
 showCallHistory cs =
-        "Backtrace: " ++ concatenate cs
+        "Backtrace (most recent call last): " ++ concatenate cs
     where concatenate [] = ""
           concatenate (x:xs) = "\n\t" ++ showInternal (fst x) ++ "\n\t\tcalled with: " ++
                                (snd x) ++ concatenate xs
