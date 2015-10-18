@@ -17,6 +17,4 @@ install:
     - cabal install
 
 script: 
-    #- make test | grep "#f"; [ $? == 1 ]
-    - zepto
-    - make test
+    - make test | grep "#f"; [ $? == 1 ]
