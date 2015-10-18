@@ -226,18 +226,18 @@ evalString env expr =  runIOThrows $ liftM show $
     eval env (nullCont env)
 
 contEval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
-contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing)) val =
+contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing _)) val =
     case cBody of
         [] ->
             case cCont of
-                Cont (Continuation nEnv _ _ _ _) -> contEval nEnv cCont val
+                Cont (Continuation nEnv _ _ _ _ _) -> contEval nEnv cCont val
                 _ -> return val
-        [lval] -> eval cEnv (Cont (Continuation cEnv [] cCont Nothing Nothing)) lval
-        (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing)) lval
+        [lval] -> eval cEnv (Cont (Continuation cEnv [] cCont Nothing Nothing [])) lval
+        (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing [])) lval
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
-evalFun [c@(Cont (Continuation env _ _ _ _)), val] = eval env c val
+evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
 
@@ -252,13 +252,13 @@ evalCallCC :: [LispVal] -> IOThrowsError LispVal
 evalCallCC [conti@(Cont _), fun] =
         case fun of
             Cont _ -> apply conti fun [conti]
-            PrimitiveFunc f -> do
+            PrimitiveFunc _ f -> do
                 result <- liftThrows $ f [conti]
                 case conti of
-                    Cont (Continuation cEnv _ _ _ _) -> contEval cEnv conti result
+                    Cont (Continuation cEnv _ _ _ _ _) -> contEval cEnv conti result
                     _ -> return result
-            Func (LispFun _ (Just _) _ _ _) -> apply conti fun [conti]
-            Func (LispFun aparams _ _ _ _) ->
+            Func _ (LispFun _ (Just _) _ _ _) -> apply conti fun [conti]
+            Func _ (LispFun aparams _ _ _ _) ->
                 if length aparams == 1
                     then apply conti fun [conti]
                     else throwError $ NumArgs (toInteger $ length aparams) [conti]
@@ -479,48 +479,48 @@ eval env conti (List [SimpleVal (Atom "define"), SimpleVal (Atom var), form]) = 
         result <- eval env (nullCont env) form >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "define") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
-        result <- makeDocFunc env p b doc >>= defineVar env var
+        result <- makeDocFunc var env p b doc >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "define") : List (SimpleVal (Atom var) : p) : b)) = do
-        result <- makeNormalFunc env p b >>= defineVar env var
+        result <- makeNormalFunc var env p b >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
-        result <- makeVarargs varargs env p b doc >>= defineVar env var
+        result <- makeVarargs var varargs env p b doc >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
-        result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
+        result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
-        result <- makeDocFunc env p b doc >>= defineVar env var
+        result <- makeDocFunc var env p b doc >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : b)) = do
-        result <- makeNormalFunc env p b >>= defineVar env var
+        result <- makeNormalFunc var env p b >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
-        result <- makeVarargs varargs env p b doc >>= defineVar env var
+        result <- makeVarargs var varargs env p b doc >>= defineVar env var
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
-        result <- makeVarargs varargs env p b "No documentation" >>= defineVar env var
+        result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
 eval _ _ (List (SimpleVal (Atom "define") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List (SimpleVal (Atom "ƒ") : x)) = throwError $ NumArgs 2 x
 eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
-        result <- makeNormalFunc env p b
+        result <- makeNormalFunc "lambda" env p b
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "λ") : List p : b)) =  do
-        result <- makeNormalFunc env p b
+        result <- makeNormalFunc "lambda" env p b
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : b)) = do
-        result <- makeVarargs varargs env p b "lambda"
+        result <- makeVarargs "lambda" varargs env p b "lambda"
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "λ") : DottedList p varargs : b)) = do
-        result <- makeVarargs varargs env p b "lambda"
+        result <- makeVarargs "lambda" varargs env p b "lambda"
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : varargs@(SimpleVal (Atom _)) : b)) = do
-        result <- makeVarargs varargs env [] b "lambda"
+        result <- makeVarargs "lambda" varargs env [] b "lambda"
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "λ") : varargs@(SimpleVal (Atom _)) : b)) = do
-        result <- makeVarargs varargs env [] b "lambda"
+        result <- makeVarargs "lambda" varargs env [] b "lambda"
         contEval env conti result
 eval _ _ (List [SimpleVal (Atom "λ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "lambda")]) = throwError $ NumArgs 2 []
@@ -727,40 +727,52 @@ readCharProc _ args = if length args == 1
                          else throwError $ NumArgs 1 args
 
 apply :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
-apply _ c@(Cont (Continuation env _ _ _ _)) args =
+apply (Cont (Continuation a b c d e cs)) fn args =
+  apply' (Cont (Continuation a b c d e $! (buildCallHistory (fn, showArgs args) cs))) fn args
+apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
+
+apply' :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
+apply' _ c@(Cont (Continuation env _ _ _ _ _)) args =
         if toInteger (length args) /= 1
             then throwError $ NumArgs 1 args
             else contEval env c $ head args
-apply _ (IOFunc func) args = func args
-apply _ (PrimitiveFunc func) args = liftThrows $ func args
-apply conti (EvalFunc fun) args = fun (conti : args)
-apply conti (Func (LispFun fparams varargs fbody fclosure _)) args =
+apply' (Cont (Continuation _ _ _ _ _ cs)) (IOFunc _ func) args =
+        catchError (func args) (throwHistorial cs)
+apply' (Cont (Continuation _ _ _ _ _ cs))  (PrimitiveFunc _ func) args =
+        catchError (liftThrows $ func args) (throwHistorial cs)
+apply' conti@(Cont (Continuation _ _ _ _ _ cs)) (EvalFunc _ fun) args =
+        catchError (fun (conti : args)) (throwHistorial cs)
+apply' conti@(Cont (Continuation _ _ _ _ _ cs)) (Func _ (LispFun fparams varargs fbody fclosure _)) args =
         if num fparams /= num args && isNothing varargs
             then throwError $ NumArgs (num fparams) args
-            else liftIO (extendEnv fclosure $ zip (fmap ((,) vnamespace) fparams) args) >>= bindVarArgs varargs >>= evalBody fbody
+            else liftIO (extendEnv fclosure $ zip (fmap ((,) vnamespace) fparams) args)
+                  >>= bindVarArgs varargs
+                  >>= evalBody fbody
     where
         remainingArgs = drop (length fparams) args
         num = toInteger . length
         evalBody ebody env = case conti of
-                                Cont (Continuation _ cBody cCont _ _) -> if null cBody
+                                Cont (Continuation _ cBody cCont _ _ _) -> if null cBody
                                     then continueWithContinuation env ebody cCont
                                     else continueWithContinuation env ebody conti
                                 _ -> continueWithContinuation env ebody conti
         continueWithContinuation env cebody continuation =
-            contEval env (Cont (Continuation env cebody continuation Nothing Nothing)) $ fromSimple $ Nil ""
+            catchError
+              (contEval env (Cont (Continuation env cebody continuation Nothing Nothing [])) $ fromSimple $ Nil "")
+              (throwHistorial cs)
         bindVarArgs arg env = case arg of
             Just argName -> liftIO $ extendEnv env [((vnamespace, argName), List remainingArgs)]
             Nothing -> return env
-apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
+apply' _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
-makeFunc :: Monad m => Maybe String -> Env -> [LispVal] -> [LispVal] -> String -> m LispVal
-makeFunc varargs env p b doc = return $ Func $ LispFun (fmap showVal p) varargs b env doc
+makeFunc :: Monad m => String -> Maybe String -> Env -> [LispVal] -> [LispVal] -> String -> m LispVal
+makeFunc name varargs env p b doc = return $ Func name $ LispFun (fmap showVal p) varargs b env doc
 
-makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
-makeNormalFunc env p b = makeFunc Nothing env p b "No documentation available"
+makeNormalFunc :: String -> Env -> [LispVal] -> [LispVal] -> ExceptT LispError IO LispVal
+makeNormalFunc name env p b = makeFunc name Nothing env p b "No documentation available"
 
-makeDocFunc :: Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
-makeDocFunc = makeFunc Nothing
+makeDocFunc :: String -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
+makeDocFunc name = makeFunc name Nothing
 
-makeVarargs :: LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
-makeVarargs = makeFunc . Just . showVal
+makeVarargs :: String -> LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
+makeVarargs name = makeFunc name . Just . showVal

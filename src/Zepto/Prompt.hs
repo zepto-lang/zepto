@@ -150,7 +150,7 @@ primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= flip extendEnv (fmap (makeFunc IOFunc) ioPrimitives ++
                                 fmap (makeFunc PrimitiveFunc) primitives ++
                                 fmap (makeFunc EvalFunc) evalPrimitives)
-                where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
+                where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor var func)
 
 -- | prints help for all primitives
 printHelp :: IO [()]

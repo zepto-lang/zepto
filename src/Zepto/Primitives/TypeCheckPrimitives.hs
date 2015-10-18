@@ -42,10 +42,10 @@ isDottedList (DottedList _ _) = return $ fromSimple $ Bool True
 isDottedList _ = return $ fromSimple $ Bool False
 
 isProcedure :: LispVal -> ThrowsError LispVal
-isProcedure (PrimitiveFunc _) = return $ fromSimple $ Bool True
-isProcedure (EvalFunc _) = return $ fromSimple $ Bool True
-isProcedure (Func _) = return $ fromSimple $ Bool True
-isProcedure (IOFunc _) = return $ fromSimple $ Bool True
+isProcedure (PrimitiveFunc _ _) = return $ fromSimple $ Bool True
+isProcedure (EvalFunc _ _) = return $ fromSimple $ Bool True
+isProcedure (Func _ _) = return $ fromSimple $ Bool True
+isProcedure (IOFunc _ _) = return $ fromSimple $ Bool True
 isProcedure (Cont _) = return $ fromSimple $ Bool True
 isProcedure _ = return $ fromSimple $ Bool False
 
