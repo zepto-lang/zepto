@@ -10,11 +10,13 @@ import Zepto.Types
 
 car :: LispVal -> ThrowsError LispVal
 car (List (x : _)) = return x
+car (SimpleVal (SimpleList (x : _))) = return $ fromSimple x
 car (DottedList (x : _) _) = return x
 car badArg = throwError $ TypeMismatch "pair" badArg
 
 cdr :: LispVal -> ThrowsError LispVal
 cdr (List (_ : xs)) = return $ List xs
+cdr (SimpleVal (SimpleList (_ : xs))) = return $ fromSimple $ SimpleList xs
 cdr (DottedList [_] x) = return x
 cdr (DottedList (_ : xs) x) = return $ DottedList xs x
 cdr (badArg) = throwError $ TypeMismatch "pair" badArg
@@ -22,6 +24,7 @@ cdr (badArg) = throwError $ TypeMismatch "pair" badArg
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x, List []] = return $ List [x]
 cons [x, List xs] = return $ List $ x : xs
+cons [(SimpleVal x), SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
@@ -89,10 +92,11 @@ vectorToList (Vector v) = return $ List $ elems v
 vectorToList badType = throwError $ TypeMismatch "vector" badType
 
 listToVector (List l) = return $ Vector $ listArray (0, length l - 1) l
+listToVector (SimpleVal (SimpleList l)) = return $ Vector $ listArray (0, length l - 1) (map fromSimple l)
 listToVector badType = throwError $ TypeMismatch "list" badType
 
 buildString :: [LispVal] -> ThrowsError LispVal
-buildString [List []] = return $ fromSimple $ String ""
+buildString [] = return $ fromSimple $ String ""
 buildString [SimpleVal (Character c)] = return $ fromSimple $ String [c]
 buildString (SimpleVal (Character c) : rest) = do
     cs <- buildString rest
