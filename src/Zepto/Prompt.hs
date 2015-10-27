@@ -314,7 +314,7 @@ readPrompt env text = do set <- addSettings env
           poll p = do
             input <- getInputLine p
             case input of
-                Nothing -> return "(print \"\")"
+                Nothing -> return ":q"
                 Just strinput -> do
                   inputL <- getMore [strinput]
                   return $ unlines inputL
