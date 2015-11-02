@@ -15,10 +15,10 @@ eqv [SimpleVal (Character arg1), SimpleVal (Character arg2)] = return $ fromSimp
 eqv [SimpleVal (Atom arg1), SimpleVal (Atom arg2)] = return $ fromSimple $ Bool $ arg1 == arg2
 eqv [SimpleVal (Nil _), SimpleVal (Nil _)] = return $ fromSimple $ Bool True
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
-eqv [x@(EvalFunc _), y@(EvalFunc _)] = return $ fromSimple $ Bool $ show x == show y
-eqv [x@(PrimitiveFunc _), y@(PrimitiveFunc _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [x@(EvalFunc _ _), y@(EvalFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [x@(PrimitiveFunc _ _), y@(PrimitiveFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [(ByteVector x), (ByteVector y)] = return $ fromSimple $ Bool $ x == y
-eqv [x@(IOFunc _), y@(IOFunc _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [x@(IOFunc _ _), y@(IOFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [SimpleVal (SimpleList arg1), SimpleVal (SimpleList arg2)] =
         return $ fromSimple $ Bool $ (length arg1 == length arg2) &&
                                      and (zipWith (curry eqvPair) arg1 arg2)

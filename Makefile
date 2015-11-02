@@ -1,8 +1,10 @@
 override CARGS+=-j2
 #Installs
 all:
-	git submodule foreach git checkout master
-	git submodule foreach git pull
+	git submodule update --init --recursive
+	make install
+
+install:
 	cabal install $(CARGS)
 
 #Runs all tests

@@ -150,7 +150,7 @@ updatePointers envRef namespace var = do
           existingValue <- getNamespacedVar envRef namespace var
           setNamespacedVar pEnv namespace pVar existingValue
         [] -> return $ SimpleVal $ Nil ""
-        _ -> throwError $ InternalError
+        _ -> throwError $ InternalError $
                "non-pointer value found in updatePointers"
     Nothing -> return $ SimpleVal $ Nil ""
  where

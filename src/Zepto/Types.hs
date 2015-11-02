@@ -10,21 +10,25 @@ module Zepto.Types (LispNum(..),
                     IOThrowsError,
                     showVal,
                     showError,
+                    showArgs,
                     fromSimple,
                     toSimple,
                     trapError,
                     extractValue,
                     typeString,
                     nullEnv,
-                    globalEnv,
                     nullCont,
+                    globalEnv,
                     liftThrows,
-                    runIOThrows
+                    runIOThrows,
+                    throwHistorial,
+                    buildCallHistory
                     ) where
 import Data.Array
 import Data.ByteString (ByteString, unpack)
 import Data.Complex
 import Data.Fixed
+import Data.List (foldl')
 import Data.Ratio
 import Data.IORef
 import Control.Monad
@@ -300,11 +304,11 @@ data LispVal = SimpleVal Simple
              | Vector (Array Int LispVal)
              | ByteVector ByteString
              | HashMap (Data.Map.Map Simple LispVal)
-             | PrimitiveFunc  ([LispVal] -> ThrowsError LispVal)
-             | IOFunc  ([LispVal] -> IOThrowsError LispVal)
+             | PrimitiveFunc  String ([LispVal] -> ThrowsError LispVal)
+             | IOFunc String ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
-             | Func LispFun
-             | EvalFunc ([LispVal] -> IOThrowsError LispVal)
+             | Func String LispFun
+             | EvalFunc String ([LispVal] -> IOThrowsError LispVal)
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Cont Continuation
              | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
@@ -315,6 +319,7 @@ data Continuation = Continuation { contClosure :: Env
                                  , cont :: LispVal
                                  , frameFunc :: Maybe LispVal
                                  , frameEvaledArgs :: Maybe [LispVal]
+                                 , callStack :: [(LispVal, String)]
                                  }
 
 -- | a LispFun data type
@@ -337,6 +342,7 @@ data LispError = NumArgs Integer [LispVal]
                | UnboundVar String String
                | InternalError String
                | Default String
+               | Historial [(LispVal, String)] LispError
 
 instance Eq Env where
     (Environment _ xb xp) == (Environment _ yb yp) = (xb == yb) && (xp == yp)
@@ -356,10 +362,6 @@ globalEnv :: Maybe Env -> Env -> Env
 globalEnv (Just prev) Environment{parentEnv=Nothing} = prev
 globalEnv Nothing val@(Environment{parentEnv=Nothing}) = val
 globalEnv _ val@(Environment{parentEnv=Just parent})=globalEnv (Just val) parent
-
---globalEnv :: Env -> Env
---globalEnv val@(Environment{parentEnv=Nothing}) = val
---globalEnv Environment{parentEnv=Just parent}=globalEnv parent
 
 showNum :: LispNum -> String
 showNum (NumF contents) = show contents
@@ -382,14 +384,14 @@ showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
 showVal (ByteVector contents) = "b{" ++ unwords (map show (unpack contents)) ++ "}"
 showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (Data.Map.keys contents))
                                                      (Data.Map.elems contents)) ++ "}"
-showVal (PrimitiveFunc _) = "<primitive>"
-showVal (IOFunc _) = "<IO primitive>"
-showVal (EvalFunc _) = "<eval primitive>"
+showVal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
+showVal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
+showVal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
 showVal (Port _) = "<IO port>"
-showVal (Func LispFun {params = args, vararg = varargs, body = _, closure = _,
-                       docstring = doc}) =
+showVal (Func name (LispFun {params = args, vararg = varargs, body = _,
+                             closure = _, docstring = doc})) =
     doc ++ "\n  source: " ++
-    "(lambda (" ++ unwords (fmap show args) ++
+    "(" ++ name ++ " (" ++ unwords (fmap show args) ++
         (case varargs of
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
@@ -435,6 +437,45 @@ showError (TypeMismatch expected found) =
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
+showError (Historial cs err) = showCallHistory cs ++ "\n" ++ show err
+
+showCallHistory :: [(LispVal, String)] -> String
+showCallHistory cs =
+        "Backtrace (most recent call last): " ++ concatenate cs
+    where concatenate [] = ""
+          concatenate (x:xs) = "\n\t" ++ showInternal (fst x) ++ "\n\t\tcalled with: " ++
+                               (snd x) ++ concatenate xs
+
+showArgs :: [LispVal] -> String
+showArgs args = unwords (map showInternal args)
+
+showInternal :: LispVal -> String
+showInternal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
+showInternal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
+showInternal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
+showInternal (Func name (LispFun {params = args, vararg = varargs, body = _,
+                             closure = _, docstring = doc})) =
+    "(" ++ name ++ " \"" ++ doc ++ "\" (" ++ unwords (fmap show args) ++
+        (case varargs of
+            Nothing -> ""
+            Just arg -> " . " ++ arg) ++ ") ...)"
+showInternal (Cont _) = "<continuation>"
+showInternal (HashMap _) = "<hash-map>"
+showInternal (HashComprehension _ _ _ _) = "<hash-comprehension>"
+showInternal (ListComprehension _ _ _ _) = "<list-comprehension>"
+showInternal (Vector _) = "<vector>"
+showInternal (ByteVector _) = "<byte-vector>"
+showInternal (List _) = "<list>"
+showInternal (DottedList _ _) = "<dotted-list>"
+showInternal (Port _) = "<port>"
+showInternal (Pointer _ _) = "<pointer>"
+showInternal x@(SimpleVal _) = show x
+
+buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
+buildCallHistory f h
+  | null h = [f]
+  | show f == show (last h) = h --dirty dirty hack
+  | otherwise = f : lastN 10 h
 
 fromSimple :: Simple -> LispVal
 fromSimple = SimpleVal
@@ -442,6 +483,17 @@ fromSimple = SimpleVal
 toSimple :: LispVal -> Simple
 toSimple (SimpleVal x) = x
 toSimple _ = Nil ""
+
+lastN :: Int -> [a] -> [a]
+lastN n xs = foldl' (const . drop 1) xs (drop n xs)
+
+throwHistorial :: [(LispVal, String)] -> LispError -> IOThrowsError LispVal
+throwHistorial cs (Historial ics e) = throwError $ Historial (mergeCs cs ics) e
+    where mergeCs stack merged
+            | null stack = merged
+            | length stack > 10 = lastN 10 stack
+            | otherwise = mergeCs (init stack) (buildCallHistory (last stack) merged)
+throwHistorial cs e = throwError $ Historial cs e
 
 typeString :: LispVal -> String
 typeString (SimpleVal (Number (NumI _))) = "integer"
@@ -460,11 +512,11 @@ typeString (List _) = "list"
 typeString (DottedList _ _) = "dotted list"
 typeString (Vector _) = "vector"
 typeString (HashMap _) = "hashmap"
-typeString (PrimitiveFunc _) = "primitive"
-typeString (IOFunc _) = "io primitive"
-typeString (EvalFunc _) = "eval primitive"
+typeString (PrimitiveFunc _ _) = "primitive"
+typeString (IOFunc _ _) = "io primitive"
+typeString (EvalFunc _ _) = "eval primitive"
 typeString (Port _) = "port"
-typeString (Func _) = "function"
+typeString (Func _ _) = "function"
 typeString (Pointer _ _) = "pointer"
 typeString (Cont _) = "continuation"
 typeString (ListComprehension{}) = "list comprehension"
@@ -496,7 +548,7 @@ nullEnv = do
     return $ Environment Nothing nullb nullp
 
 nullCont :: Env -> LispVal
-nullCont env = Cont $ Continuation env [] (fromSimple (Nil "")) Nothing Nothing
+nullCont env = Cont $ Continuation env [] (fromSimple (Nil "")) Nothing Nothing []
 
 -- | lift a ThrowsError to an IOThrowsError
 liftThrows :: ThrowsError a -> IOThrowsError a

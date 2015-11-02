@@ -150,7 +150,7 @@ primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= flip extendEnv (fmap (makeFunc IOFunc) ioPrimitives ++
                                 fmap (makeFunc PrimitiveFunc) primitives ++
                                 fmap (makeFunc EvalFunc) evalPrimitives)
-                where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor func)
+                where makeFunc constructor (var, func, _) = ((vnamespace, var), constructor var func)
 
 -- | prints help for all primitives
 printHelp :: IO [()]
@@ -314,7 +314,7 @@ readPrompt env text = do set <- addSettings env
           poll p = do
             input <- getInputLine p
             case input of
-                Nothing -> return "(print \"\")"
+                Nothing -> return ":q"
                 Just strinput -> do
                   inputL <- getMore [strinput]
                   return $ unlines inputL
