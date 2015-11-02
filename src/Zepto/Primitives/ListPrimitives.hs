@@ -305,3 +305,44 @@ allExtend v@(ByteVector _ : _) = byteVectorAppend v
 allExtend [badType] = throwError $ NumArgs 2 [badType]
 allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector/bytevector" badType
 allExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
+
+inspect :: [LispVal] -> ThrowsError LispVal
+inspect [a] = return $ fromSimple $ String $ pprint a
+inspect a = throwError $ NumArgs 2 a
+
+pprint :: LispVal -> String
+pprint (List x) = "(" ++ unwords (map pprint x) ++ ")"
+pprint (DottedList x y) = "(" ++ unwords (map pprint x) ++ " . " ++ pprint y ++ ")"
+pprint (SimpleVal (Atom x)) = x
+pprint (SimpleVal (Character x)) = "#\\" ++ [x]
+pprint (SimpleVal (Bool x)) = if x then "#t" else "#f"
+pprint (SimpleVal (Nil _)) = "nil"
+pprint (SimpleVal (SimpleList x)) = "simple(" ++ unwords (map (pprint . fromSimple) x) ++ ")"
+pprint (Vector x) = "{" ++ unwords (map pprint (elems x)) ++ "}"
+pprint (ByteVector x) = "u8{" ++ show x ++ "}"
+pprint (SimpleVal (String x)) = "\"" ++ x ++ "\""
+pprint (SimpleVal (Number x)) = show x
+pprint (HashMap _) = "<hashmap>"
+pprint (PrimitiveFunc s _) = "<primitive: " ++ s ++ ">"
+pprint (IOFunc s _) = "<io primitive: " ++ s ++ ">"
+pprint (EvalFunc s _) = "<eval primitive: " ++ s ++ ">"
+pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
+  where printFunc (LispFun p v b _ d) = let x = unwords p
+                                            y = unwords (map pprint b)
+                                        in case v of
+                                          Nothing -> x ++") \"" ++ d ++ "\" (" ++ y ++ ")"
+                                          Just m -> x ++ " . " ++ m ++ ") \"" ++ d ++ "\" (" ++ y ++ ")"
+pprint (Port _) = "<port>"
+pprint (Cont _) = "<continuation>"
+pprint (Pointer _ _) = "<pointer>"
+pprint (ListComprehension a b c d) =
+  let x = "[" ++ pprint a ++ " | " ++ pprint b ++ " <- " ++ pprint c
+  in case d of
+    Nothing -> x ++ "]"
+    Just m -> x ++ ", " ++ pprint m ++ "]"
+pprint (HashComprehension a b c d) =
+  let x = "{" ++ pprint (fst a) ++ " " ++ pprint (snd a) ++
+          " | " ++ pprint (fst b) ++ " " ++ pprint (snd b) ++ " <- " ++ pprint c
+  in case d of
+    Nothing -> x ++ "}"
+    Just m -> x ++ ", " ++ pprint m ++ "}"

@@ -68,6 +68,8 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("&&", boolMulop (&&), "and operation")
              , ("||", boolMulop (||), "or operation")
 
+             , ("inspect", inspect, "inspect source code")
+
              , ("string=?", strBoolBinop (==), "compare equality of two strings")
              , ("string>?", strBoolBinop (>), "compare equality of two strings")
              , ("string<?", strBoolBinop (<), "compare equality of two strings")
