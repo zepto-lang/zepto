@@ -38,6 +38,7 @@ Data-Files:          zepto-stdlib/*.zp
                      zepto-stdlib/module/*.zp
                      zepto-stdlib/querystring/*.zp
                      zepto-stdlib/slugify/*.zp
+                     zepto-stdlib/statistics/*.zp
                      assets/*.as
 Cabal-Version:       >= 1.2 
 
