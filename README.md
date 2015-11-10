@@ -13,11 +13,11 @@ be relaxed enough to not get into the way of other interesting things that may
 want to be implemented.
 Features included include but are not limited to the full numeric tower (with
 extensions even), macros, lazy evaluation, continuations, list comprehensions,
-a minimal stdlib, many native primitives and help for those or for functions 
-provided via docstrings included in the function definition. And it actually 
-has a decent shell with completion and history.
+user-defined types, an extensive standard library, many native primitives and help
+for those or for functions provided via docstrings included in the function definition.
+And it actually has a decent shell with completion and history.
 
-It is very small, so the name might or might not be appropriate.
+It is pretty small, so the name might or might not be appropriate.
 
 ## Table of Contents
 
