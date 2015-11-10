@@ -196,6 +196,7 @@ transformRule localEnv ellipsisIndex (List result) transform@(List (SimpleVal (A
                                           List v -> if length v > (ellipsisIndex - 1)
                                                        then return $ v !! (ellipsisIndex - 1)
                                                        else return $ fromSimple $ Nil ""
+                                          atom@(SimpleVal (Atom _)) -> return atom
                                           x -> throwError $ Default $ "Unexpected error in transformRule: " ++ show x
                                 else return var
                      else return $ fromSimple $ Atom a
