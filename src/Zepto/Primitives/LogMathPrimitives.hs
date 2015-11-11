@@ -15,8 +15,10 @@ eqv [SimpleVal (Character arg1), SimpleVal (Character arg2)] = return $ fromSimp
 eqv [SimpleVal (Atom arg1), SimpleVal (Atom arg2)] = return $ fromSimple $ Bool $ arg1 == arg2
 eqv [SimpleVal (Nil _), SimpleVal (Nil _)] = return $ fromSimple $ Bool True
 eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+-- all of those function checks are dirty hacks
 eqv [x@(EvalFunc _ _), y@(EvalFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(PrimitiveFunc _ _), y@(PrimitiveFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
+eqv [(Func x _), (Func y _)] = return $ fromSimple $ Bool $ x == y
 eqv [(ByteVector x), (ByteVector y)] = return $ fromSimple $ Bool $ x == y
 eqv [x@(IOFunc _ _), y@(IOFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [SimpleVal (SimpleList arg1), SimpleVal (SimpleList arg2)] =
