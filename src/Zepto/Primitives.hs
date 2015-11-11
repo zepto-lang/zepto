@@ -270,13 +270,20 @@ evalCallCC _ = throwError $ NumArgs 1 []
 
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
+        let expanded = expand filename
         fileAsLib <- liftIO $ getDataFileName $ "zepto-stdlib/" ++ filename
+        let fileAsLibExpanded = expand fileAsLib
         exists <- fex filename
+        existsExpanded <- fex expanded
         existsLib <- fex fileAsLib
-        case (exists, existsLib) of
-            (Bool False, Bool True) -> return fileAsLib
-            _ -> return filename
+        existsLibExpanded <- fex fileAsLibExpanded
+        case (exists, existsExpanded, existsLib, existsLibExpanded) of
+            (Bool False, Bool False, Bool False, Bool True) -> return fileAsLibExpanded
+            (Bool False, Bool False, Bool True, _)          -> return fileAsLib
+            (Bool False, Bool True, _, _)                   -> return expanded
+            _                                               -> return filename
     where
+        expand x = x ++ ".zp"
         fex file = do ex <-liftIO $ doesFileExist file
                       return $ Bool ex
 
