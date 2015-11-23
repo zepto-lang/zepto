@@ -78,10 +78,6 @@ print' port obj =
           SimpleVal (String str) -> hPutStr port str
           _ -> hPutStr port $ show obj
 
-errorProc :: [LispVal] -> IOThrowsError LispVal
-errorProc [obj] = liftIO $ hPrint stderr obj >> return (fromSimple (Nil ""))
-errorProc badArgs = throwError $ NumArgs 1 badArgs
-
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ readFile filename
 readContents [x] = throwError $ TypeMismatch "string" x
