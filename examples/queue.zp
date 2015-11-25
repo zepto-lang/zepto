@@ -1,0 +1,39 @@
+; A minimal queue
+(load "srfi/srfi-9.zp")
+
+(define-record-type queue
+    (queue:make-queue data size)
+    queue:queue?
+    (data queue:_get-data queue:_set-data)
+    (size queue:size queue:_set-size!))
+
+(define (queue:empty? queue)
+  (eq? #() (queue:_get-data)))
+
+(define (queue:make-empty)
+  (queue:make-queue #() 0))
+
+(define (queue:size queue)
+  (vector:length (queue:_get-data queue)))
+
+(define (queue:front queue)
+  (if (queue:empty? queue)
+    (nil)
+    (vector:ref (queue:_get-data queue) 0)))
+
+(define (queue:rear queue)
+  (if (queue:empty? queue)
+    (nil)
+    (vector:ref (queue:_get-data queue) (queue:_get-size))))
+
+(define (queue:push queue datum)
+  (queue:make-queue (++ (queue:_get-data queue) datum) (add1 (queue:size queue))))
+
+(define (queue:pop queue)
+  (let ((datum (pop-right (queue:_get-data queue)))
+        (new-size (sub1 (queue:size queue))))
+    (list
+      datum
+      (queue:make-queue 
+        (if (zero? new-size) #() (vector:subvector (queue:_get-data queue) 0 new-size))
+        new-size))))
