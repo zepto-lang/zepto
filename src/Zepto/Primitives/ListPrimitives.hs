@@ -1,5 +1,5 @@
 module Zepto.Primitives.ListPrimitives where
-import Data.Array (elems, listArray, (!))
+import Data.Array (elems, listArray, (!), Array)
 import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
@@ -29,7 +29,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -78,15 +78,36 @@ byteVectorLength badType = throwError $ TypeMismatch "bytevector" badType
 
 vectorRef [Vector v, SimpleVal (Number (NumI n))] = return $ v ! fromInteger n
 vectorRef [Vector v, SimpleVal (Number (NumS n))] = return $ v ! n
-vectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
+vectorRef [Vector _, badType] = throwError $ TypeMismatch "integer" badType
+vectorRef [badType, _] = throwError $ TypeMismatch "vector" badType
 vectorRef badArgList = throwError $ NumArgs 2 badArgList
 
 byteVectorRef [ByteVector v, SimpleVal (Number (NumI n))] =
         return $ fromSimple $ Number $ NumI $ fromIntegral $ BS.index v (fromInteger n)
 byteVectorRef [ByteVector v, SimpleVal (Number (NumS n))] =
         return $ fromSimple $ Number $ NumI $ fromIntegral $ BS.index v n
-byteVectorRef [badType] = throwError $ TypeMismatch "vector integer" badType
+byteVectorRef [Vector _, badType] = throwError $ TypeMismatch "vector" badType
+byteVectorRef [badType, _] = throwError $ TypeMismatch "vector" badType
 byteVectorRef badArgList = throwError $ NumArgs 2 badArgList
+
+subArray :: (Int, Int) -> (Array Int LispVal) -> (Array Int LispVal)
+subArray (from, to) v = listArray (0,to-from) $ map (v!) [from..to]
+
+subVector [Vector v, SimpleVal (Number (NumI n))] = return $ Vector $ subArray (0, fromInteger n) v
+subVector [Vector v, SimpleVal (Number (NumS n))] = return $ Vector $ subArray (0, n) v
+subVector [Vector v, SimpleVal (Number (NumI from)), SimpleVal (Number (NumI to))] =
+        return $ Vector $ subArray (fromInteger from, fromInteger to) v
+subVector [Vector v, SimpleVal (Number (NumS from)), SimpleVal (Number (NumS to))] =
+        return $ Vector $ subArray (from, to) v
+subVector [Vector v, SimpleVal (Number (NumI from)), SimpleVal (Number (NumS to))] =
+        return $ Vector $ subArray (fromInteger from, to) v
+subVector [Vector v, SimpleVal (Number (NumS from)), SimpleVal (Number (NumI to))] =
+        return $ Vector $ subArray (from, fromInteger to) v
+subVector [Vector _, SimpleVal (Number (NumI _)), badType] = throwError $ TypeMismatch "integer" badType
+subVector [Vector _, SimpleVal (Number (NumS _)), badType] = throwError $ TypeMismatch "integer" badType
+subVector ((Vector _) : badType : _) = throwError $ TypeMismatch "integer" badType
+subVector (badType : _) = throwError $ TypeMismatch "vector" badType
+subVector badArgList = throwError $ NumArgs 2 badArgList
 
 vectorToList (Vector v) = return $ List $ elems v
 vectorToList badType = throwError $ TypeMismatch "vector" badType
