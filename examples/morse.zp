@@ -1,0 +1,42 @@
+; A simple Morse code encoder for alphanumeric strings
+
+(define morse:to #{#\A ".-"
+                   #\B "-..."
+                   #\C "-.-."
+                   #\D "-.."
+                   #\E "."
+                   #\F "..-."
+                   #\G "--."
+                   #\H "...."
+                   #\I ".."
+                   #\J ".---"
+                   #\K "-.-"
+                   #\L ".-.."
+                   #\M "--"
+                   #\N "-."
+                   #\O "---"
+                   #\P ".--."
+                   #\Q "--.-"
+                   #\R ".-."
+                   #\S "..."
+                   #\T "-"
+                   #\U "..-"
+                   #\W ".--"
+                   #\X "-..-"
+                   #\Y "-.--"
+                   #\Z "--.."
+                   #\1 ".----"
+                   #\2 "..---"
+                   #\3 "...--"
+                   #\4 "....-"
+                   #\5 "....."
+                   #\6 "-...."
+                   #\7 "--..."
+                   #\8 "---.."
+                   #\9 "----."
+                   #\0 "-----"})
+
+(define (morse:encode str)
+  "encodes a regular alphanumeric string to morse code"
+  (let ((str (string:upper-case str)))
+    (string:join (map (lambda (x) (morse:to x)) (string->list str)))))
