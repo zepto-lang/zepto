@@ -36,7 +36,10 @@ Data-Files:          zepto-stdlib/*.zp
                      zepto-stdlib/json/*.zp
                      zepto-stdlib/minitest/*.zp
                      zepto-stdlib/module/*.zp
+                     zepto-stdlib/monads/*.zp
                      zepto-stdlib/querystring/*.zp
+                     zepto-stdlib/parsecomb/*.zp
+                     zepto-stdlib/rsa/*.zp
                      zepto-stdlib/slugify/*.zp
                      zepto-stdlib/statistics/*.zp
                      assets/*.as
