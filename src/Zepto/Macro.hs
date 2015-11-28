@@ -23,6 +23,7 @@ macroEval env lisp@(List (SimpleVal (Atom x) : xs)) = do
        rest <- mapM (macroEval env) xs
        return $ List $ fromSimple (Atom x) : rest
 macroEval _ lisp@_ = return lisp
+
 macroTransform :: Env -> LispVal -> [LispVal] -> LispVal -> IOThrowsError LispVal
 macroTransform env identifiers (rule@(List _) : rs) input = do
   localEnv <- liftIO nullEnv

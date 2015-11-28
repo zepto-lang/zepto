@@ -1,6 +1,6 @@
 module Zepto.Primitives.LogMathPrimitives where
 import Data.Array (elems)
-import Data.Bits (shift)
+import Data.Bits (shift, (.&.), (.|.), complement)
 import Data.Char
 import Control.Monad.Except
 import Data.Complex
@@ -159,6 +159,30 @@ arithmeticShift [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "int
 arithmeticShift [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
 arithmeticShift [badType, _] = throwError $ TypeMismatch "integer" badType
 arithmeticShift badArgList = throwError $ NumArgs 2 badArgList
+
+bitwiseAnd :: [LispVal] -> ThrowsError LispVal
+bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ n .&. s
+bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .&. (fromIntegral s)
+bitwiseAnd [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ n .&. s
+bitwiseAnd [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
+bitwiseAnd [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
+bitwiseAnd [badType, _] = throwError $ TypeMismatch "integer" badType
+bitwiseAnd badArgList = throwError $ NumArgs 2 badArgList
+
+bitwiseOr :: [LispVal] -> ThrowsError LispVal
+bitwiseOr [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ n .|. s
+bitwiseOr [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .|. (fromIntegral s)
+bitwiseOr [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ n .|. s
+bitwiseOr [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
+bitwiseOr [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
+bitwiseOr [badType, _] = throwError $ TypeMismatch "integer" badType
+bitwiseOr badArgList = throwError $ NumArgs 2 badArgList
+
+bitwiseNot :: [LispVal] -> ThrowsError LispVal
+bitwiseNot [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumI $ complement (n + n - n)
+bitwiseNot [SimpleVal (Number (NumS n))] = return $ fromSimple $ Number $ NumS $ complement (n + n - n)
+bitwiseNot [badType] = throwError $ TypeMismatch "integer" badType
+bitwiseNot badArgList = throwError $ NumArgs 2 badArgList
 
 real :: LispVal -> ThrowsError LispVal
 real (SimpleVal (Number (NumC x))) = return $ fromSimple $ Number $ NumF $ realPart x

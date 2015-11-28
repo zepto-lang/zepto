@@ -44,6 +44,9 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("ceiling", numRound ceiling, "ceils a number")
              , ("truncate", numRound truncate, "truncates a number")
              , ("arithmetic-shift", arithmeticShift, "do an arithmetic shift on an integer")
+             , ("bitwise-and", bitwiseAnd, "do a bitwise and on two integers")
+             , ("bitwise-or", bitwiseOr, "do a bitwise or on two integers")
+             , ("bitwise-not", bitwiseNot, "do a bitwise or on one integer")
              , ("real", unaryOp real, "gets real part of a number")
              , ("imaginary", unaryOp imaginary, "gets imaginary part of a number")
              , ("expt", numericBinopErr numPow, "power of function")
@@ -330,19 +333,23 @@ eval env conti val@(HashMap _) = contEval env conti val
 eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
-                     throwError $ TypeMismatch "integer" wrong
+        throwError $ TypeMismatch "integer" wrong
 eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
-                     i <- getVar env a
-                     eval env conti (List [Vector x, i])
+        i <- getVar env a
+        eval env conti (List [Vector x, i])
 eval _ _ (List [HashMap x, SimpleVal i@(Atom (':' : _))]) = if Data.Map.member i x
-                        then return $ x Data.Map.! i
-                        else return $ fromSimple $ Nil ""
+        then return $ x Data.Map.! i
+        else return $ fromSimple $ Nil ""
 eval env conti (List [HashMap x, SimpleVal (Atom a)]) = do
-                     i <- getVar env a
-                     eval env conti (List [HashMap x, i])
-eval _ _ (List [HashMap x, SimpleVal i]) = if Data.Map.member i x
-                        then return $ x Data.Map.! i
-                        else return $ fromSimple $ Nil ""
+        i <- getVar env a
+        eval env conti (List [HashMap x, i])
+eval _ _ (List [HashMap x, SimpleVal i]) =
+        if Data.Map.member i x
+          then return $ x Data.Map.! i
+          else return $ fromSimple $ Nil ""
+eval env conti (List [HashMap x, form]) = do
+        i <- eval env conti form
+        eval env conti (List [HashMap x, i])
 eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) (SimpleVal (Atom iter)) cond) = do
         hash <- contEval env conti =<< getVar env iter
         case hash of

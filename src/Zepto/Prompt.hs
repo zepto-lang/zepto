@@ -47,10 +47,10 @@ keywords = [ "apply"
            , "set!"
            , "set-car"
            , "set-cdr"
-           , "string-fill"
-           , "string-set"
-           , "vector-fill"
-           , "vector-set"
+           , "string:fill"
+           , "string:set!"
+           , "vector:fill!"
+           , "vector:set!"
            ]
 
 metaKeywords :: [String]
