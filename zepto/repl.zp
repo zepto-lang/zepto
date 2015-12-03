@@ -1,0 +1,89 @@
+; A small REPL for zepto in zepto
+
+(define *prompt* "zepto> ")
+(define *ret* "=> ")
+(define *conf* (++ (get-home-dir) "/.zeptorc"))
+(define *histfile* (++ (get-home-dir) "/.zepto_history"))
+(define *env* (make-base-env))
+(define *hist* [])
+
+(define (do-exit)
+  (begin
+    (close-output-file *hist-to*)
+    (write "Moriturus te saluto!")
+    (exit)))
+
+(define meta-commands
+  (make-hash
+    :q do-exit
+    :quit do-exit))
+
+(define (read-loop)
+  (define (remove-from-input count)
+    (let ((b (string:replicate count #\backspace)))
+      (display (++ b (string:replicate count #\space) b) :flush)))
+  (define (internal str hist hist-depth)
+    (let ((x (read-char)))
+        (cond
+          ((eq? x #\newline)
+            (begin
+              (set! *hist* (cons str *hist*))
+              str))
+          ((eq? x #\x1B)
+            (let ((code (string (read-char) (read-char))))
+              (begin
+                (remove-from-input 4)
+                (cond
+                  ((eq? code "[A") 
+                    (if (null? hist)
+                      (internal str hist (add1 hist-depth))
+                    (begin
+                      (remove-from-input (length str))
+                      (display (car hist) :flush)
+                      (internal (car hist) (cdr hist) (add1 hist-depth)))))
+                  ((eq? code "[B")
+                    (if (null? *hist*)
+                      (internal str hist hist-depth)
+                      (let ((new-hist (indexed-tail *hist* (max 0 (- hist-depth 1)))))
+                        (if (null? new-hist)
+                          (internal str hist hist-depth)
+                          (begin
+                            (remove-from-input (length str))
+                            (display (car new-hist) :flush)
+                            (internal (car new-hist) (cdr new-hist) (sub1 hist-depth)))))))))))
+          ((eq? x #\x7f)
+              (if (> (string:length str) 0)
+                (begin
+                  (remove-from-input 3)
+                  (internal (substring str 0 (- (length str) 1)) hist hist-depth))
+                (begin
+                  (remove-from-input 2)
+                  (internal str hist hist-depth))))
+          (else (internal (++ str x) hist hist-depth)))))
+  (internal "" *hist* 0))
+
+(define (repl)
+  (begin
+    (display *prompt* :flush)
+    (define input (read-loop))
+    (if (falsy? input)
+      (repl))
+    (write input *hist-to*)
+    (define res (eval (string:parse input) *env*))
+    (if (not (nil? (meta-commands res)))
+      ((meta-commands res))
+      (begin
+        (display *ret*)
+        (write res)
+        (repl)))))
+
+(if (not (eq? (open-input-file *conf*) #f))
+  (load *conf*))
+(let ((x (open-input-file *histfile*)))
+  (if (not (eq? x #f))
+    (begin
+      (set! *hist* (reverse (string:split (read-contents *histfile*) #\newline)))
+      (close-input-file x))))
+(define *hist-to* (open-output-file *histfile*))
+(if (truthy? *hist*) (map (lambda (x) (write x *hist-to*)) *hist*))
+(repl)

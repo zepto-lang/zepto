@@ -347,6 +347,7 @@ pprint (HashMap _) = "<hashmap>"
 pprint (PrimitiveFunc s _) = "<primitive: " ++ s ++ ">"
 pprint (IOFunc s _) = "<io primitive: " ++ s ++ ">"
 pprint (EvalFunc s _) = "<eval primitive: " ++ s ++ ">"
+pprint (Environ _) = "<environment>"
 pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
   where printFunc (LispFun p v b _ d) = let x = unwords p
                                             y = unwords (map pprint b)

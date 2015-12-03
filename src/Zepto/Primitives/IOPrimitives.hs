@@ -49,9 +49,9 @@ getHomeDir badArgs = throwError $ NumArgs 0 badArgs
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [SimpleVal (String filename)] = do
          fex <- liftIO $ doesFileExist filename
-         if fex && mode == ReadMode
-           then liftM Port $ liftIO $ openFile filename mode
-           else return $ fromSimple $ Bool False
+         if not fex && mode == ReadMode
+           then return $ fromSimple $ Bool False
+           else liftM Port $ liftIO $ openFile filename mode
 makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 closePort :: [LispVal] -> IOThrowsError LispVal

@@ -310,6 +310,7 @@ data LispVal = SimpleVal Simple
              | Func String LispFun
              | EvalFunc String ([LispVal] -> IOThrowsError LispVal)
              | Pointer { pointerVar :: String, pointerEnv :: Env }
+             | Environ Env
              | Cont Continuation
              | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
              | HashComprehension (LispVal, LispVal) (LispVal, LispVal) LispVal (Maybe LispVal)
@@ -399,6 +400,7 @@ showVal (DottedList h t) = "(" ++ unwordsList h ++ " . " ++ showVal t ++ ")"
 showVal (Pointer p _) = "<pointer " ++ p ++ ">"
 showVal (SimpleVal (Nil _)) = "nil"
 showVal (Cont _) = "<continuation>"
+showVal (Environ _) = "<environment>"
 showVal (ListComprehension expr filt _ _) = "<list comprehension: " ++
                                             show expr ++ " : " ++
                                             show filt ++ ">"
@@ -463,6 +465,7 @@ showInternal (Cont _) = "<continuation>"
 showInternal (HashMap _) = "<hash-map>"
 showInternal (HashComprehension _ _ _ _) = "<hash-comprehension>"
 showInternal (ListComprehension _ _ _ _) = "<list-comprehension>"
+showInternal (Environ _) = "<environment>"
 showInternal (Vector _) = "<vector>"
 showInternal (ByteVector _) = "<byte-vector>"
 showInternal (List _) = "<list>"
@@ -510,6 +513,7 @@ typeString (SimpleVal (Nil _)) = "nil"
 typeString (SimpleVal (SimpleList _)) = "simple list"
 typeString (List _) = "list"
 typeString (DottedList _ _) = "dotted list"
+typeString (Environ _ ) = "environment"
 typeString (Vector _) = "vector"
 typeString (HashMap _) = "hashmap"
 typeString (PrimitiveFunc _ _) = "primitive"

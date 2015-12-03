@@ -18,6 +18,7 @@ import qualified Data.Map
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
 import Zepto.Primitives.ConversionPrimitives
+import Zepto.Primitives.EnvironmentPrimitives
 import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
@@ -180,8 +181,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("get-home-dir", getHomeDir, "get the home directory")
                , ("read", readProc, "read from file")
                , ("write", writeProc printInternal, "write to file")
-               , ("peek-char", readCharProc hGetChar, "peek char from file")
-               , ("read-char", readCharProc hLookAhead, "read char from file")
+               , ("read-char", readCharProc hGetChar, "peek char from file")
+               , ("peek-char", readCharProc hLookAhead, "read char from file")
                , ("write-char", writeCharProc, "write char to file")
                , ("display", writeProc print', "print to stdout")
                , ("read-contents", readContents, "read contents of file")
@@ -192,6 +193,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
                , ("escape-sequence", escapeProc, "send escape sequence to shell")
                , ("color", colorProc, "colorize output")
+               , ("make-null-env", makeNullEnv, "make empty environment")
+               , ("make-base-env", makeBaseEnv, "make standard environment")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
@@ -243,14 +246,26 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing _)) val =
         (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing [])) lval
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
-evalFun :: [LispVal] -> IOThrowsError LispVal
-evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
-evalFun (_ : args) = throwError $ NumArgs 1 args
-evalFun _ = throwError $ NumArgs 1 []
-
 stringParse :: LispVal -> ThrowsError LispVal
 stringParse (SimpleVal (String x)) = readExpr x
 stringParse x = throwError $ TypeMismatch "string" x
+
+makeBaseEnv :: [LispVal] -> IOThrowsError LispVal
+makeBaseEnv [] = do
+    env <- liftIO primitiveBindings
+    return $ Environ env
+  where
+    primitiveBindings = nullEnv >>= flip extendEnv (fmap (makeBind IOFunc) ioPrimitives ++
+                                  fmap (makeBind PrimitiveFunc) primitives ++
+                                  fmap (makeBind EvalFunc) evalPrimitives)
+                  where makeBind constructor (var, func, _) = ((vnamespace, var), constructor var func)
+makeBaseEnv args = throwError $ NumArgs 0 args
+
+evalFun :: [LispVal] -> IOThrowsError LispVal
+evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
+evalFun [c@(Cont _), val, Environ env] = eval env c val
+evalFun (_ : args) = throwError $ NumArgs 1 args
+evalFun _ = throwError $ NumArgs 1 []
 
 evalApply :: [LispVal] -> IOThrowsError LispVal
 evalApply [conti@(Cont _), fun, List args] = apply conti fun args
@@ -336,6 +351,7 @@ eval env conti val@(SimpleVal (Character _)) = contEval env conti val
 eval env conti val@(Vector _) = contEval env conti val
 eval env conti val@(ByteVector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
+eval env conti val@(Environ _) = contEval env conti val
 eval _ _ (List [Vector x, SimpleVal (Number (NumI i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector x, SimpleVal (Number (NumS i))]) = return $ x ! fromIntegral i
 eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
