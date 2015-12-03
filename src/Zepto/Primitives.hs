@@ -143,6 +143,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("string->list", unaryOp stringToList, "makes list from string")
              , ("list->string", unaryOp listToString, "makes string from list")
              , ("string:copy", unaryOp stringCopy, "copy string")
+             , ("string:parse", unaryOp stringParse, "copy string")
              , ("substring", substring, "makes substring from string")
              , ("vector:ref", vectorRef, "get element from vector")
              , ("byte-vector:ref", byteVectorRef, "get element from byte vector")
@@ -176,6 +177,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("close-output-file", closePort, "close a file opened for writing")
                , ("input-port?", unaryIOOp isInputPort, "check whether arg is input port")
                , ("output-port?", unaryIOOp isOutputPort, "check whether arg is output port")
+               , ("get-home-dir", getHomeDir, "get the home directory")
                , ("read", readProc, "read from file")
                , ("write", writeProc printInternal, "write to file")
                , ("peek-char", readCharProc hGetChar, "peek char from file")
@@ -245,6 +247,10 @@ evalFun :: [LispVal] -> IOThrowsError LispVal
 evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
+
+stringParse :: LispVal -> ThrowsError LispVal
+stringParse (SimpleVal (String x)) = readExpr x
+stringParse x = throwError $ TypeMismatch "string" x
 
 evalApply :: [LispVal] -> IOThrowsError LispVal
 evalApply [conti@(Cont _), fun, List args] = apply conti fun args
@@ -726,6 +732,9 @@ load filename = do
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
 readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
+readProc [x@(SimpleVal (Atom ":no-eval"))] = readProc [Port stdin, x]
+readProc [SimpleVal (Atom ":stdin"), x@(SimpleVal (Atom ":no-eval"))] = readProc [Port stdin, x]
+readProc [Port port, SimpleVal (Atom ":no-eval")] = liftIO (hGetLine port) >>= return . fromSimple . String
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 

@@ -2,6 +2,7 @@ module Zepto.Primitives.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
 import Data.List (find)
+import System.Directory (doesFileExist, getHomeDirectory)
 import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
@@ -39,8 +40,18 @@ colorProc [SimpleVal (Atom (':' : s))] =
 colorProc [badArg] = throwError $ TypeMismatch "atom" badArg
 colorProc badArgs = throwError $ NumArgs 1 badArgs
 
+getHomeDir :: [LispVal] -> IOThrowsError LispVal
+getHomeDir [] = do
+  dir <- liftIO $ getHomeDirectory
+  return $ fromSimple $ String dir
+getHomeDir badArgs = throwError $ NumArgs 0 badArgs
+
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
-makePort mode [SimpleVal (String filename)] = liftM Port $ liftIO $ openFile filename mode
+makePort mode [SimpleVal (String filename)] = do
+         fex <- liftIO $ doesFileExist filename
+         if fex && mode == ReadMode
+           then liftM Port $ liftIO $ openFile filename mode
+           else return $ fromSimple $ Bool False
 makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
 closePort :: [LispVal] -> IOThrowsError LispVal
@@ -56,6 +67,18 @@ writeProc fun [obj, Port port] = do
       case out of
           Left _ -> throwError $ Default "IO Error writing to port"
           Right _ -> return $ fromSimple $ Nil ""
+writeProc fun [obj, a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stdout, a]
+writeProc fun [obj, SimpleVal (Atom ":stdout"), a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stdout, a]
+writeProc fun [obj, SimpleVal (Atom ":stderr"), a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stderr, a]
+writeProc fun [obj, Port port, (SimpleVal (Atom ":flush"))] = do
+      out <- liftIO $ tryIOError (liftIO $ fun port obj)
+      case out of
+          Left _ -> throwError $ Default "IO Error writing to port"
+          Right _ -> do
+              flush <- liftIO $ tryIOError (liftIO $ hFlush port)
+              case flush of
+                Left _ -> throwError $ Default "IO Error flushing port"
+                Right _ -> return $ fromSimple $ Nil ""
 writeProc _ [] = throwError $ NumArgs 1 []
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 

@@ -1,0 +1,33 @@
+; A small REPL for zepto in zepto
+
+(define *prompt* "zepto> ")
+(define *ret* "=> ")
+(define *conf* (++ (get-home-dir) "/.zeptorc"))
+
+(define (do-exit)
+  (begin
+    (write "Moriturus te saluto!")
+    (exit)))
+
+(define meta-commands
+  (make-hash
+    :q do-exit
+    :quit do-exit))
+
+(define (repl)
+  (begin
+    (display *prompt* :flush)
+    (define input (read :no-eval))
+    (if (falsy? input)
+      (repl))
+    (define res (eval (string:parse input)))
+    (if (not (nil? (meta-commands res)))
+      ((meta-commands res))
+      (begin
+        (display *ret*)
+        (write res)
+        (repl)))))
+
+(if (not (eq? (open-input-file *conf*) #f))
+  (load *conf*))
+(repl)
