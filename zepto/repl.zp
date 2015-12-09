@@ -9,7 +9,6 @@
 
 (define (do-exit)
   (begin
-    (close-output-file *hist-to*)
     (write "Moriturus te saluto!")
     (exit)))
 
@@ -22,6 +21,10 @@
   (define (remove-from-input count)
     (let ((b (string:replicate count #\backspace)))
       (display (++ b (string:replicate count #\space) b) :flush)))
+  (define (new-input old new)
+    (begin
+      (remove-from-input (length old))
+      (display new :flush)))
   (define (internal str hist hist-depth)
     (let ((x (read-char)))
         (cond
@@ -35,22 +38,25 @@
                 (remove-from-input 4)
                 (cond
                   ((eq? code "[A") 
-                    (if (null? hist)
-                      (internal str hist (add1 hist-depth))
-                    (begin
-                      (remove-from-input (length str))
-                      (display (car hist) :flush)
-                      (internal (car hist) (cdr hist) (add1 hist-depth)))))
+                    (begin 
+                      (if (null? hist)
+                        (internal str hist hist-depth)
+                      (begin
+                        (new-input str (car hist))
+                        (internal (car hist) (cdr hist) (add1 hist-depth))))))
                   ((eq? code "[B")
                     (if (null? *hist*)
                       (internal str hist hist-depth)
-                      (let ((new-hist (indexed-tail *hist* (max 0 (- hist-depth 1)))))
-                        (if (null? new-hist)
-                          (internal str hist hist-depth)
+                      (let ((new-hist (indexed-tail *hist* (min (length *hist*) (max 0 (- hist-depth 1))))))
+                        (if (< (- hist-depth 1) 0)
                           (begin
-                            (remove-from-input (length str))
-                            (display (car new-hist) :flush)
-                            (internal (car new-hist) (cdr new-hist) (sub1 hist-depth)))))))))))
+                            (new-input str "")
+                            (internal "" *hist* hist-depth))
+                          (if (null? new-hist)
+                            (internal str hist hist-depth)
+                            (begin
+                              (new-input str (car new-hist))
+                              (internal (car new-hist) (cdr new-hist) (max 0 (sub1 hist-depth)))))))))))))
           ((eq? x #\x7f)
               (if (> (string:length str) 0)
                 (begin
@@ -62,13 +68,21 @@
           (else (internal (++ str x) hist hist-depth)))))
   (internal "" *hist* 0))
 
+(define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
+  (let ((cont (begin (define x (open-input-file *histfile*)) (define y (read x)) (close-input-file x) y))
+        (hist-to (open-output-file *histfile*)))
+    (begin
+      (write cont hist-to)
+      (write item hist-to)
+      (close-output-file hist-to))))
+
 (define (repl)
   (begin
     (display *prompt* :flush)
     (define input (read-loop))
     (if (falsy? input)
       (repl))
-    (write input *hist-to*)
+    (write-hist-item input)
     (define res (eval (string:parse input) *env*))
     (if (not (nil? (meta-commands res)))
       ((meta-commands res))
@@ -84,6 +98,5 @@
     (begin
       (set! *hist* (reverse (string:split (read-contents *histfile*) #\newline)))
       (close-input-file x))))
-(define *hist-to* (open-output-file *histfile*))
-(if (truthy? *hist*) (map (lambda (x) (write x *hist-to*)) *hist*))
+(if (truthy? *hist*) (map write-hist-item *hist*))
 (repl)

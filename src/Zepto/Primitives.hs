@@ -706,7 +706,15 @@ eval env conti (List [SimpleVal (Atom "vector:set!"), SimpleVal (Atom var), i, o
     contEval env conti result
   where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = fromSimple $ Nil "This should never happen"
-eval _ _ (List (SimpleVal (Atom "vector:set!") : x)) = throwError $ NumArgs 2 x
+eval env conti (List [SimpleVal (Atom "vector:set!"), var, i, object]) = do
+    idx <- eval env (nullCont env) i
+    obj <- eval env (nullCont env) object
+    vec <- eval env (nullCont env) var
+    result <- eval env (nullCont env) (updateVector vec idx obj)
+    contEval env conti result
+  where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
+        updateVector _ _ _ = fromSimple $ Nil "This should never happen"
+eval _ _ (List (SimpleVal (Atom "vector:set!") : x)) = throwError $ NumArgs 3 x
 eval env conti (List [SimpleVal (Atom "vector:fill!"), SimpleVal (Atom var), object]) = do
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
