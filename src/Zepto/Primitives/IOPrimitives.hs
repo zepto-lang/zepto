@@ -9,6 +9,7 @@ import System.IO.Error (tryIOError)
 import System.Process (readProcessWithExitCode)
 import System.Clock
 
+import qualified System.IO.Strict as S (readFile)
 import qualified Data.ByteString as BS (readFile)
 
 import Zepto.Types
@@ -102,7 +103,7 @@ print' port obj =
           _ -> hPutStr port $ show obj
 
 readContents :: [LispVal] -> IOThrowsError LispVal
-readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ readFile filename
+readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ S.readFile filename
 readContents [x] = throwError $ TypeMismatch "string" x
 readContents badArgs = throwError $ NumArgs 1 badArgs
 

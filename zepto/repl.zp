@@ -7,15 +7,23 @@
 (define *env* (make-base-env))
 (define *hist* [])
 
-(define (do-exit)
+(define (do-exit args)
   (begin
     (write "Moriturus te saluto!")
-    (exit)))
+    (exit (if (null? args) 0 (string->number (car args))))))
+
+(define (set-prompt args)
+  (if (not (null? args))
+    (begin
+     (set! *prompt* (car args))
+     (repl))))
 
 (define meta-commands
   (make-hash
     :q do-exit
-    :quit do-exit))
+    :quit do-exit
+    :p set-prompt
+    :prompt set-prompt))
 
 (define (read-loop)
   (define (remove-from-input count)
@@ -69,10 +77,10 @@
   (internal "" *hist* 0))
 
 (define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
-  (let ((cont (begin (define x (open-input-file *histfile*)) (define y (read x)) (close-input-file x) y))
-        (hist-to (open-output-file *histfile*)))
+  (let* ((cont (read-contents *histfile*))
+         (hist-to (open-output-file *histfile*)))
     (begin
-      (write cont hist-to)
+      (write (substring cont 0 (sub1 (length cont))) hist-to)
       (write item hist-to)
       (close-output-file hist-to))))
 
@@ -84,19 +92,26 @@
       (repl))
     (write-hist-item input)
     (define res (eval (string:parse input) *env*))
-    (if (not (nil? (meta-commands res)))
-      ((meta-commands res))
-      (begin
-        (display *ret*)
-        (write res)
-        (repl)))))
+    (let* ((split (string:split (->string res) #\=))
+           (cmd (string->symbol (car split))))
+      (if (not (nil? (meta-commands cmd)))
+        ((meta-commands cmd) (cdr split))
+        (begin
+          (display *ret*)
+          (write res)
+          (repl))))))
 
 (if (not (eq? (open-input-file *conf*) #f))
   (load *conf*))
+
 (let ((x (open-input-file *histfile*)))
   (if (not (eq? x #f))
     (begin
       (set! *hist* (reverse (string:split (read-contents *histfile*) #\newline)))
       (close-input-file x))))
+
 (if (truthy? *hist*) (map write-hist-item *hist*))
+
+(write (eval '(load "module.zp") *env*))
+
 (repl)

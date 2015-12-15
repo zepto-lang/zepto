@@ -64,6 +64,7 @@ Executable           zepto
                      process,
                      random,
                      split,
+                     strict,
                      time,
                      transformers >= 0.4.2
     Extensions:      ExistentialQuantification 
