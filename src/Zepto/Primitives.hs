@@ -342,6 +342,16 @@ isNotNil :: LispVal -> Bool
 isNotNil (SimpleVal (Nil _)) = False
 isNotNil _ = True
 
+stringifyFunction :: LispVal -> String
+stringifyFunction (Func name (LispFun {params = args, vararg = varargs, body = _,
+                                       closure = _, docstring = doc})) =
+    doc ++ "\n  source: " ++
+    "(" ++ name ++ " (" ++ unwords (fmap show args) ++
+        (case varargs of
+            Nothing -> ""
+            Just arg -> " . " ++ arg) ++ ") ...)"
+stringifyFunction _ = ""
+
 -- | evaluates a parsed expression
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 eval env conti val@(SimpleVal (Nil _)) = contEval env conti val
@@ -601,39 +611,63 @@ eval env conti (List [SimpleVal (Atom "load"), maybefile]) = do
 eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
-eval _ _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) =
-        return $ fromSimple $ String $ concat $
-        fmap thirdElem (filter filterTuple primitives) ++
-        fmap thirdElem (filter filterTuple ioPrimitives)
-    where
-          filterTuple tuple = (== val) $ firstElem tuple
-          firstElem (x, _, _) = x
-          thirdElem (_, _, x) = x
-eval _ _ (List [SimpleVal (Atom "doc"), SimpleVal (String val)]) =
-        return $ fromSimple $ String $ concat $
-        fmap thirdElem (filter filterTuple primitives) ++
-        fmap thirdElem (filter filterTuple ioPrimitives)
-    where
-          filterTuple tuple = (== val) $ firstElem tuple
-          firstElem (x, _, _) = x
-          thirdElem (_, _, x) = x
-eval env _ (List [SimpleVal (Atom "help"), SimpleVal (Atom val)]) = do
+eval env _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) = do
         let x = concat $
                 fmap thirdElem (filter filterTuple primitives) ++
                 fmap thirdElem (filter filterTuple ioPrimitives)
         if x == ""
-            then getVar env val
+            then do
+              var <- getVar env val
+              case var of
+                f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval env _ (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
+eval env _ (List [SimpleVal (Atom "doc"), SimpleVal (String val)]) = do
         let x = concat $
                 fmap thirdElem (filter filterTuple primitives) ++
                 fmap thirdElem (filter filterTuple ioPrimitives)
         if x == ""
-            then getVar env val
+            then do
+              var <- getVar env val
+              case var of
+                f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                _ -> throwError $ Default $ val ++ " is not a function"
+            else return $ fromSimple $ String x
+    where
+          filterTuple tuple = (== val) $ firstElem tuple
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
+eval env conti (List [SimpleVal (Atom "help"), SimpleVal (Atom val)]) = do
+        let x = concat $
+                fmap thirdElem (filter filterTuple primitives) ++
+                fmap thirdElem (filter filterTuple ioPrimitives)
+        if x == ""
+            then do
+              var <- getVar env val
+              case var of
+                f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+                _ -> throwError $ Default $ val ++ " is not a function"
+            else return $ fromSimple $ String x
+    where
+          filterTuple tuple = (== val) $ firstElem tuple
+          firstElem (x, _, _) = x
+          thirdElem (_, _, x) = x
+eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
+        let x = concat $
+                fmap thirdElem (filter filterTuple primitives) ++
+                fmap thirdElem (filter filterTuple ioPrimitives)
+        if x == ""
+            then do
+              var <- getVar env val
+              case var of
+                f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+                _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
           filterTuple tuple = (== val) $ firstElem tuple
