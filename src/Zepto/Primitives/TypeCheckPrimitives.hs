@@ -53,13 +53,15 @@ isSimple :: LispVal -> ThrowsError LispVal
 isSimple (SimpleVal _) = return $ fromSimple $ Bool True
 isSimple _ = return $ fromSimple $ Bool False
 
-isVector, isList, isByteVector :: LispVal -> ThrowsError LispVal
+isVector, isList, isByteVector, isSimpleList :: LispVal -> ThrowsError LispVal
 isVector (Vector _) = return $ fromSimple $ Bool True
 isVector _ = return $ fromSimple $ Bool False
 isList (List _) = return $ fromSimple $ Bool True
 isList _ = return $ fromSimple $ Bool False
 isByteVector (ByteVector _) = return $ fromSimple $ Bool True
 isByteVector _ = return $ fromSimple $ Bool False
+isSimpleList (SimpleVal (SimpleList _)) = return $ fromSimple $ Bool True
+isSimpleList _ = return $ fromSimple $ Bool False
 
 isNull :: LispVal -> ThrowsError LispVal
 isNull (List []) = return $ fromSimple $ Bool True
