@@ -464,8 +464,15 @@ eval env conti (List [SimpleVal (Atom "zepto:get-bindings"), form]) = do
           SimpleVal (String prefix) -> do
                 bind <- liftIO $ allEnvironments env
                 let x = Data.Map.keys bind
-                return $ List $ map (\e -> fromSimple $ Atom $ drop 2 e) $
-                  filter (\e -> isPrefixOf (vnamespace : "_" ++ prefix) e) x
+                let filtered = filter (\e -> isPrefixOf (vnamespace : "_" ++ prefix) e) x
+                mapped <- mapM
+                  (\e ->
+                    let name = fromSimple $ Atom $ drop 2 e
+                    in do
+                      evald <- eval env conti name
+                      return $ List $ name : [evald])
+                  filtered
+                return $ List $ mapped
           x -> throwError $ TypeMismatch "string" x
     where allEnvironments (Environment Nothing b _) = readIORef $ b
           allEnvironments (Environment (Just parent) b _) = do
