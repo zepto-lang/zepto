@@ -644,6 +644,9 @@ eval env _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                IOFunc doc _ -> return $ fromSimple $ String $ doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+                EvalFunc doc _ -> return $ fromSimple $ String $ doc
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
@@ -659,6 +662,9 @@ eval env _ (List [SimpleVal (Atom "doc"), SimpleVal (String val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                IOFunc doc _ -> return $ fromSimple $ String $ doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+                EvalFunc doc _ -> return $ fromSimple $ String $ doc
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
@@ -674,8 +680,11 @@ eval env conti (List [SimpleVal (Atom "help"), SimpleVal (Atom val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                IOFunc doc _ -> return $ fromSimple $ String $ doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+                EvalFunc doc _ -> return $ fromSimple $ String $ doc
                 f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
-                _ -> throwError $ Default $ val ++ " is not a function"
+                err -> throwError $ Default $ val ++ " is not a function (is: " ++ typeString err ++ ")"
             else return $ fromSimple $ String x
     where
           filterTuple tuple = (== val) $ firstElem tuple
@@ -690,6 +699,9 @@ eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+                IOFunc doc _ -> return $ fromSimple $ String $ doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+                EvalFunc doc _ -> return $ fromSimple $ String $ doc
                 f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
