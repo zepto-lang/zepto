@@ -81,7 +81,12 @@ numericMinop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError Lisp
 numericMinop _ [SimpleVal (Number l)] = return $ fromSimple $ Number $ negate l
 numericMinop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
 
+numericTimesop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
+numericTimesop _ [] = return $ fromSimple $ Number $ 1
+numericTimesop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
+
 numericPlusop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
+numericPlusop _ [] = return $ fromSimple $ Number $ 0
 numericPlusop _ [SimpleVal (Number l)] = if l > 0 then return $ fromSimple $ Number l
                                       else return $ fromSimple $ Number $ negate l
 numericPlusop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)

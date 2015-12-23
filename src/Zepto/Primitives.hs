@@ -36,7 +36,7 @@ import Zepto.Macro
 primitives :: [(String, [LispVal] -> ThrowsError LispVal, String)]
 primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("-", numericMinop (-), "subtract two or more values/negate value")
-             , ("*", numericBinop (*), "multiply two or more values")
+             , ("*", numericTimesop (*), "multiply two or more values")
              , ("/", numericBinop div, "divide two or more values")
              , ("mod", numericBinop mod, "modulo of two or more values")
              , ("modulo", numericBinop mod, "modulo of two or more values")
