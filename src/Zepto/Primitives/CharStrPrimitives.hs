@@ -15,10 +15,6 @@ listToString (List []) = return $ fromSimple $ String ""
 listToString (List l) = buildString l
 listToString badType = throwError $ TypeMismatch "list" badType
 
-stringCopy :: LispVal -> ThrowsError LispVal
-stringCopy (SimpleVal (String s)) = return $ fromSimple $ String s
-stringCopy badType = throwError $ TypeMismatch "string" badType
-
 charDowncase :: LispVal -> ThrowsError LispVal
 charDowncase (SimpleVal (Character c)) = return $ fromSimple $ Character $ toLower c
 charDowncase badType = throwError $ TypeMismatch "character" badType
