@@ -183,7 +183,7 @@ stringExtend v@(SimpleVal (String _) : _) = extend' v
               elsewise -> throwError $
                             TypeMismatch "string/character" elsewise
         extend' (a : _) = throwError $ TypeMismatch "string/character" a
-        extend' _ = throwError $ InternalError "this should not happen"
+        extend' x = throwError $ InternalError $ "this should not happen" ++ show x
 stringExtend [badType] = throwError $ NumArgs 2 [badType]
 stringExtend (badType : _) = throwError $ TypeMismatch "string" badType
 stringExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
@@ -192,6 +192,7 @@ listAppend :: [LispVal] -> ThrowsError LispVal
 listAppend (vec@(List _) : t) = append' [vec] t
   where append' :: [LispVal] -> [LispVal] -> ThrowsError LispVal
         append' [] [v] = return $ List [v]
+        append' [x] [] = return $ x
         append' [List x] (st : sts) = do
           rest <- append' [] sts
           case rest of
@@ -203,7 +204,7 @@ listAppend (vec@(List _) : t) = append' [vec] t
               List s -> return $ List $ st : s
               elsewise -> throwError $ TypeMismatch "list/element" elsewise
         append' [] [] = return $ List []
-        append' _ _ = throwError $ InternalError "This should not happen"
+        append' x y = throwError $ InternalError $ "This should not happen: " ++ show x ++ " " ++ show y
 listAppend [badType] = throwError $ NumArgs 2 [badType]
 listAppend (badType : _) = throwError $ TypeMismatch "list" badType
 listAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
@@ -212,6 +213,7 @@ vectorAppend :: [LispVal] -> ThrowsError LispVal
 vectorAppend (vec@(Vector _) : t) = append' [vec] t
   where append' :: [LispVal] -> [LispVal] -> ThrowsError LispVal
         append' [] [x] = return $ Vector $ listArray (0, 0) [x]
+        append' [x@(Vector _)] [] = return x
         append' [Vector x] (st : sts) = do
           rest <- append' [] sts
           let ast = elems x
@@ -228,7 +230,7 @@ vectorAppend (vec@(Vector _) : t) = append' [vec] t
                           listArray (0, length (elems s)) (st : elems s)
               elsewise -> throwError $ TypeMismatch "vector/element" elsewise
         append' [] [] = return $ Vector $ listArray (0, -1) []
-        append' _ _ = throwError $ InternalError "This should not happen"
+        append' x y = throwError $ InternalError $ "This should not happen" ++ show x ++ " " ++ show y
 vectorAppend [badType] = throwError $ NumArgs 2 [badType]
 vectorAppend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
@@ -309,7 +311,7 @@ vectorExtend v@(Vector _: _) = append' v
               Vector s -> return $ Vector $
                           listArray (0, length (elems s)) (st : elems s)
               elsewise -> throwError $ TypeMismatch "vector/element" elsewise
-        append' _ = throwError $ InternalError "This should not happen"
+        append' x = throwError $ InternalError $ "This should not happen: " ++ show x
 vectorExtend [badType] = throwError $ NumArgs 2 [badType]
 vectorExtend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
