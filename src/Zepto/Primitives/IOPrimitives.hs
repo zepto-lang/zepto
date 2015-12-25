@@ -104,6 +104,7 @@ print' port obj =
 
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ S.readFile filename
+readContents [Port handle] = liftM (SimpleVal . String) $ liftIO $ hGetContents handle
 readContents [x] = throwError $ TypeMismatch "string" x
 readContents badArgs = throwError $ NumArgs 1 badArgs
 
