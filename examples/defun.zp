@@ -1,0 +1,5 @@
+; An example of how a macro for defining functions would look like in pure zepto
+(define-syntax defun 
+  (syntax-rules ()
+    ((defun args body)
+      (eval `(define ,(head 'args) (lambda ,(tail 'args) ,'body))))))

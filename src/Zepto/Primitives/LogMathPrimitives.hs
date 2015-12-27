@@ -5,6 +5,8 @@ import Data.Char
 import Control.Monad.Except
 import Data.Complex
 
+import qualified Data.Map as DM (toList)
+
 import Zepto.Types
 
 eqv :: [LispVal] -> ThrowsError LispVal
@@ -35,6 +37,9 @@ eqv [List arg1, List arg2] = return $ fromSimple $ Bool $ (length arg1 == length
                               Right (SimpleVal (Bool val)) -> val
                               _ -> False
 eqv [Vector arg1, Vector arg2] = eqv [List (elems arg1), List (elems arg2)]
+eqv [HashMap arg1, HashMap arg2] = eqv [List $ mkList (DM.toList arg1), List $ mkList (DM.toList arg2)]
+    where mkList [] = []
+          mkList ((a, b) : cs) = [fromSimple a, b] ++ mkList cs
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 

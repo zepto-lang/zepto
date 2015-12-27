@@ -1,5 +1,5 @@
 ![zepto banner](https://raw.githubusercontent.com/zepto-lang/logos/master/zepto_logo.png)
-![general version](http://img.shields.io/badge/version-0.8.5-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.9.0-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 [![Build Status](https://travis-ci.org/zepto-lang/zepto.png?branch=master)](https://travis-ci.org/zepto-lang/zepto)
