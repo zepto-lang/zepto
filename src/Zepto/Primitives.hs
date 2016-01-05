@@ -201,6 +201,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
 evalPrimitives = [ ("eval", evalFun, "evaluate list")
+                 , ("macro-expand", macroEvalFun, "treat list as code and expand the macros")
                  , ("apply", evalApply, "apply function to values")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
@@ -262,6 +263,12 @@ makeBaseEnv [] = do
                                   fmap (makeBind EvalFunc) evalPrimitives)
                   where makeBind constructor (var, func, _) = ((vnamespace, var), constructor var func)
 makeBaseEnv args = throwError $ NumArgs 0 args
+
+macroEvalFun :: [LispVal] -> IOThrowsError LispVal
+macroEvalFun [(Cont (Continuation env _ _ _ _ _)), val] = macroEval env val
+macroEvalFun [(Cont _), val, Environ env] = macroEval env val
+macroEvalFun (_ : args) = throwError $ NumArgs 1 args
+macroEvalFun _ = throwError $ NumArgs 1 []
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
 evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
@@ -803,6 +810,8 @@ eval env conti (List (SimpleVal (Atom "begin") : funs))
                                     let fs = tail funs
                                     _ <- eval env conti (head funs)
                                     eval env conti (List (SimpleVal (Atom "begin") : fs))
+eval env _ (List [SimpleVal (Atom "current-env")]) = return $ Environ env
+eval _ _ (List ((SimpleVal (Atom "current-env")) : x)) = throwError $ NumArgs 0 x
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
