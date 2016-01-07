@@ -51,6 +51,8 @@ keywords = [ "apply"
            , "string:set!"
            , "vector:fill!"
            , "vector:set!"
+           , "zepto:get-bindings"
+           , "current-env"
            ]
 
 metaKeywords :: [String]
