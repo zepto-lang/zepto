@@ -1,5 +1,5 @@
 module Zepto.Primitives.ConversionPrimitives where
-import Data.Char (ord)
+import Data.Char (ord, chr)
 import Control.Monad.Except (throwError)
 
 import Zepto.Types
@@ -25,6 +25,11 @@ number2String [(SimpleVal (Number x)), (SimpleVal (Number (NumS y)))] = return $
 number2String [(SimpleVal (Number _)), notNumber] = throwError $ TypeMismatch "integer" notNumber
 number2String [notNumber, _] = throwError $ TypeMismatch "number" notNumber
 number2String n = throwError $ NumArgs 1 n
+
+integer2Char :: LispVal -> ThrowsError LispVal
+integer2Char (SimpleVal (Number (NumI x))) = return $ fromSimple $ Character $ chr $ fromInteger x
+integer2Char (SimpleVal (Number (NumS x))) = return $ fromSimple $ Character $ chr x
+integer2Char notInt = throwError $ TypeMismatch "integer" notInt
 
 buildNil :: ThrowsError LispVal
 buildNil = return $ fromSimple $ Nil ""
