@@ -54,7 +54,7 @@ main = do args <- getArgs
               printUsage
             | hasIn arg (makeArg "S" "silent") =
               runRepl
-            | hasIn arg (makeArg "s" "single") =
+            | any (`elem` (makeArg "s" "single")) arg =
               runSingleStatement (getOpt arg (makeArg "s" "single"))
             | hasIn arg (makeArg "v" "version") =
               printVersion
@@ -63,7 +63,7 @@ main = do args <- getArgs
               putStrLn ("Unknown option: " ++ head arg)
               printUsage
           hasIn :: [String] -> [String] -> Bool
-          hasIn x l = any (`elem` l) x
+          hasIn x l = any (`elem` l) x && not (any noMeta x)
           makeArg :: String -> String -> [String]
           makeArg short long = ['-' : short, "--" ++ long]
           getOpt :: [String] -> [String] -> String
