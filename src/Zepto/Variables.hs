@@ -66,12 +66,19 @@ exportsFromEnv env = do
 
 -- | checks whether a variable is bound
 isBound :: Env -> String -> IO Bool
-isBound envRef = isNamespacedBound envRef vnamespace
+isBound envRef = isNamespaceBound envRef vnamespace
 
 -- | checks whether a variable is bound to a namespace
-isNamespacedBound :: Env -> Char -> String -> IO Bool
-isNamespacedBound envRef namespace var = liftM (Data.Map.member
-        (getVarName namespace var)) (readIORef (bindings envRef))
+isNamespaceBound :: Env -> Char -> String -> IO Bool
+isNamespaceBound envRef prfx var = do
+        binds <- liftIO $ readIORef $ bindings envRef
+        if Data.Map.member (getVarName prfx var) binds
+          then return True
+          else
+            case parentEnv envRef of
+              Just par -> isNamespaceBound par prfx var
+              Nothing -> return False
+
 
 getVarName :: Char -> String -> String
 getVarName namespace name = namespace : ('_' : name)
@@ -175,7 +182,7 @@ updatePointers envRef namespace var = do
 -- | defines a variable to an environment in a specific namespace
 defineNamespacedVar :: Env -> Char -> String -> LispVal -> IOThrowsError LispVal
 defineNamespacedVar envRef namespace var value = do
-        alreadyDefined <- liftIO $ isNamespacedBound envRef namespace var
+        alreadyDefined <- liftIO $ isNamespaceBound envRef namespace var
         if alreadyDefined
             then setNamespacedVar envRef namespace var value >> return value
             else do

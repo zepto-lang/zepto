@@ -14,7 +14,7 @@ macroEval env (List (x@(List _) : xs)) = do
   rest <- mapM (macroEval env) xs
   return $ List $ first : rest
 macroEval env lisp@(List (SimpleVal (Atom x) : xs)) = do
-  isDefined <- liftIO $ isNamespacedBound env mnamespace x
+  isDefined <- liftIO $ isNamespaceBound env mnamespace x
   if isDefined
      then do
        (List (SimpleVal (Atom "syntax-rules") : (List identifiers : rules))) <- getNamespacedVar env mnamespace x
@@ -273,7 +273,7 @@ lookupPatternVarSrc localEnv (DottedList ps p) = do
         SimpleVal (Bool False) -> lookupPatternVarSrc localEnv p
         _ -> return result
 lookupPatternVarSrc localEnv (SimpleVal (Atom pattern)) =
-    do isDefined <- liftIO $ isNamespacedBound localEnv mnamespace pattern
+    do isDefined <- liftIO $ isNamespaceBound localEnv mnamespace pattern
        if isDefined then getNamespacedVar localEnv mnamespace pattern
                     else return $ fromSimple $ Bool False
 lookupPatternVarSrc _ _ =
