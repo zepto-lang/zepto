@@ -816,10 +816,7 @@ eval _ _ (List ((SimpleVal (Atom "current-env")) : x)) = throwError $ NumArgs 0 
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
-        case func of
-          HashMap _ -> eval env conti (List (func : args))
-          Vector _  -> eval env conti (List (func : args))
-          _         -> apply conti func argVals
+        apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 readAll :: [LispVal] -> IOThrowsError LispVal
