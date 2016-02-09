@@ -14,6 +14,8 @@ import qualified Data.ByteString as BS (readFile)
 
 import Zepto.Types
 
+import Paths_zepto
+
 escapeProc :: [LispVal] -> IOThrowsError LispVal
 escapeProc [SimpleVal (Number (NumI n))] = writeProc print' [fromSimple $ String $ "\x1b[" ++ show n ++ "m"]
 escapeProc [SimpleVal (Number (NumS n))] = writeProc print' [fromSimple $ String $ "\x1b[" ++ show n ++ "m"]
@@ -46,6 +48,12 @@ getHomeDir [] = do
   dir <- liftIO $ getHomeDirectory
   return $ fromSimple $ String dir
 getHomeDir badArgs = throwError $ NumArgs 0 badArgs
+
+getZeptoDir :: [LispVal] -> IOThrowsError LispVal
+getZeptoDir [] = do
+  dir <- liftIO $ getDataFileName ""
+  return $ fromSimple $ String dir
+getZeptoDir badArgs = throwError $ NumArgs 0 badArgs
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [SimpleVal (String filename)] = do

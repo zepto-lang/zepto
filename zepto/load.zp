@@ -1,0 +1,33 @@
+(define *load-params* #{:stdlib "zepto-stdlib/" :paths []})
+(define *global-env* (current-env))
+
+(define (load- file . env)
+  (define (file-exists? file)
+    (not (boolean? (open-input-file file))))
+  (define (lookup file)
+    (let* ((with-ext (++ file ".zp"))
+           (stdlib (++ (zepto:home) (*load-params* :stdlib) with-ext)))
+    (cond
+      ((file-exists? file) file)
+      ((file-exists? with-ext) with-ext)
+      ((file-exists? stdlib) stdlib)
+      (else
+        (let* ((paths (*load-params* :paths))
+               (found (reduce
+                        (lambda (acc p) (cond 
+                                          ((file-exists (++ p file)) (++ p file))
+                                          ((file-exists (++ p file ".zp")) (++ p file ".zp"))))
+                        ""
+                        paths)))
+        (if (truthy? found)
+          found
+          (begin
+            (error "load: Did not find file" file "on the search path")
+            (#f))))))))
+  (let ((file (lookup file))
+        (env (if (null? env) *global-env* (car env))))
+    (if (truthy? file)
+      (map (lambda (x) (eval x env))
+        (macro-expand
+          (parse file)))
+      #f)))

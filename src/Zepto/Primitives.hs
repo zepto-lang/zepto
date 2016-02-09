@@ -182,6 +182,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("input-port?", unaryIOOp isInputPort, "check whether arg is input port")
                , ("output-port?", unaryIOOp isOutputPort, "check whether arg is output port")
                , ("get-home-dir", getHomeDir, "get the home directory")
+               , ("zepto:home", getZeptoDir, "get the home directory")
                , ("read", readProc, "read from file")
                , ("write", writeProc printInternal, "write to file")
                , ("read-char", readCharProc hGetChar, "peek char from file")
@@ -816,7 +817,10 @@ eval _ _ (List ((SimpleVal (Atom "current-env")) : x)) = throwError $ NumArgs 0 
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
-        apply conti func argVals
+        case func of
+          HashMap _ -> eval env conti (List (func : args))
+          Vector _  -> eval env conti (List (func : args))
+          _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 readAll :: [LispVal] -> IOThrowsError LispVal
