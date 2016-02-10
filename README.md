@@ -1,5 +1,5 @@
 ![zepto banner](https://raw.githubusercontent.com/zepto-lang/logos/master/zepto_logo.png)
-![general version](http://img.shields.io/badge/version-0.9.0-yellow.svg)
+![general version](http://img.shields.io/badge/version-0.9.1-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-7.4--7.10-grey.svg)
 [![Build Status](https://travis-ci.org/zepto-lang/zepto.png?branch=master)](https://travis-ci.org/zepto-lang/zepto)
@@ -69,7 +69,7 @@ If you know Scheme, working in the REPL should be pretty straightforward.
 Calling it via `zepto`, you should be greeted by this:
 
 ```
-zepto Version 0.8.4, compiled with GHC version 710
+zepto Version 0.9.1, compiled with GHC version 710
 Copyright (C) 2015 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
