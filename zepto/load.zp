@@ -44,17 +44,10 @@
       #f)))
 
 (define (zepto:add-to-path path)
-  (set! *load-params* (make-hash *load-params*
-                        (make-hash :paths
-                          (++ (*load-params* :paths) path)))))
+  (hash:update! *load-params* :paths (lambda (p) (++ p path))))
 
 (define (zepto:remove-from-path path)
-  (set! *load-params* (make-hash *load-params*
-                        (make-hash :paths
-                          (list:remove (*load-params* :paths) path)))))
+  (hash:update! *load-params* :paths (lambda (p) (list:remove p path))))
 
 (define (zepto:implements-lang f lang)
-  (set! *load-params* (make-hash *load-params*
-                        (make-hash :parsers
-                          (make-hash (*load-params* :parsers)
-                            (make-hash lang f))))))
+  (hash:update! *load-params* :parsers (lambda (p) (hash:update p lang f))))
