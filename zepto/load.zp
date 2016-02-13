@@ -1,4 +1,4 @@
-(define *load-params* #{:stdlib "zepto-stdlib/" :paths [] :parsers #{}})
+(define *load-params* #{:stdlib "zepto-stdlib/" :paths () :parsers #{}})
 (define *global-env* (current-env))
 
 (define (load- file . env)
@@ -50,4 +50,4 @@
   (hash:update! *load-params* :paths (lambda (p) (list:remove p path))))
 
 (define (zepto:implements-lang f lang)
-  (hash:update! *load-params* :parsers (lambda (p) (hash:update p lang f))))
+  (hash:update! *load-params* :parsers (lambda (p) (hash:set p lang f))))
