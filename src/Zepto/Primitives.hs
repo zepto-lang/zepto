@@ -6,7 +6,6 @@ module Zepto.Primitives(primitives
                        , evalString
                        ) where
 import Data.Array
-import Data.ByteString (hPut)
 import Data.IORef (readIORef)
 import Data.List (isPrefixOf)
 import Data.Maybe
@@ -16,6 +15,7 @@ import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
 import qualified Data.Map
+import qualified Data.ByteString as BS (hPut, cons, splitAt, append, tail, index)
 
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
@@ -214,7 +214,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
 printInternal :: Handle -> LispVal -> IO ()
 printInternal handle val =
     case val of
-      ByteVector x -> hPut handle x
+      ByteVector x -> BS.hPut handle x
       _            -> hPrint handle val
 
 stringToNumber :: [LispVal] -> ThrowsError LispVal
@@ -380,6 +380,17 @@ eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
 eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
         i <- getVar env a
         eval env conti (List [Vector x, i])
+eval _ _ (List [Vector _, x]) = throwError $ TypeMismatch "integer" x
+eval _ _ (List [ByteVector x, SimpleVal (Number (NumI i))]) =
+        return $ fromSimple $ Number $ NumS $ fromIntegral $ BS.index x (fromIntegral i)
+eval _ _ (List [ByteVector x, SimpleVal (Number (NumS i))]) =
+        return $ fromSimple $ Number $ NumS $ fromIntegral $ BS.index x (fromIntegral i)
+eval _ _ (List [ByteVector _, wrong@(SimpleVal (Atom (':' : _)))]) =
+        throwError $ TypeMismatch "integer" wrong
+eval env conti (List [ByteVector x, SimpleVal (Atom a)]) = do
+        i <- getVar env a
+        eval env conti (List [ByteVector x, i])
+eval _ _ (List [ByteVector _, x]) = throwError $ TypeMismatch "integer" x
 eval _ _ (List [HashMap x, SimpleVal i@(Atom (':' : _))]) = if Data.Map.member i x
         then return $ x Data.Map.! i
         else return $ fromSimple $ Nil ""
@@ -757,8 +768,11 @@ eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti 
 eval env conti (List [SimpleVal (Atom "string:fill!"), SimpleVal (Atom var), character]) = do
     str <- eval env (nullCont env) =<< getVar env var
     ch <- eval env (nullCont env) character
-    result <- eval env (nullCont env) (fillStr(str, ch)) >>= setVar env var
-    contEval env conti result
+    case ch of
+      (SimpleVal (Character _)) -> do
+        result <- eval env (nullCont env) (fillStr(str, ch)) >>= setVar env var
+        contEval env conti result
+      x -> throwError $ TypeMismatch "character" x
   where fillStr (SimpleVal (String str), SimpleVal (Character ch)) =
             doFillStr (String "", Character ch, length str)
         fillStr (_, _) = fromSimple $ Nil "This should never happen"
@@ -770,8 +784,11 @@ eval env conti (List [SimpleVal (Atom "string:fill!"), SimpleVal (Atom var), cha
 eval env conti (List [SimpleVal (Atom "string:set!"), SimpleVal (Atom var), i, character]) = do
     idx <- eval env (nullCont env) i
     str <- eval env (nullCont env) =<< getVar env var
-    result <- eval env (nullCont env) (substr(str, character, idx)) >>= setVar env var
-    contEval env conti result
+    case str of
+      (SimpleVal (String _)) -> do
+          result <- eval env (nullCont env) (substr(str, character, idx)) >>= setVar env var
+          contEval env conti result
+      x -> throwError $ TypeMismatch "string" x
   where substr (SimpleVal (String str), SimpleVal (Character ch), SimpleVal (Number (NumI j))) =
                               fromSimple . String $ (take (fromInteger j) . drop 0) str ++
                                        [ch] ++
@@ -781,24 +798,37 @@ eval env conti (List [SimpleVal (Atom "vector:set!"), SimpleVal (Atom var), i, o
     idx <- eval env (nullCont env) i
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
-    result <- eval env (nullCont env) (updateVector vec idx obj) >>= setVar env var
-    contEval env conti result
-  where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
-        updateVector _ _ _ = fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "vector:set!"), var, i, object]) = do
-    idx <- eval env (nullCont env) i
-    obj <- eval env (nullCont env) object
-    vec <- eval env (nullCont env) var
-    result <- eval env (nullCont env) (updateVector vec idx obj)
-    contEval env conti result
+    case vec of
+      Vector _ -> do result <- eval env (nullCont env) (updateVector vec idx obj) >>= setVar env var
+                     contEval env conti result
+      x -> throwError $ TypeMismatch "vector" x
   where updateVector (Vector vec) (SimpleVal (Number (NumI idx))) obj = Vector $ vec//[(fromInteger idx, obj)]
         updateVector _ _ _ = fromSimple $ Nil "This should never happen"
 eval _ _ (List (SimpleVal (Atom "vector:set!") : x)) = throwError $ NumArgs 3 x
+eval env conti (List [SimpleVal (Atom "byte-vector:set!"), SimpleVal (Atom var), i, object]) = do
+    idx <- eval env (nullCont env) i
+    obj <- eval env (nullCont env) object
+    case obj of
+      (SimpleVal (Number (NumS _))) -> do
+        vec <- eval env (nullCont env) =<< getVar env var
+        case vec of
+          ByteVector _ -> do
+            result <- eval env (nullCont env) (updateBVector vec idx obj) >>= setVar env var
+            contEval env conti result
+          x -> throwError $ TypeMismatch "byte-vector" x
+      x -> throwError $ TypeMismatch "small int" x
+  where updateBVector (ByteVector vec) (SimpleVal (Number (NumI idx))) (SimpleVal (Number (NumS obj))) =
+            let (t, d) = BS.splitAt (fromInteger idx) vec
+            in ByteVector $ BS.append t (BS.cons (fromIntegral obj) (BS.tail d))
+        updateBVector _ _ _ = fromSimple $ Nil ""
+eval _ _ (List (SimpleVal (Atom "byte-vector:set!") : x)) = throwError $ NumArgs 3 x
 eval env conti (List [SimpleVal (Atom "vector:fill!"), SimpleVal (Atom var), object]) = do
     obj <- eval env (nullCont env) object
     vec <- eval env (nullCont env) =<< getVar env var
-    result <- eval env (nullCont env) (fillVector vec obj) >>= setVar env var
-    contEval env conti result
+    case vec of
+      Vector _ -> do result <- eval env (nullCont env) (fillVector vec obj) >>= setVar env var
+                     contEval env conti result
+      x -> throwError $ TypeMismatch "vector" x
   where fillVector (Vector vec) obj = do
           let l = replicate (lenVector vec) obj
           Vector $ listArray (0, length l - 1) l
@@ -820,6 +850,7 @@ eval env conti (List (function : args)) = do
         case func of
           HashMap _ -> eval env conti (List (func : args))
           Vector _  -> eval env conti (List (func : args))
+          ByteVector _  -> eval env conti (List (func : args))
           _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
