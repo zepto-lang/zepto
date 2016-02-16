@@ -154,11 +154,12 @@ stringFind [SimpleVal (String v), SimpleVal (Character x)] =
         case findIndex (\m -> x == m) v of
            Just n -> return $ SimpleVal $ Number $ NumI $ toInteger n
            _      -> return $ SimpleVal $ Number $ NumI $ -1
-stringFind [SimpleVal (String v), SimpleVal (String x)] =
-        return $ SimpleVal $ Number $ NumI $ substring x v
-  where substring pat str = findStrHelp pat str 0
+stringFind [SimpleVal (String match), SimpleVal (String sub)] =
+        return $ SimpleVal $ Number $ NumI $ substr sub match
+  -- TODO: Advance to next match of first element instead?
+  where substr pat str = findStrHelp pat str 0
         findStrHelp _ [] _ = -1
-        findStrHelp pat s@(x:xs) n
+        findStrHelp pat s@(_:xs) n
           | pat == (take (length pat) s) = n
           | otherwise = findStrHelp pat xs (n+1)
 stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
