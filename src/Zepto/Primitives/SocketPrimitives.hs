@@ -1,9 +1,10 @@
 module Zepto.Primitives.SocketPrimitives where
+import Control.Concurrent.MVar (newMVar)
 import Control.Monad.Except (throwError, liftIO)
 
 import qualified Network.Socket as NS
---import qualified Network.Socket.ByteString as NBS (send, sendAll, sendTo, sendAllTo,
---                                                   recv, recvFrom)
+import qualified Network.Socket.ByteString as NBS (recv, send)
+                                                   -- send, sendAll, sendTo, sendAllTo, recvFrom)
 
 import Zepto.Types
 
@@ -112,3 +113,62 @@ getAddrInfo [_, x] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo [_, x, (SimpleVal _)] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo [_, _, x] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo x = throwError $ NumArgs 2 x
+
+connect :: [LispVal] -> IOThrowsError LispVal
+connect [List [(SimpleVal (Number (NumS fd))),
+               (SimpleVal (Number (NumS fam))),
+               (SimpleVal (String type')),
+               (SimpleVal (Number (NumS protonum)))],
+         addrInfo@(List _)] = do
+        let info' = ls2AddrInfo addrInfo
+        case info' of
+          Just info -> do
+            status <- liftIO (newMVar (NS.NotConnected))
+            let sock = NS.MkSocket (fromIntegral fd)
+                                   (NS.unpackFamily (fromIntegral fam))
+                                   (lookupType type')
+                                   (fromIntegral protonum)
+                                   status
+            _ <- liftIO $ NS.connect sock (getSockAddr info)
+            return $ fromSimple $ Nil ""
+          Nothing -> throwError $ Default "Could not construct addr-info type"
+    where getSockAddr (NS.AddrInfo _ _ _ _ a _) = a
+connect [x, (List _)] = throwError $ TypeMismatch "list" x
+connect [_, x] = throwError $ TypeMismatch "list" x
+connect x = throwError $ NumArgs 2 x
+
+recv :: [LispVal] -> IOThrowsError LispVal
+recv [List [(SimpleVal (Number (NumS fd))),
+            (SimpleVal (Number (NumS fam))),
+            (SimpleVal (String type')),
+            (SimpleVal (Number (NumS protonum)))],
+      (SimpleVal (Number (NumS n)))] = do
+        status <- liftIO (newMVar (NS.Connected))
+        let sock = NS.MkSocket (fromIntegral fd)
+                               (NS.unpackFamily (fromIntegral fam))
+                               (lookupType type')
+                               (fromIntegral protonum)
+                               status
+        datum <- liftIO $ NBS.recv sock n
+        return $ ByteVector datum
+recv [x, (SimpleVal (Number (NumS _)))] = throwError $ TypeMismatch "list" x
+recv [_, x] = throwError $ TypeMismatch "small-int" x
+recv x = throwError $ NumArgs 2 x
+
+send :: [LispVal] -> IOThrowsError LispVal
+send [List [(SimpleVal (Number (NumS fd))),
+            (SimpleVal (Number (NumS fam))),
+            (SimpleVal (String type')),
+            (SimpleVal (Number (NumS protonum)))],
+      ByteVector b] = do
+        status <- liftIO (newMVar (NS.Connected))
+        let sock = NS.MkSocket (fromIntegral fd)
+                               (NS.unpackFamily (fromIntegral fam))
+                               (lookupType type')
+                               (fromIntegral protonum)
+                               status
+        datum <- liftIO $ NBS.send sock b
+        return $ fromSimple $ Number $ NumS datum
+send [x, ByteVector _] = throwError $ TypeMismatch "list" x
+send [_, x] = throwError $ TypeMismatch "byte-vector" x
+send x = throwError $ NumArgs 2 x
