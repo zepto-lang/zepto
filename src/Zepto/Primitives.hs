@@ -201,7 +201,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
 
-               , ("socket", socket, "opens a socket")
+               , ("net:socket", socket, "opens a socket")
+               , ("net:get-addr-info", getAddrInfo, "create an address info object")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
