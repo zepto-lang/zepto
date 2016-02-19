@@ -25,6 +25,7 @@ import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
 import Zepto.Primitives.LogMathPrimitives
+import Zepto.Primitives.SocketPrimitives
 import Zepto.Primitives.TypeCheckPrimitives
 import Zepto.Primitives.VersionPrimitives
 import Zepto.Types
@@ -199,6 +200,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("color", colorProc, "colorize output")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
+
+               , ("socket", socket, "opens a socket")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
