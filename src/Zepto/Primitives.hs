@@ -14,6 +14,7 @@ import Control.Monad.Except
 import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
+import qualified Control.Exception as CE
 import qualified Data.Map
 import qualified Data.ByteString as BS (hPut, cons, splitAt, append, tail, index)
 
@@ -317,8 +318,11 @@ evalCallCC (_ : args) = throwError $ NumArgs 1 args
 evalCallCC x = throwError $ NumArgs 1 x
 
 catchVMError :: [LispVal] -> IOThrowsError LispVal
-catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchError (eval env c x) handler
-    where handler msg = return $ fromSimple $ String $ show msg
+catchVMError [c, x, Environ env] = do
+          str <- liftIO $ CE.catch (runIOThrows $ liftM show $ eval env c x) handler
+          return $ fromSimple $ String str
+    where handler msg@(CE.SomeException _) = return $ show (msg::CE.SomeException)
+catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchVMError [c, x, Environ env]
 catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
 catchVMError x = throwError $ NumArgs 1 (tail x)
 
