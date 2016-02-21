@@ -67,7 +67,8 @@ Executable           zepto
                      split,
                      strict,
                      time,
-                     transformers >= 0.4.2
+                     transformers >= 0.4.2,
+                     utf8-string
     Extensions:      ExistentialQuantification 
                      CPP
     ghc-options:     -Wall 

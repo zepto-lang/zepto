@@ -4,7 +4,9 @@ import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
 
-import qualified Data.ByteString as BS (length, index, replicate, singleton, cons, append, empty, pack)
+import qualified Data.ByteString as BS (length, index, replicate, singleton, cons,
+                                        append, empty, pack)
+import qualified Data.ByteString.UTF8 as BS (fromString, toString)
 
 import Zepto.Types
 
@@ -378,3 +380,11 @@ pprint (HashComprehension a b c d) =
   in case d of
     Nothing -> x ++ "}"
     Just m -> x ++ ", " ++ pprint m ++ "}"
+
+stringToByteVector :: LispVal -> ThrowsError LispVal
+stringToByteVector (SimpleVal (String str)) = return $ ByteVector $ BS.fromString str
+stringToByteVector x = throwError $ TypeMismatch "string" x
+
+byteVectorToString :: LispVal -> ThrowsError LispVal
+byteVectorToString (ByteVector bv) = return $ fromSimple $ String $ BS.toString bv
+byteVectorToString x = throwError $ TypeMismatch "byte-vector" x
