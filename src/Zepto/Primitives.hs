@@ -219,6 +219,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("apply", evalApply, "apply function to values")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
+                 , ("catch-vm-error", catchVMError, "catches any vm error")
                  --, ("call-with-values", evalCallWValues, "call with values"),
                  --, ("load-ffi", evalFFI, "load foreign function")
                  ]
@@ -313,7 +314,13 @@ evalCallCC [conti@(Cont _), fun] =
                     else throwError $ NumArgs (toInteger $ length aparams) [conti]
             other -> throwError $ TypeMismatch "procedure" other
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
-evalCallCC _ = throwError $ NumArgs 1 []
+evalCallCC x = throwError $ NumArgs 1 x
+
+catchVMError :: [LispVal] -> IOThrowsError LispVal
+catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchError (eval env c x) handler
+    where handler msg = return $ fromSimple $ String $ show msg
+catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
+catchVMError x = throwError $ NumArgs 1 (tail x)
 
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
@@ -949,3 +956,4 @@ makeDocFunc name = makeFunc name Nothing
 
 makeVarargs :: String -> LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
 makeVarargs name = makeFunc name . Just . showVal
+
