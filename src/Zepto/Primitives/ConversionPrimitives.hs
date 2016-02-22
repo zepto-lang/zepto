@@ -1,6 +1,10 @@
 module Zepto.Primitives.ConversionPrimitives where
+import Data.Binary (encode)
+import Data.ByteString.Lazy (toStrict)
 import Data.Char (ord, chr)
+import Data.Complex (realPart, imagPart)
 import Control.Monad.Except (throwError)
+import qualified Data.ByteString.Lazy as BSL (concat)
 
 import Zepto.Types
 
@@ -49,3 +53,12 @@ list2Simple notList = throwError $ TypeMismatch "list" notList
 simple2List :: LispVal -> ThrowsError LispVal
 simple2List (SimpleVal (SimpleList x)) = return $ List $ map fromSimple x
 simple2List notList = throwError $ TypeMismatch "list" notList
+
+number2Bytes :: LispVal -> ThrowsError LispVal
+number2Bytes (SimpleVal (Number (NumS x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumI x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumF x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumR x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumC x))) =
+        return $ ByteVector $ toStrict $ BSL.concat $ map encode [realPart x, imagPart x]
+number2Bytes x = throwError $ TypeMismatch "number" x
