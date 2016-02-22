@@ -212,6 +212,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("net:bind-socket", bindSocket, "bind a socket to a specific address")
                , ("net:listen", listen, "listen on a bound socket")
                , ("net:accept", accept, "accept connection to a bound socket")
+               , ("net:close-socket", close, "closes a socket; all future operations on thsi socket will fail")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]

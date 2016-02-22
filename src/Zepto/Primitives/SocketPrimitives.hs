@@ -239,5 +239,21 @@ accept [List [(SimpleVal (Number (NumS fd))),
         return $ List [socketToList conn, addressToList addr]
     where socketToList (NS.MkSocket f fa t p _) =
             List [toS f, toS $ NS.packFamily fa, fromSimple $ String $ typeStr t, toS p]
-accept [x] = throwError $ TypeMismatch "list (representing socket" x
-accept x = throwError $ NumArgs 2 x
+accept [x] = throwError $ TypeMismatch "list (representing socket)" x
+accept x = throwError $ NumArgs 1 x
+
+close :: [LispVal] -> IOThrowsError LispVal
+close [List [(SimpleVal (Number (NumS fd))),
+             (SimpleVal (Number (NumS fam))),
+             (SimpleVal (String type')),
+             (SimpleVal (Number (NumS protonum)))]] = do
+        status <- liftIO (newMVar (NS.Listening))
+        let sock = NS.MkSocket (fromIntegral fd)
+                               (NS.unpackFamily (fromIntegral fam))
+                               (lookupType type')
+                               (fromIntegral protonum)
+                               status
+        _ <- liftIO $ NS.close sock
+        return $ fromSimple $ Nil ""
+close [x] = throwError $ TypeMismatch "list (representing socket)" x
+close x = throwError $ NumArgs 1 x
