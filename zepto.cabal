@@ -53,7 +53,7 @@ Executable           zepto
     Build-Depends:   array,
                      base,
                      binary,
-                     bytestring,
+                     bytestring >= 0.10.2.0,
                      clock,
                      containers,
                      directory,
