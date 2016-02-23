@@ -5,7 +5,7 @@ import Data.Word (Word8)
 import Control.Monad.Except
 
 import qualified Data.ByteString as BS (length, index, replicate, singleton, cons,
-                                        append, empty, pack)
+                                        append, empty, pack, take, drop)
 import qualified Data.ByteString.UTF8 as BS (fromString, toString)
 
 import Zepto.Types
@@ -31,7 +31,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -110,6 +110,24 @@ subVector [Vector _, SimpleVal (Number (NumS _)), badType] = throwError $ TypeMi
 subVector ((Vector _) : badType : _) = throwError $ TypeMismatch "integer" badType
 subVector (badType : _) = throwError $ TypeMismatch "vector" badType
 subVector badArgList = throwError $ NumArgs 2 badArgList
+
+subByteVector [ByteVector v, SimpleVal (Number (NumI n))] =
+        return $ ByteVector $ BS.take (fromInteger n) v
+subByteVector [ByteVector v, SimpleVal (Number (NumS n))] =
+        return $ ByteVector $ BS.take n v
+subByteVector [ByteVector v, SimpleVal (Number (NumI from)), SimpleVal (Number (NumI to))] =
+        return $ ByteVector $ BS.take (fromInteger (to - from)) $ BS.drop (fromInteger from) v
+subByteVector [ByteVector v, SimpleVal (Number (NumS from)), SimpleVal (Number (NumS to))] =
+        return $ ByteVector $ BS.take (to - from) $ BS.drop from v
+subByteVector [ByteVector v, SimpleVal (Number (NumI from)), SimpleVal (Number (NumS to))] =
+        return $ ByteVector $ BS.take (to - fromInteger from) $ BS.drop (fromInteger from) v
+subByteVector [ByteVector v, SimpleVal (Number (NumS from)), SimpleVal (Number (NumI to))] =
+        return $ ByteVector $ BS.take (fromInteger to - from) $ BS.drop from v
+subByteVector [ByteVector _, SimpleVal (Number (NumI _)), badType] = throwError $ TypeMismatch "integer" badType
+subByteVector [ByteVector _, SimpleVal (Number (NumS _)), badType] = throwError $ TypeMismatch "integer" badType
+subByteVector ((ByteVector _) : badType : _) = throwError $ TypeMismatch "integer" badType
+subByteVector (badType : _) = throwError $ TypeMismatch "byte-vector" badType
+subByteVector badArgList = throwError $ NumArgs 2 badArgList
 
 vectorToList (Vector v) = return $ List $ elems v
 vectorToList badType = throwError $ TypeMismatch "vector" badType

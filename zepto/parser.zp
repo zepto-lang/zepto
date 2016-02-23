@@ -1,0 +1,59 @@
+(define-syntax ->ast
+  (syntax-rules ()
+    ((_ form)
+      ((import "ast:ast") 'form))))
+
+(module "ast"
+  (export
+    (list "ast" ast))
+
+  (build-value (lambda (category type form)
+    (make-hash :category category :type type :value form)))
+
+  (build-function (lambda (form)
+    (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+      (make-hash :type :define-fn
+                 :category :callable
+                 :name (ast (caadr form))
+                 :arguments (map ast (cdadr form))
+                 :doc docstring
+                 :body (ast (list:last form))))))
+
+  (list->ast (lambda (form)
+    (case (car form)
+      ((quote) (build-value :collection :list (map ast (cadr form))))
+      ((define)
+        (if (list? (cadr form))
+          (build-function form)
+          (make-hash :type :define-val
+                     :category :callable
+                     :name (cadr form)
+                     :binding (ast (caddr form)))))
+      ((lambda)
+        (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+          (make-hash :type :lambda
+                     :category :callable
+                     :arguments (map ast (cadr form))
+                     :doc docstring
+                     :body (ast (list:last form)))))
+      (else (make-hash :type :application
+                       :function (ast (car form))
+                       :arguments (map ast (cdr form)))))))
+
+  (ast (lambda (form)
+    (cond
+      ((list? form) (list->ast form))
+      ((integer? form) (build-value :simple :integer form))
+      ((float? form) (build-value :simple :float form))
+      ((rational? form) (build-value :simple :rational form))
+      ((small-int? form) (build-value :simple :int form))
+      ((complex? form) (build-value :simple :complex form))
+      ((string? form) (build-value :collection :string form))
+      ((char? form) (build-value :simple :string form))
+      ((vector? form) (build-value :collection :vector (vector->list form)))
+      ((byte-vector? form) (build-value :collection :byte-vector (byte-vector->list form)))
+      ((hash-map? form) (build-value :collection :hash-map
+                                     (hash:kv-map (lambda (kv) (map ast kv)) form)))
+      ((symbol? form) (build-value :simple :symbol form))
+      ((atom? form) (build-value :simple :atom form))
+      (else (error "ast:ast" (typeof form) "is a deprecated special form"))))))
