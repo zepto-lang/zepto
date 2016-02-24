@@ -1,12 +1,27 @@
 module Zepto.Primitives.ConversionPrimitives where
+import Control.Exception (evaluate)
+import Control.Monad.Except (throwError, liftIO)
 import Data.Binary (encode)
 import Data.ByteString.Lazy (toStrict)
 import Data.Char (ord, chr)
 import Data.Complex (realPart, imagPart)
-import Control.Monad.Except (throwError)
+import Data.IORef (readIORef)
+import Data.Map.Lazy (foldrWithKey, empty, insert)
 import qualified Data.ByteString.Lazy as BSL (concat)
 
 import Zepto.Types
+import Zepto.Variables (allBindings)
+
+env2HashMap :: LispVal -> IOThrowsError LispVal
+env2HashMap (Environ x) = do
+        env <- liftIO $ allBindings x
+        hashmap <- liftIO $ foldrWithKey accum (evaluate empty) env
+        return $ HashMap hashmap
+    where accum k v acc = do
+            nv <- readIORef v
+            nacc <- liftIO acc
+            return $ insert (String $ drop 2 k) nv nacc
+env2HashMap x = throwError $ TypeMismatch "env" x
 
 symbol2String :: LispVal -> ThrowsError LispVal
 symbol2String (SimpleVal (Atom a)) = return $ fromSimple $ String a

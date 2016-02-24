@@ -6,8 +6,6 @@ module Zepto.Primitives(primitives
                        , evalString
                        ) where
 import Data.Array
-import Data.IORef (readIORef)
-import Data.List (isPrefixOf)
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
@@ -205,6 +203,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("color", colorProc, "colorize output")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
+               , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
 
                , ("net:socket", socket, "opens a socket")
                , ("net:get-addr-info", getAddrInfo, "create an address info object")
@@ -503,28 +502,6 @@ eval _ _ (List [SimpleVal (Atom "if"), x]) = throwError $ BadSpecialForm
                             ++ "plus an optional alternative clause")
                             x
 eval _ _ (List (SimpleVal (Atom "if") : x)) = throwError $ NumArgs 2 x
-eval env conti (List [SimpleVal (Atom "zepto:get-bindings"), form]) = do
-        result <- eval env conti form
-        case result of
-          SimpleVal (String prefix) -> do
-                bind <- liftIO $ allEnvironments env
-                let x = Data.Map.keys bind
-                let filtered = filter (\e -> isPrefixOf (vnamespace : "_" ++ prefix) e) x
-                mapped <- mapM
-                  (\e ->
-                    let name = fromSimple $ Atom $ drop 2 e
-                    in do
-                      evald <- eval env conti name
-                      return $ List $ name : [evald])
-                  filtered
-                return $ List $ mapped
-          x -> throwError $ TypeMismatch "string" x
-    where allEnvironments (Environment Nothing b _) = readIORef $ b
-          allEnvironments (Environment (Just parent) b _) = do
-              x <- readIORef b
-              y <- allEnvironments parent
-              return $ Data.Map.union x y
-eval _ _ (List (SimpleVal (Atom "zepto:get-bindings") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "set!")]) = throwError $ NumArgs 2 []
 eval env conti (List [SimpleVal (Atom "set!"), SimpleVal (Atom var), form]) = do
         result <- eval env (nullCont env) form >>= setVar env var

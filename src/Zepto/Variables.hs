@@ -21,6 +21,13 @@ mnamespace = 'm'
 vnamespace :: Char
 vnamespace = 'v'
 
+allBindings :: Env -> IO (Data.Map.Map String (IORef LispVal))
+allBindings (Environment Nothing b _) = readIORef $ b
+allBindings (Environment (Just parent) b _) = do
+        x <- readIORef b
+        y <- allBindings parent
+        return $ Data.Map.union x y
+
 copyEnv :: Env -> IO Env
 copyEnv env = do
         ptrs <- liftIO $ readIORef $ pointers env
