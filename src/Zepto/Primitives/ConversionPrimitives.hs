@@ -6,7 +6,7 @@ import Data.ByteString.Lazy (toStrict)
 import Data.Char (ord, chr)
 import Data.Complex (realPart, imagPart)
 import Data.IORef (readIORef)
-import Data.Map.Lazy (foldrWithKey, empty, insert)
+import Data.Map (foldrWithKey, empty, insert)
 import qualified Data.ByteString.Lazy as BSL (concat)
 
 import Zepto.Types
