@@ -1,0 +1,4 @@
+(load "zepto/erl/ast")
+(load "zepto/erl/core")
+
+(->core (->ast (parse (car zepto:args))))

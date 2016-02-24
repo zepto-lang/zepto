@@ -1,0 +1,11 @@
+(define-syntax ->core
+  (syntax-rules ()
+    ((_ form)
+      ((import "core:ast->core") form))))
+
+(module "core"
+  (export
+    (list "ast->core" ast->core))
+
+  (ast->core (lambda (form)
+    (write form))))

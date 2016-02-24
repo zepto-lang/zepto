@@ -1,7 +1,7 @@
 (define-syntax ->ast
   (syntax-rules ()
     ((_ form)
-      ((import "ast:ast") 'form))))
+      ((import "ast:ast") form))))
 
 (module "ast"
   (export
@@ -20,7 +20,8 @@
                  :body (ast (list:last form))))))
 
   (list->ast (lambda (form)
-    (case (car form)
+    (begin (write form)
+      (case (car form)
       ((quote) (build-value :collection :list (map ast (cadr form))))
       ((define)
         (if (list? (cadr form))
@@ -36,14 +37,22 @@
                      :arguments (map ast (cadr form))
                      :doc docstring
                      :body (ast (list:last form)))))
+      (('module) (make-module form))
+      ((begin) (make-hash :type :seq :category :instruction :arguments (map ast (cdr form))))
+      ((if) (make-hash :type :if
+                       :category :instruction
+                       :cond (ast (cadr form))
+                       :then (ast (caddr form))
+                       :else (ast (get-from form 3 (nil)))))
       (else (make-hash :type :application
                        :function (ast (car form))
-                       :arguments (map ast (cdr form)))))))
+                       :arguments (map ast (cdr form))))))))
 
   (ast (lambda (form)
     (cond
       ((list? form) (list->ast form))
       ((integer? form) (build-value :simple :integer form))
+      ((boolean? form) (build-value :simple :boolean form))
       ((float? form) (build-value :simple :float form))
       ((rational? form) (build-value :simple :rational form))
       ((small-int? form) (build-value :simple :int form))
