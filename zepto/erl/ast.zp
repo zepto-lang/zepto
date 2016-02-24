@@ -20,8 +20,7 @@
                  :body (ast (list:last form))))))
 
   (list->ast (lambda (form)
-    (begin (write form)
-      (case (car form)
+    (case (car form)
       ((quote) (build-value :collection :list (map ast (cadr form))))
       ((define)
         (if (list? (cadr form))
@@ -46,7 +45,7 @@
                        :else (ast (get-from form 3 (nil)))))
       (else (make-hash :type :application
                        :function (ast (car form))
-                       :arguments (map ast (cdr form))))))))
+                       :arguments (map ast (cdr form)))))))
 
   (ast (lambda (form)
     (cond
