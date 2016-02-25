@@ -1,11 +1,36 @@
 (define-syntax ->core
   (syntax-rules ()
-    ((_ form)
-      ((import "core:ast->core") form))))
+    ((_ form module-name)
+      ((import "core:ast->core") form module-name))))
 
 (module "core"
   (export
     (list "ast->core" ast->core))
 
-  (ast->core (lambda (form)
-    (write form))))
+  (CORE-INST [+ - / *])
+
+  (fn-with-arity (lambda (fn)
+    (++ "'" (->string ((fn :name) :value)) "'" "/" (->string (length (fn :arguments))))))
+
+  (args-string (lambda (args)
+    (string:join (map (lambda (arg) (->string (arg :value))) args) #\,)))
+
+  (body-parse (lambda (body)
+    (case (body :type)
+      ((:application)
+        (let ((inst ((body :function) :value)))
+          (if (in? CORE-INST inst)
+            (++ "call 'erlang':'" (->string inst) "'" " (" (args-string (body :arguments)) ")")
+            "")))
+      (else (begin (write "unknown instruction.") (exit 1))))))
+
+  (build-fn (lambda (fn)
+    (++ (fn-with-arity fn) " =\n\t fun ("
+        (args-string (fn :arguments))
+        ") ->" (body-parse (fn :body)))))
+
+  (ast->core (lambda (form module-name)
+    (let ((functions (filter (lambda (x) (eq? :define-fn (x :type))) form)))
+      (++ "module '" module-name "'
+          [" (string:join (map fn-with-arity functions) #\,) "]\n"
+          (string:join (map build-fn functions) #\newline))))))
