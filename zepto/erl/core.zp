@@ -9,25 +9,61 @@
 
   (CORE-INST [+ - / *])
 
-  (fn-with-arity (lambda (fn)
-    (++ "'" (->string ((fn :name) :value)) "'" "/" (->string (length (fn :arguments))))))
+  (x-with-arity (lambda (fn name)
+    (++ "'" (->string (name :value)) "'" "/" (->string (length (fn :arguments))))))
+
+  (fn-with-arity (lambda (fn) (x-with-arity fn (fn :name))))
+
+  (apply-with-arity (lambda (fn) (x-with-arity fn (fn :function))))
 
   (args-string (lambda (args)
     (string:join (map (lambda (arg) (->string (arg :value))) args) #\,)))
 
+  (args-parse (lambda (args)
+    (if (all? (lambda (a) (or (eq? :simple (a :category)) (eq? :collection (a :category))))
+              args)
+      (args-string args)
+      (begin (write "non-simple body.") (exit 1)))))
+
+  (app-parse (lambda (body)
+    (let ((inst ((body :function) :value))
+          (args (body :arguments)))
+      (if (all? final? args)
+        (++
+          (if (in? CORE-INST inst)
+            (++ "call 'erlang':'" (->string inst) "'")
+            (++ "apply " (apply-with-arity body)))
+          " (" (args-string args) ")")
+        (let ((nenv (reduce let-forms (list 0 "" (list->vector args) 0) args)))
+          (++ (cadr nenv) (app-parse (hash:set body :arguments (vector->list (caddr nenv))))))))))
+
+  (let-forms (lambda (acc arg) "yuck"
+    (let ((nbinds (car acc))
+          (args (cadr acc))
+          (env (caddr acc))
+          (i (cadddr acc)))
+    (if (final? arg)
+      (list nbinds args env (add1 i))
+      (let ((name (++ "_cor" (->string nbinds))))
+      (list (add1 nbinds)
+            (++ args "let <" name "> = " (app-parse arg) " in ")
+            (vector:update! env i (lambda (x) (make-hash :category :simple :value name)))
+            (add1 i)))))))
+
+  (final? (lambda (a) (or (eq? :simple (a :category)) (eq? :collection (a :category)))))
+
   (body-parse (lambda (body)
     (case (body :type)
-      ((:application)
-        (let ((inst ((body :function) :value)))
-          (if (in? CORE-INST inst)
-            (++ "call 'erlang':'" (->string inst) "'" " (" (args-string (body :arguments)) ")")
-            "")))
-      (else (begin (write "unknown instruction.") (exit 1))))))
+      ((:application) (app-parse body))
+      ((:symbol :integer :int :float) (->string (body :value)))
+      ((:boolean) (++ "'" (->string (body :value)) "'"))
+      ((:string) (->string (string:reduce (lambda (acc x) (++ acc (char->integer x))) [] (body :value))))
+      (else (begin (write (++ "unknown instruction type" (->string (body :type)))) (exit 1))))))
 
   (build-fn (lambda (fn)
     (++ (fn-with-arity fn) " =\n\t fun ("
         (args-string (fn :arguments))
-        ") ->" (body-parse (fn :body)))))
+        ") -> " (body-parse (fn :body)))))
 
   (ast->core (lambda (form module-name)
     (let ((functions (filter (lambda (x) (eq? :define-fn (x :type))) form)))
