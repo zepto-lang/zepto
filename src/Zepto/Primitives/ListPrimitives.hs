@@ -144,6 +144,12 @@ buildString (SimpleVal (Character c) : rest) = do
     case cs of
         SimpleVal (String s) -> return $ fromSimple $ String $ c : s
         badType -> throwError $ TypeMismatch "character" badType
+buildString [s@(SimpleVal (String _))] = return s
+buildString (SimpleVal (String h) : rest) = do
+    cs <- buildString rest
+    case cs of
+        SimpleVal (String s) -> return $ fromSimple $ String $ h ++ s
+        badType -> throwError $ TypeMismatch "character" badType
 buildString [badType] = throwError $ TypeMismatch "character" badType
 buildString badArgList = throwError $ NumArgs 1 badArgList
 
