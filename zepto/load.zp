@@ -48,7 +48,7 @@
         (foldl (lambda (_ x) (eval x env))
           []
           (macro-expand
-            parsed))
+            parsed env))
         #f)))
 
   (define (zepto:add-to-path path)
