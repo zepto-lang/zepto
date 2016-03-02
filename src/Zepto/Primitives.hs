@@ -633,28 +633,6 @@ eval env conti (List [SimpleVal (Atom "global-load"), SimpleVal (String file)]) 
           checkLast x = last x
 eval _ _ (List [SimpleVal (Atom "global-load"), x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (SimpleVal (Atom "global-load") : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [SimpleVal (Atom "load")]) = throwError $ NumArgs 1 []
-eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
-        filename <- findFile' file
-        result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
-        contEval env conti result
-    where evl env' cont' val = macroEval env' val >>= eval env' cont'
-          checkLast [] = fromSimple $ Nil ""
-          checkLast [x] = x
-          checkLast x = last x
-eval env conti (List [SimpleVal (Atom "load"), maybefile]) = do
-        f <- eval env conti maybefile
-        case f of
-          (SimpleVal (String file)) -> do
-            filename <- findFile' file
-            result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
-            contEval env conti result
-          othr -> throwError $ TypeMismatch "string" othr
-    where evl env' cont' val = macroEval env' val >>= eval env' cont'
-          checkLast [] = fromSimple $ Nil ""
-          checkLast [x] = x
-          checkLast x = last x
-eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
 eval env _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) = do
