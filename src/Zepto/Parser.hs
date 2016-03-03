@@ -214,6 +214,7 @@ parseChar = do
     "delete"    -> return $ fromSimple $ Character '\DEL'
     "escape"    -> return $ fromSimple $ Character '\ESC'
     "newline"   -> return $ fromSimple $ Character '\n'
+    "carriage"  -> return $ fromSimple $ Character '\r'
     "null"      -> return $ fromSimple $ Character '\0'
     "return"    -> return $ fromSimple $ Character '\n'
     "space"     -> return $ fromSimple $ Character ' '

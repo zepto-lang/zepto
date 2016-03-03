@@ -20,10 +20,10 @@
 
 (define meta-commands
   (make-hash
-    :q do-exit
-    :quit do-exit
-    :p set-prompt
-    :prompt set-prompt))
+    ":q" do-exit
+    ":quit" do-exit
+    ":p" set-prompt
+    ":prompt" set-prompt))
 
 (define (read-loop)
   (define (remove-from-input count)
@@ -91,9 +91,9 @@
     (if (falsy? input)
       (repl))
     (write-hist-item input)
-    (define res (eval (string:parse input) *env*))
+    (define res (catch-vm-error (string:parse input) *env*))
     (let* ((split (string:split (->string res) #\=))
-           (cmd (string->symbol (car split))))
+           (cmd (car split)))
       (if (not (nil? (meta-commands cmd)))
         ((meta-commands cmd) (cdr split))
         (begin

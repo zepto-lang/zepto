@@ -1,53 +1,61 @@
-(define *load-params* #{:stdlib "zepto-stdlib/" :paths () :parsers #{}})
-(define *global-env* (current-env))
+(begin
+  (define *load-params* #{:stdlib "zepto-stdlib/" :paths () :parsers #{}})
+  (define *global-env* (current-env))
 
-(define (load- file . env)
-  (define (file-exists? file)
-    (not (boolean? (open-input-file file))))
-  (define (lookup file)
-    (let* ((with-ext (++ file ".zp"))
-           (stdlib (++ (zepto:home) (*load-params* :stdlib) with-ext)))
-    (cond
-      ((file-exists? file) file)
-      ((file-exists? with-ext) with-ext)
-      ((file-exists? stdlib) stdlib)
-      (else
-        (let* ((paths (*load-params* :paths))
-               (found (reduce
-                        (lambda (acc p) (cond 
-                                          ((file-exists (++ p file)) (++ p file))
-                                          ((file-exists (++ p file ".zp")) (++ p file ".zp"))))
-                        ""
-                        paths)))
-        (if (truthy? found)
-          found
-          (begin
-            (error "load: Did not find file" file "on the search path")
-            #f)))))))
-  (define (iparse file)
-    (let* ((firstline (read-line (open-input-file file)))
-           (lang (get-from (string:split firstline #\space) 1 "")))
-      (if (string:starts-with firstline "#lang")
-        (cond
-          ((string:empty? lang) (begin (error "Malformed #lang directive:" firstline) #f))
-          ((in? (*load-params* :parsers) lang) ((get-from *load-params* (list :parsers lang))
-                                                  (read-contents file)))
-          (else (begin (error "No parser found for language:" lang) #f)))
-        (parse file))))
-  (let* ((file (lookup file))
-         (env (if (null? env) *global-env* (car env)))
-         (parsed (and file (iparse file))))
-    (if (not (eq? parsed #f))
-      (map (lambda (x) (eval x env))
-        (macro-expand
-          parsed))
-      #f)))
+  (define (load file . env)
+    (define (file-exists? file)
+      (not (boolean? (open-input-file file))))
+    (define (lookup file)
+      (let* ((with-ext (++ file ".zp"))
+             (stdlib (++ (zepto:home) (*load-params* :stdlib) file))
+             (stdlib-ext (++ (zepto:home) (*load-params* :stdlib) with-ext)))
+      (cond
+        ((file-exists? file) file)
+        ((file-exists? with-ext) with-ext)
+        ((file-exists? stdlib) stdlib)
+        ((file-exists? stdlib-ext) stdlib-ext)
+        (else
+          (let* ((paths (*load-params* :paths))
+                 (found (reduce
+                          (lambda (acc p)
+                            (if (truthy? acc)
+                              acc
+                              (cond 
+                                ((file-exists (++ p file)) (++ p file))
+                                ((file-exists (++ p file ".zp")) (++ p file ".zp"))
+                                (else acc))))
+                          ""
+                          paths)))
+          (if (truthy? found)
+            found
+            (begin
+              (error "load: Did not find file" file "on the search path")
+              #f)))))))
+    (define (iparse file)
+      (let* ((firstline (read-line (open-input-file file)))
+             (lang (get-from (string:split firstline #\space) 1 "")))
+        (if (string:starts-with firstline "#lang")
+          (cond
+            ((string:empty? lang) (begin (error "Malformed #lang directive:" firstline) #f))
+            ((in? (*load-params* :parsers) lang) ((get-from *load-params* (list :parsers lang))
+                                                    (read-contents file)))
+            (else (begin (error "No parser found for language:" lang) #f)))
+          (parse file))))
+    (let* ((file (lookup file))
+           (env (if (null? env) *global-env* (car env)))
+           (parsed (and file (iparse file))))
+      (if (not (eq? parsed #f))
+        (foldl (lambda (_ x) (eval x env))
+          []
+          (macro-expand
+            parsed env))
+        #f)))
 
-(define (zepto:add-to-path path)
-  (hash:update! *load-params* :paths (lambda (p) (++ p path))))
+  (define (zepto:add-to-path path)
+    (hash:update! *load-params* :paths (lambda (p) (++ p path))))
 
-(define (zepto:remove-from-path path)
-  (hash:update! *load-params* :paths (lambda (p) (list:remove p path))))
+  (define (zepto:remove-from-path path)
+    (hash:update! *load-params* :paths (lambda (p) (list:remove p path))))
 
-(define (zepto:implements-lang f lang)
-  (hash:update! *load-params* :parsers (lambda (p) (hash:set p lang f))))
+  (define (zepto:implements-lang f lang)
+    (hash:update! *load-params* :parsers (lambda (p) (hash:set p lang f)))))

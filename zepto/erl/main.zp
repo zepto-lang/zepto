@@ -1,0 +1,6 @@
+(load "zepto/erl/ast")
+(load "zepto/erl/core")
+
+(let ((name (head zepto:args)))
+  (->core (map (lambda (x) (->ast x)) (parse name))
+          (head (string:split (list:last (string:split name "/")) ".zp"))))

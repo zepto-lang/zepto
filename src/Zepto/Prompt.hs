@@ -41,7 +41,6 @@ keywords = [ "apply"
            , "help"
            , "if"
            , "lambda"
-           , "load"
            , "quote"
            , "quasiquote"
            , "set!"
@@ -338,14 +337,42 @@ readPrompt env text = do set <- addSettings env
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr = evalString env expr >>= putStrLn . (++) "=> "
 
+stdlib :: Env -> IO String
+stdlib env = do
+    _ <- loadFun env "zepto-stdlib/foldl.zp"
+    x <- mapM (\x -> loadFile env x) ["zepto-stdlib/let.zp",
+                                  "zepto-stdlib/extra.zp",
+                                  "zepto-stdlib/logical.zp",
+                                  "zepto-stdlib/util.zp",
+                                  "zepto-stdlib/math.zp",
+                                  "zepto-stdlib/zplist.zp",
+                                  "zepto-stdlib/zpstring.zp",
+                                  "zepto-stdlib/definitions.zp",
+                                  "zepto-stdlib/io.zp",
+                                  "zepto-stdlib/pairs.zp",
+                                  "zepto-stdlib/zpcollections.zp",
+                                  "zepto/load.zp",
+                                  "zepto-stdlib/module.zp"]
+    return $ last x
+
+loadFun :: Env -> String -> IO String
+loadFun env f = do
+      file <- getDataFileName f
+      evalString env $ "(eval (car (macro-expand (parse \"" ++ file ++ "\"))))"
+
+-- | load a file into an environment
+loadFile :: Env -> String -> IO String
+loadFile env f = do
+      file <- getDataFileName f
+      evalString env $
+        "(begin (define env (current-env)) (foldl (lambda (_ el) (eval el env)) [] (macro-expand (parse \"" ++ file ++ "\"))))"
+
 -- | run a single statement
 runSingleStatement :: String -> IO ()
 runSingleStatement statement = do
         env <- primitiveBindings
-        lib <- getDataFileName "zepto-stdlib/module.zp"
-        _   <- loadFile env lib
+        _   <- stdlib env
         evalString env statement >>= putStrLn
-    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 -- | run a file
 runFile :: [String] -> IO ()
@@ -354,23 +381,19 @@ runFile args = do
                                                     List $ fromSimple . String <$> drop 1 args)]
                                  >>= flip extendEnv[((vnamespace, "zepto:name"),
                                                     fromSimple $ String $ head args)]
-        lib <- getDataFileName "zepto-stdlib/module.zp"
-        _   <- loadFile env lib
-        smt <- runIOThrows (liftM show $ eval env (nullCont env)
+        _   <- stdlib env
+        smt  <- runIOThrows (liftM show $ eval env (nullCont env)
           (List [fromSimple (Atom "load"), fromSimple $ String $ head args]))
         putStrLn smt
-    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
 
 
 -- | run the REPL
 runRepl :: IO ()
 runRepl = do
         env <- primitiveBindings
-        lib <- getDataFileName "zepto-stdlib/module.zp"
-        ret <- loadFile env lib
+        ret <- stdlib env
         _   <- putStrLn ret
         until_ (readPrompt env) (evaluation env) defaultPrompt
-    where loadFile env file = evalString env $ "(load \"" ++ file ++ "\")"
-          evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
+    where evaluation env x = Control.Exception.catch (evalAndPrint env x) handler
           handler msg@(Control.Exception.SomeException _) = putStrLn $
                 "Caught error: " ++ show (msg::Control.Exception.SomeException)
