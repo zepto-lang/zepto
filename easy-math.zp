@@ -1,0 +1,24 @@
+(define (sub y z)
+  (- y z))
+
+(define (add y z)
+  (+ y z))
+
+(define (pow y z)
+  (xp y z))
+
+(define (append y z)
+  (++ y z))
+
+(define (mappend x y z)
+  (++ x (++ y z)))
+
+(define (add a b)
+  (+ (id a) (id b)))
+
+(define (id i) i)
+
+(define (true) #t)
+(define (false) #f)
+(define (x) 1)
+(define (x) "lol")

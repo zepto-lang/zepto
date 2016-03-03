@@ -6,14 +6,13 @@ module Zepto.Primitives(primitives
                        , evalString
                        ) where
 import Data.Array
-import Data.IORef (readIORef)
-import Data.List (isPrefixOf)
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Except
 import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
+import qualified Control.Exception as CE
 import qualified Data.Map
 import qualified Data.ByteString as BS (hPut, cons, splitAt, append, tail, index)
 
@@ -25,6 +24,7 @@ import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
 import Zepto.Primitives.LogMathPrimitives
+import Zepto.Primitives.SocketPrimitives
 import Zepto.Primitives.TypeCheckPrimitives
 import Zepto.Primitives.VersionPrimitives
 import Zepto.Types
@@ -128,6 +128,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("vector:length", unaryOp vectorLength, "get length of vector")
              , ("byte-vector:length", unaryOp byteVectorLength, "get length of byte vector")
              , ("vector:subvector", subVector, "get subvector from element to element")
+             , ("byte-vector:subvector", subByteVector, "get subvector from element to element")
              , ("string:length", unaryOp stringLength, "get length of string")
              , ("string:substitute", stringSub, "substitute pattern within string by string")
              , ("make-string", makeString, "make a new string")
@@ -143,10 +144,13 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("list->vector", unaryOp listToVector, "makes vector from list")
              , ("symbol->string", unaryOp symbol2String, "makes string from symbol")
              , ("number->string", number2String, "makes string from number")
+             , ("number->bytes", unaryOp number2Bytes, "makes list of bytes from number")
              , ("string->symbol", unaryOp string2Symbol, "makes symbol from string")
              , ("string->number", stringToNumber, "makes number from string")
              , ("string->list", unaryOp stringToList, "makes list from string")
              , ("list->string", unaryOp listToString, "makes string from list")
+             , ("byte-vector->string", unaryOp byteVectorToString, "makes string from byte-vector")
+             , ("string->byte-vector", unaryOp stringToByteVector, "makes byte-vector from string")
              , ("string:parse", unaryOp stringParse, "parse string")
              , ("substring", substring, "makes substring from string")
              , ("vector:ref", vectorRef, "get element from vector")
@@ -199,6 +203,17 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("color", colorProc, "colorize output")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
+               , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
+
+               , ("net:socket", socket, "opens a socket")
+               , ("net:get-addr-info", getAddrInfo, "create an address info object")
+               , ("net:connect", connect, "connect a socket to an address")
+               , ("net:recv", recv, "receive data from a connected socket")
+               , ("net:send", send, "send data to a connected socket")
+               , ("net:bind-socket", bindSocket, "bind a socket to a specific address")
+               , ("net:listen", listen, "listen on a bound socket")
+               , ("net:accept", accept, "accept connection to a bound socket")
+               , ("net:close-socket", close, "closes a socket; all future operations on thsi socket will fail")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
@@ -207,6 +222,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("apply", evalApply, "apply function to values")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
+                 , ("catch-vm-error", catchVMError, "catches any vm error")
                  --, ("call-with-values", evalCallWValues, "call with values"),
                  --, ("load-ffi", evalFFI, "load foreign function")
                  ]
@@ -301,7 +317,16 @@ evalCallCC [conti@(Cont _), fun] =
                     else throwError $ NumArgs (toInteger $ length aparams) [conti]
             other -> throwError $ TypeMismatch "procedure" other
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
-evalCallCC _ = throwError $ NumArgs 1 []
+evalCallCC x = throwError $ NumArgs 1 x
+
+catchVMError :: [LispVal] -> IOThrowsError LispVal
+catchVMError [c, x, Environ env] = do
+          str <- liftIO $ CE.catch (runIOThrows $ liftM show $ eval env c x) handler
+          return $ fromSimple $ String str
+    where handler msg@(CE.SomeException _) = return $ show (msg::CE.SomeException)
+catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchVMError [c, x, Environ env]
+catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
+catchVMError x = throwError $ NumArgs 1 (tail x)
 
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
@@ -477,28 +502,6 @@ eval _ _ (List [SimpleVal (Atom "if"), x]) = throwError $ BadSpecialForm
                             ++ "plus an optional alternative clause")
                             x
 eval _ _ (List (SimpleVal (Atom "if") : x)) = throwError $ NumArgs 2 x
-eval env conti (List [SimpleVal (Atom "zepto:get-bindings"), form]) = do
-        result <- eval env conti form
-        case result of
-          SimpleVal (String prefix) -> do
-                bind <- liftIO $ allEnvironments env
-                let x = Data.Map.keys bind
-                let filtered = filter (\e -> isPrefixOf (vnamespace : "_" ++ prefix) e) x
-                mapped <- mapM
-                  (\e ->
-                    let name = fromSimple $ Atom $ drop 2 e
-                    in do
-                      evald <- eval env conti name
-                      return $ List $ name : [evald])
-                  filtered
-                return $ List $ mapped
-          x -> throwError $ TypeMismatch "string" x
-    where allEnvironments (Environment Nothing b _) = readIORef $ b
-          allEnvironments (Environment (Just parent) b _) = do
-              x <- readIORef b
-              y <- allEnvironments parent
-              return $ Data.Map.union x y
-eval _ _ (List (SimpleVal (Atom "zepto:get-bindings") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "set!")]) = throwError $ NumArgs 2 []
 eval env conti (List [SimpleVal (Atom "set!"), SimpleVal (Atom var), form]) = do
         result <- eval env (nullCont env) form >>= setVar env var
@@ -630,28 +633,6 @@ eval env conti (List [SimpleVal (Atom "global-load"), SimpleVal (String file)]) 
           checkLast x = last x
 eval _ _ (List [SimpleVal (Atom "global-load"), x]) = throwError $ TypeMismatch "string" x
 eval _ _ (List (SimpleVal (Atom "global-load") : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [SimpleVal (Atom "load")]) = throwError $ NumArgs 1 []
-eval env conti (List [SimpleVal (Atom "load"), SimpleVal (String file)]) = do
-        filename <- findFile' file
-        result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
-        contEval env conti result
-    where evl env' cont' val = macroEval env' val >>= eval env' cont'
-          checkLast [] = fromSimple $ Nil ""
-          checkLast [x] = x
-          checkLast x = last x
-eval env conti (List [SimpleVal (Atom "load"), maybefile]) = do
-        f <- eval env conti maybefile
-        case f of
-          (SimpleVal (String file)) -> do
-            filename <- findFile' file
-            result <- load filename >>= liftM checkLast . mapM (evl env (nullCont env))
-            contEval env conti result
-          othr -> throwError $ TypeMismatch "string" othr
-    where evl env' cont' val = macroEval env' val >>= eval env' cont'
-          checkLast [] = fromSimple $ Nil ""
-          checkLast [x] = x
-          checkLast x = last x
-eval _ _ (List (SimpleVal (Atom "load") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "help")]) = throwError $ NumArgs 1 []
 eval _ _ (List [SimpleVal (Atom "doc")]) = throwError $ NumArgs 1 []
 eval env _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) = do
@@ -937,3 +918,4 @@ makeDocFunc name = makeFunc name Nothing
 
 makeVarargs :: String -> LispVal -> Env -> [LispVal] -> [LispVal] -> String -> ExceptT LispError IO LispVal
 makeVarargs name = makeFunc name . Just . showVal
+

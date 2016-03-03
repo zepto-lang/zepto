@@ -1,8 +1,27 @@
 module Zepto.Primitives.ConversionPrimitives where
+import Control.Exception (evaluate)
+import Control.Monad.Except (throwError, liftIO)
+import Data.Binary (encode)
+import Data.ByteString.Lazy (toStrict)
 import Data.Char (ord, chr)
-import Control.Monad.Except (throwError)
+import Data.Complex (realPart, imagPart)
+import Data.IORef (readIORef)
+import Data.Map (foldrWithKey, empty, insert)
+import qualified Data.ByteString.Lazy as BSL (concat)
 
 import Zepto.Types
+import Zepto.Variables (allBindings)
+
+env2HashMap :: LispVal -> IOThrowsError LispVal
+env2HashMap (Environ x) = do
+        env <- liftIO $ allBindings x
+        hashmap <- liftIO $ foldrWithKey accum (evaluate empty) env
+        return $ HashMap hashmap
+    where accum k v acc = do
+            nv <- readIORef v
+            nacc <- liftIO acc
+            return $ insert (String $ drop 2 k) nv nacc
+env2HashMap x = throwError $ TypeMismatch "env" x
 
 symbol2String :: LispVal -> ThrowsError LispVal
 symbol2String (SimpleVal (Atom a)) = return $ fromSimple $ String a
@@ -49,3 +68,12 @@ list2Simple notList = throwError $ TypeMismatch "list" notList
 simple2List :: LispVal -> ThrowsError LispVal
 simple2List (SimpleVal (SimpleList x)) = return $ List $ map fromSimple x
 simple2List notList = throwError $ TypeMismatch "list" notList
+
+number2Bytes :: LispVal -> ThrowsError LispVal
+number2Bytes (SimpleVal (Number (NumS x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumI x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumF x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumR x))) = return $ ByteVector $ toStrict $ encode x
+number2Bytes (SimpleVal (Number (NumC x))) =
+        return $ ByteVector $ toStrict $ BSL.concat $ map encode [realPart x, imagPart x]
+number2Bytes x = throwError $ TypeMismatch "number" x

@@ -1,22 +1,28 @@
 (define *load-params* #{:stdlib "zepto-stdlib/" :paths () :parsers #{}})
 (define *global-env* (current-env))
 
-(define (load- file . env)
+(define (load file . env)
   (define (file-exists? file)
     (not (boolean? (open-input-file file))))
   (define (lookup file)
     (let* ((with-ext (++ file ".zp"))
-           (stdlib (++ (zepto:home) (*load-params* :stdlib) with-ext)))
+           (stdlib (++ (zepto:home) (*load-params* :stdlib) file))
+           (stdlib-ext (++ (zepto:home) (*load-params* :stdlib) with-ext)))
     (cond
       ((file-exists? file) file)
       ((file-exists? with-ext) with-ext)
       ((file-exists? stdlib) stdlib)
+      ((file-exists? stdlib-ext) stdlib-ext)
       (else
         (let* ((paths (*load-params* :paths))
                (found (reduce
-                        (lambda (acc p) (cond 
-                                          ((file-exists (++ p file)) (++ p file))
-                                          ((file-exists (++ p file ".zp")) (++ p file ".zp"))))
+                        (lambda (acc p)
+                          (if (truthy? acc)
+                            acc
+                            (cond 
+                              ((file-exists (++ p file)) (++ p file))
+                              ((file-exists (++ p file ".zp")) (++ p file ".zp"))
+                              (else acc))))
                         ""
                         paths)))
         (if (truthy? found)
@@ -38,9 +44,10 @@
          (env (if (null? env) *global-env* (car env)))
          (parsed (and file (iparse file))))
     (if (not (eq? parsed #f))
-      (map (lambda (x) (eval x env))
+      (foldl (lambda (_ x) (eval x env))
+        []
         (macro-expand
-          parsed))
+          parsed env))
       #f)))
 
 (define (zepto:add-to-path path)

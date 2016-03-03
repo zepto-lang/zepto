@@ -409,14 +409,20 @@ showVal (HashComprehension (kexpr, vexpr) (k, v) _ _) = "<hash comprehension: " 
                                                         " : " ++ show k ++ ", " ++
                                                         show v ++ ">"
 
+showTrunc :: LispVal -> String
+showTrunc val = let x = show val
+                in if length x > 100
+                     then take 100 x ++ "...(" ++ show (length x - 100) ++ " more)"
+                     else x
+
 -- | a show function for all LispErrors
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
-showError (BadSpecialForm message form) = message ++ ": " ++ show form ++
+showError (BadSpecialForm message form) = message ++ ": " ++ showTrunc form ++
                                           " (type: " ++ typeString form ++ ")"
 showError (BadSpecialForms message forms) = message ++ ": " ++ init (
                                          init $ unwords $
-                                         map (\form -> show form ++
+                                         map (\form -> showTrunc form ++
                                               " (type: " ++ typeString form ++
                                               "), ") forms)
 showError (NotFunction message func) = message ++ ": " ++ show func
@@ -428,13 +434,13 @@ showError (NumArgs expected found) =
               else x
     where extractStr val = let y = typeString val
                            in if y /= "function"
-                                then show val ++ " (type: " ++ y ++ ") "
+                                then showTrunc val ++ " (type: " ++ y ++ ") "
                                 else "<compiled function>"
 showError (TypeMismatch expected found) =
         let x = typeString found
             y = "Invalid type: expected " ++ expected ++ ", found " ++ x
         in if x /= "function"
-              then y ++ " (value: " ++ show found ++ ")"
+              then y ++ " (value: " ++ showTrunc found ++ ")"
               else y
 showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
 showError (InternalError err) = "Internal error: " ++ err
@@ -472,6 +478,7 @@ showInternal (List _) = "<list>"
 showInternal (DottedList _ _) = "<dotted-list>"
 showInternal (Port _) = "<port>"
 showInternal (Pointer _ _) = "<pointer>"
+showInternal (SimpleVal (String _)) = "<string>"
 showInternal x@(SimpleVal _) = show x
 
 buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
