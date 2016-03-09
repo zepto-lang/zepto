@@ -35,3 +35,6 @@
       (internal (string:join (cdr (string:split str #\newline)) #\newline)
                 (list 'begin)
                 0))))
+
+(zepto:implements-lang bf "bf")
+(zepto:implements-lang bf "brainfuck")
