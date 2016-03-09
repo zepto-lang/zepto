@@ -1,0 +1,23 @@
+(let ()
+  (begin
+    (define (wrap f)
+      (lambda (x)
+        (let ((x (string:join (cdr (string:split x #\newline)))))
+          (list (f x)))))
+
+    (define (iota- str)
+      (if (eq? #\* (string:head str))
+        ((iota- (string:tail str)) (iota- (string:tail (string:tail str))))
+        (lambda (c) ((c (lambda (x) (lambda (y) (lambda (z) ((x z) (y z))))))
+                        (lambda (x) (lambda (y) x))))))
+    (zepto:implements-lang (wrap iota-) "iota")
+
+    (define (jot str)
+      (let i ((str str)
+              (v id))
+        (cond ((string:empty? str) v)
+              ((eq? #\1 (string:head str)) (i (string:tail str) (lambda (f) (lambda (a) (v (f a))))))
+              (else (i (string:tail str)
+                       ((v (lambda (x) (lambda (y) (lambda (z) ((x z) (y z))))))
+                           (lambda (x) (lambda (y) x))))))))
+    (zepto:implements-lang (wrap jot) "jot")))
