@@ -1,8 +1,3 @@
-(define-syntax ->ast
-  (syntax-rules ()
-    ((_ form)
-      ((import "ast:ast") form))))
-
 (module "ast"
   (export
     (list "ast" ast))
