@@ -1,4 +1,6 @@
-(define *load-params* #{:stdlib "zepto-stdlib/" :paths () :parsers #{}})
+(define *load-params* (make-hash :stdlib "zepto-stdlib/"
+                                 :paths (list (++ (zepto:home) "zepto/"))
+                                 :parsers #{}))
 (define *global-env* (current-env))
 
 (define (load file . env)
@@ -20,8 +22,8 @@
                           (if (truthy? acc)
                             acc
                             (cond 
-                              ((file-exists (++ p file)) (++ p file))
-                              ((file-exists (++ p file ".zp")) (++ p file ".zp"))
+                              ((file-exists? (++ p file)) (++ p file))
+                              ((file-exists? (++ p file ".zp")) (++ p file ".zp"))
                               (else acc))))
                         ""
                         paths)))

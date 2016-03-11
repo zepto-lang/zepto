@@ -36,8 +36,7 @@ metaPrefix :: Char
 metaPrefix = ':'
 
 keywords :: [String]
-keywords = [ "apply"
-           , "define"
+keywords = [ "define"
            , "help"
            , "if"
            , "lambda"
@@ -97,8 +96,11 @@ listFiles path = liftIO $ do
     fixedDir <- fixPath dir
     dirExists <- doesDirectoryExist fixedDir
     std <- getDataFileName "zepto-stdlib"
-    stdfiles <- (map completion . filterPrefix) <$>
-                  getDirectoryContents std
+    zep <- getDataFileName "zepto"
+    let compf = \x -> (map completion . filterPrefix) <$> getDirectoryContents x
+    zepc <- compf zep
+    stdc <- compf std
+    let stdfiles = stdc ++ zepc
     allFiles <- if not dirExists
                     then return stdfiles
                     else do
