@@ -4,7 +4,7 @@
 (define *ret* "=> ")
 (define *conf* (++ (get-home-dir) "/.zeptorc"))
 (define *histfile* (++ (get-home-dir) "/.zepto_history"))
-(define *env* (make-base-env))
+(define *env* *global-env*)
 (define *hist* [])
 
 (define (do-exit args)
