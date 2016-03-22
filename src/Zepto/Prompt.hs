@@ -355,7 +355,6 @@ stdlib env = do
                                   "zepto-stdlib/zphash.zp",
                                   "zepto-stdlib/zpgenerics.zp",
                                   "zepto-stdlib/zpvector.zp",
-                                  "zepto-stdlib/zpstring.zp",
                                   "zepto-stdlib/zpcollections.zp",
                                   "zepto/load.zp",
                                   "zepto-stdlib/module.zp"]
@@ -364,7 +363,7 @@ stdlib env = do
 loadFun :: Env -> String -> IO String
 loadFun env f = do
       file <- getDataFileName f
-      evalString env $ "(eval (car (macro-expand (parse \"" ++ file ++ "\"))))"
+      evalString env $ "(eval (list:car (macro-expand (parse \"" ++ file ++ "\"))))"
 
 -- | load a file into an environment
 loadFile :: Env -> String -> IO String

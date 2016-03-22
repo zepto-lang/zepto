@@ -1,0 +1,13 @@
+; displays the defprotocol/defimpl capabilities
+(define-struct pair (first second))
+
+(defimpl stringify pair:pair? ((->string (lambda (x) "<pair>"))))
+
+(defimpl collec pair:pair?
+         ((length (lambda (x) 2))
+          (in? (lambda (pair x) (or (eq? (pair:get-first pair) x) (eq? (pair:get-second pair) x))))
+          (get-from (collec:get-from-skeleton
+                      (lambda (pair el dflt)
+                        (if (< el 2)
+                          (if (eq? 0 el) (pair:get-first pair) (pair:get-second pair))
+                          dflt))))))

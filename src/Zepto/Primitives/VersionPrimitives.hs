@@ -4,7 +4,7 @@ import Data.List (intercalate)
 import Zepto.Types
 
 version :: [Int]
-version = [0, 9, 2]
+version = [0, 9, 3]
 
 versionStr :: String
 versionStr = intercalate "." $ fmap show version

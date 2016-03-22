@@ -1,7 +1,6 @@
 override CARGS+=-j2
 #Installs
 all:
-	git submodule update --init --recursive
 	make install
 
 install:
