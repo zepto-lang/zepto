@@ -16,3 +16,6 @@ bin/
 zepto.prof
 profiling/
 experimental/
+
+zepto/*
+!zepto/*.zp
