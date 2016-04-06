@@ -56,7 +56,7 @@ make test
 ```
 
 There is also a [Vim plugin](https://github.com/zepto-lang/zepto-vim) 
-for all of you terminal hackers (sorry emacs).
+for all of you terminal hackers (sorry emacs) and an [Atom plugin](https://github.com/hellerve/language.zepto).
 
 ## Introduction
 
@@ -85,7 +85,7 @@ Now you can just fiddle, maybe try something like
 
 ```clojure
 zepto> (pow 3 300) ; for schemers: this is a convenience alias for expt
-136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
+=> 136891479058588375991326027382088315966463695625337436471480190078368997177499076593800
 206155688941388250484440597994042813512732765695774566001
 ```
 
@@ -93,11 +93,11 @@ Please note that numerical types are promoted when they work together:
 
 ```scheme
 zepto> (+ 1 1.5)
-2.5
+=> 2.5
 ```
 
-There are a few datatypes, namely integers, floats, exact and imaginary numbers, 
-strings, lists and vectors. Quoted and quasi-quoted expressions are supported, too.
+There are a few datatypes, namely integers, floats, rationals, exact and imaginary numbers, 
+strings, lists, hashmaps and vectors. Quoted and quasi-quoted expressions are supported, too.
 
 A faster version of integers, wrapping natives, is available. Please note that
 it is only available via explicitly creating it by invoking `make-small` on a
@@ -107,11 +107,11 @@ in contact with other number types, expect it to be promoted. A quick demo:
 
 ```clojure
 zepto> (make-small 1)
-1s
+=> 1s
 zepto> (+ (make-small 100) 10) ; Fly away, you're an integer now!
-110
+=> 110
 zepto> (make-small (pow 2 63)) ; Hardware-dependent
--9223372036854775808s
+=> -9223372036854775808s
 ```
 
 *Remember:* If you use small integers, you will have a bad time unless you know
@@ -121,18 +121,18 @@ If you need help with a specific primitive, invoke help on it like so:
 
 ```clojure
 zepto> (help +)
-add two values
+=> add two values
 zepto> (help "+")
-add two values
+=> add two values
 ```
 
 You can also get help for normal functions:
 
 ```clojure
 zepto> (define (x fst snd) "multiply two values" (* fst snd))
-multiply two values; source: (lambda ("fst" "snd") ...)
+=> multiply two values; source: (lambda ("fst" "snd") ...)
 zepto> (help x)
-multiply two values; source: (lambda ("fst" "snd") ...)
+=> multiply two values; source: (lambda ("fst" "snd") ...)
 ```
 
 And it autocompletes your newly created function, too!
@@ -141,14 +141,14 @@ There are also List and Hash Comprehensions. They look like this:
 
 ```clojure
 zepto> ; [do-this | for-every <- in, optional-check]
-zepto> [(+ x 1) | x <- [1 2 3 4]]
-(2 3 4 5)
+zepto> [(add1 x) | x <- [1 2 3 4]]
+=> (2 3 4 5)
 zepto> [(+ x 1) | x <- [1 2 3 4], (> x 1)]
-(3 4 5)
+=> (3 4 5)
 zepto> #{(+ k 1) (* v 1.0) | k v <- #{1 2 3 4}}
-#{2: 2.0, 4: 4.0, }
+=> #{2: 2.0, 4: 4.0, }
 zepto> #{(+ k 1) v | k v <- #{1 2 3 4}, (= k 1)}
-#{2: 2, }
+=> #{2: 2, }
 ```
 
 The whitespaces matter. The thing is symbol-heavy enough as it is,
@@ -198,7 +198,7 @@ zepto> :prompt-toggle-space
 zepto>:prompt doge>
 doge>:prompt-toggle-space
 doge> doge
-wow such fancy
+=> wow such fancy
 ```
 
 *I am really sorry for the broken highlighting here.*
