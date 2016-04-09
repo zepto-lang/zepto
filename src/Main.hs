@@ -31,7 +31,7 @@ printCommands = putStrLn("Type ':quit' or press Ctrl-C to exit interpreter,\n" +
 
 -- |Prints the copyright notice
 printCopyright :: IO ()
-printCopyright = putStrLn("Copyright (C) 2015 Veit Heller (GPL)\n" ++
+printCopyright = putStrLn("Copyright (C) 2016 Veit Heller (GPL)\n" ++
                           "This is free software; " ++
                           "see the accompanying LICENSE " ++
                           "for copying conditions.\n" ++

@@ -43,7 +43,7 @@
           (else (begin (error "No parser found for language:" lang) #f)))
         (parse file))))
   (let* ((file (lookup file))
-         (env (if (null? env) *global-env* (car env)))
+         (env (if (list:null? env) *global-env* (car env)))
          (parsed (and file (iparse file))))
     (if (not (eq? parsed #f))
       (foldl (lambda (_ x) (eval x env))

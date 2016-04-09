@@ -1,6 +1,6 @@
 
     zepto - the minimal Scheme Interpreter
-    Copyright (C) 2015 Veit Heller
+    Copyright (C) 2016 Veit Heller
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
