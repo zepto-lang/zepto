@@ -1,4 +1,5 @@
 (load "zepto/erl/ast")
+(load "zepto/erl/nanopass")
 (load "zepto/erl/core")
 (load "argparse/argparse")
 (import-all "argparse")
@@ -10,7 +11,8 @@
                      "usage" "the backend that should be used"}])
 
 (define (compile backend program)
-  ((*backends* backend) (map (lambda (x) ((import "ast:ast") x)) (parse program))
+  ((*backends* backend) ((import "nanopass:optimize")
+                          (map (lambda (x) ((import "ast:ast") x)) (parse program)))
                         (head (string:split (list:last (string:split program "/")) ".zp"))))
 
 (let ((name (head zepto:args))

@@ -1,0 +1,43 @@
+(module "nanopass"
+  (export
+    (list "define-pass" define-pass)
+    (list "optimize" optimize))
+
+  (traverse (lambda (pass ast)
+    (let ((wrapper (lambda (f)
+      (lambda (ast)
+        (cond
+          ((falsy? ast) ast)
+          ((list? ast) (map (lambda (x) (f x)) ast))
+          (else (f ast)))))))
+      (cond
+        ((falsy? ast) ast)
+        ((list? ast) (map (lambda (x) (traverse pass x)) ast))
+        (else (reduce
+                (lambda (ast thing)
+                  (if (hash:contains? ast thing) (hash:update ast thing (wrapper pass)) ast))
+                ast
+                [:function :body :then :else :cond :arguments]))))))
+
+  (one-armed-if
+    (let ((else-branch #{:arguments ()
+                         :function #{:category :simple
+                                     :type :symbol
+                                     :value nil}
+                         :type :application}))
+      (lambda (ast)
+        (cond
+          ((and (eq? (ast :type) :if)
+                (nil? (ast :else)))
+            (traverse one-armed-if (hash:set ast :else else-branch)))
+         (else (traverse one-armed-if ast))))))
+
+  (*default-passes* (list one-armed-if))
+
+  (*passes* *default-passes*)
+
+  (define-pass (lambda (pass)
+    (set! *passes* (++ *passes* pass))))
+
+  (optimize (lambda (ast)
+    (reduce (lambda (ast pass) (traverse pass ast)) ast *passes*))))

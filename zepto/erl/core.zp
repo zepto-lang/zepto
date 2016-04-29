@@ -50,6 +50,7 @@
   (body-parse (lambda (body)
     (case (body :type)
       ((:application) (app-parse body))
+      ((:if) (->string body))
       ((:symbol :integer :int :float) (->string (body :value)))
       ((:boolean) (++ "'" (->string (body :value)) "'"))
       ((:string) (->string (string:reduce (lambda (acc x) (++ acc (char->integer x))) [] (body :value))))
