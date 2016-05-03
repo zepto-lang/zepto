@@ -59,4 +59,5 @@
                                      (hash:kv-map (lambda (kv) (map ast kv)) form)))
       ((symbol? form) (build-value :simple :symbol form))
       ((atom? form) (build-value :simple :atom form))
+      ((nil? form) (build-value :simple :nil form))
       (else (error "ast:ast" (typeof form) "is a deprecated special form"))))))

@@ -43,7 +43,10 @@
 
   (if-parse (lambda (body)
     (let ((con (body :cond)))
-      (++ "case " (app-parse con) " of true -> " (body-parse (body :then)) " false -> " (body-parse (body :else))))))
+      (++ "case " (app-parse con)
+          " of true -> " (body-parse (body :then))
+          " false -> " (body-parse (body :else))
+          " end."))))
 
   (let-forms (lambda (acc arg) "yuck"
     (let ((nbinds (car acc))
@@ -67,6 +70,7 @@
       ((:symbol :integer :int :float) (->string (body :value)))
       ((:boolean) (++ "'" (->string (body :value)) "'"))
       ((:string) (->string (string:reduce (lambda (acc x) (++ acc (char->integer x))) [] (body :value))))
+      ((:nil) "null")
       (else (begin (write (++ "unknown instruction type" (->string (body :type)))) (exit 1))))))
 
   (build-fn (lambda (fn)
