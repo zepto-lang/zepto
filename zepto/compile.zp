@@ -1,5 +1,5 @@
-(load "zepto/erl/ast")
-(load "zepto/erl/nanopass")
+(load "zepto/compiler/ast")
+(load "zepto/compiler/nanopass")
 (load "zepto/erl/core")
 (load "argparse/argparse")
 (import-all "argparse")

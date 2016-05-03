@@ -32,6 +32,10 @@
         (let ((nenv (reduce let-forms (list 0 "" (list->vector args) 0) args)))
           (++ (cadr nenv) (app-parse (hash:set body :arguments (vector->list (caddr nenv))))))))))
 
+  (if-parse (lambda (body)
+    (let ((con (body :cond)))
+      (++ "case " (app-parse con) " of true -> " (body-parse (body :then)) " false -> " (body-parse (body :else))))))
+
   (let-forms (lambda (acc arg) "yuck"
     (let ((nbinds (car acc))
           (args (cadr acc))
@@ -50,7 +54,7 @@
   (body-parse (lambda (body)
     (case (body :type)
       ((:application) (app-parse body))
-      ((:if) (->string body))
+      ((:if) (if-parse body))
       ((:symbol :integer :int :float) (->string (body :value)))
       ((:boolean) (++ "'" (->string (body :value)) "'"))
       ((:string) (->string (string:reduce (lambda (acc x) (++ acc (char->integer x))) [] (body :value))))
