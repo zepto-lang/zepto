@@ -2,7 +2,16 @@
   (export
     (list "ast->core" ast->core))
 
-  (CORE-INST [+ - / *])
+  (CORE-INST #{"+" "+"
+               "-" "-"
+               "/" "/"
+               "*" "*"
+               "<" "<"
+               ">" ">"
+               ">=" ">="
+               "<=" "=<"
+               "=" "=:="
+               "/=" "=/="})
 
   (x-with-arity (lambda (fn name)
     (++ "'" (->string (name :value)) "'" "/" (->string (length (fn :arguments))))))
@@ -21,12 +30,12 @@
       (begin (write "non-simple body.") (exit 1)))))
 
   (app-parse (lambda (body)
-    (let ((inst ((body :function) :value))
+    (let ((inst (->string ((body :function) :value)))
           (args (body :arguments)))
       (if (all? final? args)
         (++
           (if (in? CORE-INST inst)
-            (++ "call 'erlang':'" (->string inst) "'")
+            (++ "call 'erlang':'" (CORE-INST inst) "'")
             (++ "apply " (apply-with-arity body)))
           " (" (args-string args) ")")
         (let ((nenv (reduce let-forms (list 0 "" (list->vector args) 0) args)))
