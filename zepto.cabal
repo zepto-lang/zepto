@@ -43,6 +43,8 @@ Data-Files:          zepto-stdlib/*.zp
                      zepto-stdlib/slugify/*.zp
                      zepto-stdlib/statistics/*.zp
                      zepto/*.zp
+                     zepto/compiler/*.zp
+                     zepto/erl/*.zp
                      assets/*.as
 Cabal-Version:       >= 1.2 
 
