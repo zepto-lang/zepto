@@ -867,7 +867,7 @@ readCharProc fun [Port p] = do
     input <-  liftIO $ tryIOError (liftIO $ fun p)
     liftIO $ hSetBuffering p LineBuffering
     case input of
-        Left _ -> throwError $ Default "IO error while reading from port"
+        Left _ -> return $ fromSimple $ Bool False
         Right inpChr -> return $ fromSimple $ Character inpChr
 readCharProc _ args = if length args == 1
                          then throwError $ TypeMismatch "port" $ List args
