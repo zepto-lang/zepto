@@ -59,3 +59,7 @@
 
 (define (zepto:implements-lang f lang)
   (hash:update! *load-params* :parsers (lambda (p) (hash:set p lang f))))
+
+(let ((zepto-rc (++ (get-home-dir) "/.zeptorc")))
+  (if (file-exists? zepto-rc)
+    (load zepto-rc)))
