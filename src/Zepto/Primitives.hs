@@ -199,8 +199,6 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("exit", exitProc, "exit program")
                , ("system", systemProc, "call a system command")
                , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
-               , ("escape-sequence", escapeProc, "send escape sequence to shell")
-               , ("color", colorProc, "colorize output")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
                , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
