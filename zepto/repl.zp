@@ -1,11 +1,12 @@
 ; A small REPL for zepto in zepto
+(load "readline/readline")
+(import-all "readline" "rl")
 
 (define *prompt* "zepto> ")
 (define *ret* "=> ")
 (define *conf* (++ (get-home-dir) "/.zeptorc"))
 (define *histfile* (++ (get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
-(define *hist* [])
 
 (define (do-exit args)
   (begin
@@ -25,69 +26,18 @@
     ":p" set-prompt
     ":prompt" set-prompt))
 
-(define (read-loop)
-  (define (remove-from-input count)
-    (let ((b (string:replicate count #\backspace)))
-      (display (++ b (string:replicate count #\space) b) :flush)))
-  (define (new-input old new)
-    (begin
-      (remove-from-input (length old))
-      (display new :flush)))
-  (define (internal str hist hist-depth)
-    (let ((x (read-char)))
-        (cond
-          ((eq? x #\newline)
-            (begin
-              (set! *hist* (cons str *hist*))
-              str))
-          ((eq? x #\x1B)
-            (let ((code (string (read-char) (read-char))))
-              (begin
-                (remove-from-input 4)
-                (cond
-                  ((eq? code "[A") 
-                    (begin 
-                      (if (null? hist)
-                        (internal str hist hist-depth)
-                      (begin
-                        (new-input str (car hist))
-                        (internal (car hist) (cdr hist) (add1 hist-depth))))))
-                  ((eq? code "[B")
-                    (if (null? *hist*)
-                      (internal str hist hist-depth)
-                      (let ((new-hist (indexed-tail *hist* (min (length *hist*) (max 0 (- hist-depth 1))))))
-                        (if (< (- hist-depth 1) 0)
-                          (begin
-                            (new-input str "")
-                            (internal "" *hist* hist-depth))
-                          (if (null? new-hist)
-                            (internal str hist hist-depth)
-                            (begin
-                              (new-input str (car new-hist))
-                              (internal (car new-hist) (cdr new-hist) (max 0 (sub1 hist-depth)))))))))))))
-          ((eq? x #\x7f)
-              (if (> (string:length str) 0)
-                (begin
-                  (remove-from-input 3)
-                  (internal (substring str 0 (- (length str) 1)) hist hist-depth))
-                (begin
-                  (remove-from-input 2)
-                  (internal str hist hist-depth))))
-          (else (internal (++ str x) hist hist-depth)))))
-  (internal "" *hist* 0))
-
 (define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
   (let* ((cont (read-contents *histfile*))
          (hist-to (open-output-file *histfile*)))
     (begin
+      (rl:add-history item)
       (write (substring cont 0 (sub1 (length cont))) hist-to)
       (write item hist-to)
       (close-output-file hist-to))))
 
 (define (repl)
   (begin
-    (display *prompt* :flush)
-    (define input (read-loop))
+    (define input (rl:readline *prompt*))
     (if (falsy? input)
       (repl))
     (write-hist-item input)
@@ -107,10 +57,8 @@
 (let ((x (open-input-file *histfile*)))
   (if (not (eq? x #f))
     (begin
-      (set! *hist* (reverse (string:split (read-contents *histfile*) #\newline)))
+      (map rl:add-history (string:split (read-contents *histfile*) #\newline))
       (close-input-file x))))
-
-(if (truthy? *hist*) (map write-hist-item *hist*))
 
 (write (eval '(load "module.zp") *env*))
 
