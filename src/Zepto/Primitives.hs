@@ -567,7 +567,6 @@ eval env conti (List [SimpleVal (Atom "set-car!"), sth, form]) = do
           unpack _ = (fromSimple $ Nil "", "")
 eval _ _ (List (SimpleVal (Atom "set-car!") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "define")]) = throwError $ NumArgs 2 []
-eval _ _ (List [SimpleVal (Atom "ƒ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "define"), a@(SimpleVal (Atom (':' : _))), _]) =
             throwError $ TypeMismatch "symbol" a
 eval env conti (List [SimpleVal (Atom "define"), SimpleVal (Atom "_"), form]) = do
@@ -588,41 +587,16 @@ eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom va
 eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
         result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
-        result <- makeDocFunc var env p b doc >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : b)) = do
-        result <- makeNormalFunc var env p b >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
-        result <- makeVarargs var varargs env p b doc >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
-        result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
-        contEval env conti result
-eval _ _ (List (SimpleVal (Atom "define") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List (SimpleVal (Atom "ƒ") : x)) = throwError $ NumArgs 2 x
 eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
-        result <- makeNormalFunc "lambda" env p b
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : List p : b)) =  do
         result <- makeNormalFunc "lambda" env p b
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : b)) = do
         result <- makeVarargs "lambda" varargs env p b "lambda"
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : DottedList p varargs : b)) = do
-        result <- makeVarargs "lambda" varargs env p b "lambda"
-        contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : varargs@(SimpleVal (Atom _)) : b)) = do
         result <- makeVarargs "lambda" varargs env [] b "lambda"
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : varargs@(SimpleVal (Atom _)) : b)) = do
-        result <- makeVarargs "lambda" varargs env [] b "lambda"
-        contEval env conti result
-eval _ _ (List [SimpleVal (Atom "λ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "lambda")]) = throwError $ NumArgs 2 []
-eval _ _ (List (SimpleVal (Atom "λ") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List (SimpleVal (Atom "lambda") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "global-load")]) = throwError $ NumArgs 1 []
 eval env conti (List [SimpleVal (Atom "global-load"), SimpleVal (String file)]) = do
