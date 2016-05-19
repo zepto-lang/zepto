@@ -1,5 +1,5 @@
 ; A small REPL for zepto in zepto
-(load "readline/readline")
+(load "readline")
 (import-all "readline" "rl")
 
 (define *prompt* "zepto> ")
