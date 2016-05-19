@@ -41,10 +41,6 @@ main = do args <- getArgs
     where main' :: [String] -> IO ()
           main' arg
             | null arg = do
-              printVersion
-              printCopyright
-              printCommands
-              putStrLn ""
               runRepl
             | hasIn arg (makeArg "h" "help") =
               printUsage

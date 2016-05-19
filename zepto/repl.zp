@@ -39,12 +39,12 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 
 (define (show-license . args)
   (begin
-    (read-contents (++ (zepto:home) "assets/license-interactive.as"))
+    (write (read-contents (++ (zepto:home) "assets/license_interactive.as")))
     (repl)))
 
 (define (show-complete-license . args)
   (begin
-    (read-contents (++ (zepto:home) "assets/complete-license.as"))
+    (write (read-contents (++ (zepto:home) "assets/complete_license.as")))
     (repl)))
 
 (define meta-commands
