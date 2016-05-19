@@ -7,23 +7,53 @@
 (define *conf* (++ (get-home-dir) "/.zeptorc"))
 (define *histfile* (++ (get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
+(define *header* (++ "zepto Version " zepto:version-str ", compiled with GHC version " zepto:ghc-str "
+Copyright (C) 2016 Veit Heller (GPL)
+This is free software; see the accompanying LICENSE for copying conditions.
+There is NO warranty whatsoever.
+Hail Eris, all rites reversed.
 
-(define (do-exit args)
+Type ':quit' or press Ctrl-C to exit interpreter,
+':help' to get a list of commands or ':license' to get the license text"))
+
+(define (do-exit . args)
   (begin
     (write "Moriturus te saluto!")
     (exit (if (null? args) 0 (string->number (car args))))))
 
-(define (set-prompt args)
+(define (show-commands . args)
+  (begin
+    (map (lambda (x) (write (++ (car x) ": " (->string (cadr x)))))
+         (zepto:get-bindings (if (null? args) "" (car args)) *env*))
+    (repl)))
+
+(define (set-prompt . args)
   (if (not (null? args))
     (begin
-     (set! *prompt* (car args))
-     (repl))))
+     (set! *prompt* (string:join args))
+     (repl))
+    (begin
+      (error "option :p requires an argument (example: ':p=new-prompt>')")
+      (repl))))
+
+(define (show-license . args)
+  (begin
+    (read-contents (++ (zepto:home) "assets/license-interactive.as"))
+    (repl)))
+
+(define (show-complete-license . args)
+  (begin
+    (read-contents (++ (zepto:home) "assets/complete-license.as"))
+    (repl)))
 
 (define meta-commands
   (make-hash
     ":q" do-exit
     ":quit" do-exit
     ":p" set-prompt
+    ":license" show-license
+    ":complete-license" show-complete-license
+    ":help" show-commands
     ":prompt" set-prompt))
 
 (define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
@@ -45,7 +75,7 @@
     (let* ((split (string:split (->string res) #\=))
            (cmd (car split)))
       (if (not (nil? (meta-commands cmd)))
-        ((meta-commands cmd) (cdr split))
+        (apply (meta-commands cmd) (cdr split))
         (begin
           (display *ret*)
           (write res)
@@ -59,6 +89,8 @@
     (begin
       (map rl:add-history (string:split (read-contents *histfile*) #\newline))
       (close-input-file x))))
+
+(write *header*)
 
 (write (eval '(load "module.zp") *env*))
 

@@ -1,9 +1,10 @@
 module Zepto.Primitives.LogMathPrimitives where
-import Data.Array (elems)
-import Data.Bits (shift, (.&.), (.|.), complement)
-import Data.Char
 import Control.Monad.Except
+import Data.Array (elems)
+import Data.Bits (shift, (.&.), (.|.), complement, shiftR, shiftL, xor)
+import Data.Char
 import Data.Complex
+import Data.Word (Word32)
 
 import qualified Data.Map as DM (toList)
 
@@ -165,11 +166,26 @@ makeSmall badArgList = throwError $ NumArgs 1 badArgList
 arithmeticShift :: [LispVal] -> ThrowsError LispVal
 arithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ shift n (fromInteger s)
 arithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ shift n s
+arithmeticShift [SimpleVal (Number (NumS n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumS $ shift n (fromInteger s)
 arithmeticShift [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ shift n s
 arithmeticShift [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
 arithmeticShift [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
 arithmeticShift [badType, _] = throwError $ TypeMismatch "integer" badType
 arithmeticShift badArgList = throwError $ NumArgs 2 badArgList
+
+-- This shouldn't behave differently than shift but somehow it does
+shift' :: Word32 -> Int -> Word32
+shift' n s = if s > 0 then shiftL n s else shiftR n (abs s)
+
+unsignedArithmeticShift :: [LispVal] -> ThrowsError LispVal
+unsignedArithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ fromIntegral $ shift' (fromInteger n) (fromInteger s)
+unsignedArithmeticShift [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ fromIntegral $ shift' (fromInteger n) s
+unsignedArithmeticShift [SimpleVal (Number (NumS n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ fromIntegral $ shift' (fromIntegral n) (fromInteger s)
+unsignedArithmeticShift [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ fromIntegral $ shift' (fromIntegral n) s
+unsignedArithmeticShift [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
+unsignedArithmeticShift [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
+unsignedArithmeticShift [badType, _] = throwError $ TypeMismatch "integer" badType
+unsignedArithmeticShift badArgList = throwError $ NumArgs 2 badArgList
 
 bitwiseAnd :: [LispVal] -> ThrowsError LispVal
 bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ n .&. s
@@ -188,6 +204,16 @@ bitwiseOr [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" 
 bitwiseOr [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
 bitwiseOr [badType, _] = throwError $ TypeMismatch "integer" badType
 bitwiseOr badArgList = throwError $ NumArgs 2 badArgList
+
+bitwiseXor :: [LispVal] -> ThrowsError LispVal
+bitwiseXor [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ xor n s
+bitwiseXor [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ xor n (fromIntegral s)
+bitwiseXor [SimpleVal (Number (NumS n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumS $ xor n (fromIntegral s)
+bitwiseXor [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ xor n s
+bitwiseXor [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
+bitwiseXor [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
+bitwiseXor [badType, _] = throwError $ TypeMismatch "integer" badType
+bitwiseXor badArgList = throwError $ NumArgs 2 badArgList
 
 bitwiseNot :: [LispVal] -> ThrowsError LispVal
 bitwiseNot [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumI $ complement (n + n - n)

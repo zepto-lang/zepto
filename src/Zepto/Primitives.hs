@@ -2,7 +2,6 @@ module Zepto.Primitives(primitives
                        , ioPrimitives
                        , evalPrimitives
                        , eval
-                       , versionStr
                        , evalString
                        ) where
 import Data.Array
@@ -47,8 +46,10 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("ceiling", numRound ceiling, "ceils a number")
              , ("truncate", numRound truncate, "truncates a number")
              , ("arithmetic-shift", arithmeticShift, "do an arithmetic shift on an integer")
+             , ("unsigned-arithmetic-shift", unsignedArithmeticShift, "do an arithmetic shift (zero fill) on an integer")
              , ("bitwise-and", bitwiseAnd, "do a bitwise and on two integers")
              , ("bitwise-or", bitwiseOr, "do a bitwise or on two integers")
+             , ("bitwise-xor", bitwiseXor, "do a bitwise xor on two integers")
              , ("bitwise-not", bitwiseNot, "do a bitwise or on one integer")
              , ("real", unaryOp real, "gets real part of a number")
              , ("imaginary", unaryOp imaginary, "gets imaginary part of a number")
@@ -115,6 +116,9 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("simple?", unaryOp isSimple, "check whether arg is of simple type")
              , ("simple-list?", unaryOp isSimpleList, "check whether arg is a simple list")
              , ("hash-map?", unaryOp isHash, "check whether arg is a hash-map")
+             , ("primitive?", unaryOp isPrim, "check whether arg is a primitive")
+             , ("function?", unaryOp isFun, "check whether arg is a function")
+             , ("env?", unaryOp isEnv, "check whether arg is an environment")
              , ("typeof", unaryOp checkType, "return type string")
              , ("nil", noArg buildNil, "return nil")
              , ("inf", noArg buildInf, "return inf")
@@ -171,10 +175,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("hash:values", hashVals, "get vals from hashmap")
              , ("hash:contains?", inHash, "find out whether hashtable contains key")
              , ("zepto:version", noArg getVersion, "gets the version as a list")
-             , ("zepto:version-str", noArg getVersionStr, "gets the version as a string")
-             , ("zepto:major-version", noArg getMajVersion, "gets the major version number")
-             , ("zepto:minor-version", noArg getMinVersion, "gets the minor version number")
-             , ("zepto:patch-version", noArg getPatchVersion, "gets the patch version number")
+             , ("zepto:ghc", noArg getGhc, "gets the GHC version as an integer")
              ]
 
 -- | a list of all io-bound primitives
@@ -686,9 +687,31 @@ eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [SimpleVal (Atom "help"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval env conti (List [SimpleVal (Atom "help"), val]) = do
+  case val of
+    f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+    IOFunc doc _ -> return $ fromSimple $ String $ doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+    x@(List _) -> do
+      mevald <- macroEval env x
+      evald <- eval env conti mevald
+      eval env conti (List [SimpleVal (Atom "help"), evald])
+    _ -> throwError $ Default $ show val ++ " cannot be resolved to a function"
 eval _ _ (List (SimpleVal (Atom "help") : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [SimpleVal (Atom "doc"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval env conti (List [SimpleVal (Atom "doc"), val]) = do
+  case val of
+    f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+    IOFunc doc _ -> return $ fromSimple $ String $ doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+    x@(List _) -> do
+      mevald <- macroEval env x
+      evald <- eval env conti mevald
+      eval env conti (List [SimpleVal (Atom "help"), evald])
+    _ -> throwError $ Default $ show val ++ " cannot be resolved to a function"
 eval _ _ (List (SimpleVal (Atom "doc") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "quasiquote")]) = throwError $ NumArgs 1 []
 eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti =<<doUnQuote env val

@@ -3,7 +3,6 @@ import Data.List
 import System.Environment
 
 import Zepto.Prompt
-import Zepto.Primitives
 
 -- |Prints the usage
 printUsage :: IO ()
@@ -19,10 +18,7 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn ("zepto Version "
-                        ++ versionStr
-                        ++ ", compiled with GHC version "
-                        ++ show (__GLASGOW_HASKELL__::Integer))
+printVersion = putStrLn "This REPL will be deprecated."
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
