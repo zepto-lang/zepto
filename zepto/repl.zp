@@ -4,6 +4,7 @@
 
 (define *prompt* "zepto> ")
 (define *ret* "=> ")
+(define *statement-count* 1)
 (define *conf* (++ (get-home-dir) "/.zeptorc"))
 (define *histfile* (++ (get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
@@ -67,9 +68,10 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 
 (define (repl)
   (begin
-    (define input (rl:readline *prompt*))
+    (define input (rl:readline (if (function? *prompt*) (*prompt*) *prompt*)))
     (if (falsy? input)
       (repl))
+    (set! *statement-count* (add1 *statement-count*))
     (write-hist-item input)
     (define res (catch-vm-error (string:parse input) *env*))
     (let* ((split (string:split (->string res) #\=))
@@ -77,7 +79,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (if (not (nil? (meta-commands cmd)))
         (apply (meta-commands cmd) (cdr split))
         (begin
-          (display *ret*)
+          (display (if (function? *ret*) (*ret*) *ret*))
           (write res)
           (repl))))))
 
