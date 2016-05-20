@@ -82,5 +82,5 @@ runFile args = do
 -- | run the REPL
 runRepl :: IO ()
 runRepl = do
-        repl <- getDataFileName "zepto/repl.zp"
+        repl <- getDataFileName "zepto/run-repl.zp"
         runFile [repl]

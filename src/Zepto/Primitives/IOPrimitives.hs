@@ -1,7 +1,7 @@
 module Zepto.Primitives.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
-import System.Directory (doesFileExist, getHomeDirectory)
+import System.Directory (doesFileExist, getHomeDirectory, setCurrentDirectory)
 import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
@@ -15,17 +15,22 @@ import Zepto.Types
 
 import Paths_zepto
 
-getHomeDir :: [LispVal] -> IOThrowsError LispVal
-getHomeDir [] = do
+changeDir :: LispVal -> IOThrowsError LispVal
+changeDir (SimpleVal (String dir)) = do
+  _ <- liftIO $ setCurrentDirectory dir
+  return $ fromSimple $ Bool True
+changeDir x = throwError $ TypeMismatch "string" x
+
+
+getHomeDir :: IOThrowsError LispVal
+getHomeDir = do
   dir <- liftIO $ getHomeDirectory
   return $ fromSimple $ String dir
-getHomeDir badArgs = throwError $ NumArgs 0 badArgs
 
-getZeptoDir :: [LispVal] -> IOThrowsError LispVal
-getZeptoDir [] = do
+getZeptoDir :: IOThrowsError LispVal
+getZeptoDir = do
   dir <- liftIO $ getDataFileName ""
   return $ fromSimple $ String dir
-getZeptoDir badArgs = throwError $ NumArgs 0 badArgs
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [SimpleVal (String filename)] = do
