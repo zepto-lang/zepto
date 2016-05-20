@@ -60,7 +60,7 @@
                      add1))))
 
   (backspace (lambda (state)
-    (if (> (length (state :acc)) 0)
+    (if (and (> (length (state :acc)) 0) (> (state :pos) 0))
       (begin
         (remove-from-input 3)
         (hash:update (hash:update state :pos sub1)
