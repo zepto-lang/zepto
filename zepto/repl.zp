@@ -78,6 +78,8 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (write item hist-to)
       (close-output-file hist-to))))
 
+(define (string:parseable? str) (not (in? (catch-vm-error `(string:parse ,str)) "Parse error at")))
+
 (define (repl)
   (begin
     (define input (rl:readline (++ (if (function? *prompt*) (*prompt*) *prompt*)
@@ -86,7 +88,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (repl))
     (set! *statement-count* (add1 *statement-count*))
     (write-hist-item input)
-    (define res (catch-vm-error (macro-expand (string:parse input)) *env*))
+    (if (string:parseable? input)
+      (define res (catch-vm-error (macro-expand (string:parse input)) *env*))
+      (define res (catch-vm-error `(string:parse ,input))))
     (let* ((split (string:split (->string res) #\=))
            (cmd (car split)))
       (if (not (nil? (meta-commands cmd)))
