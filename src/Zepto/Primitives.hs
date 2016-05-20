@@ -409,6 +409,9 @@ eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
 eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
         i <- getVar env a
         eval env conti (List [Vector x, i])
+eval env conti (List [Vector x, expr@(List _)]) = do
+        evald <- eval env conti expr
+        eval env conti (List [Vector x, evald])
 eval _ _ (List [Vector _, x]) = throwError $ TypeMismatch "integer" x
 eval _ _ (List [ByteVector x, SimpleVal (Number (NumI i))]) =
         return $ fromSimple $ Number $ NumS $ fromIntegral $ BS.index x (fromIntegral i)
