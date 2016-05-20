@@ -19,14 +19,24 @@ Hail Eris, all rites reversed.
 Type ':quit' or press Ctrl-C to exit interpreter,
 ':help' to get a list of commands or ':license' to get the license text"))
 
+(define (write-plain arg)
+  (begin
+    (color :reset)
+    (write arg)))
+
+(define (error-plain . args)
+  (begin
+    (color :reset)
+    (apply error args)))
+
 (define (do-exit . args)
   (begin
-    (write "Moriturus te saluto!")
+    (write-plain "Moriturus te saluto!")
     (exit (if (null? args) 0 (string->number (car args))))))
 
 (define (show-commands . args)
   (begin
-    (map (lambda (x) (write (++ (car x) ": " (->string (cadr x)))))
+    (map (lambda (x) (write-plain (++ (car x) ": " (->string (cadr x)))))
          (zepto:get-bindings (if (null? args) "" (car args)) *env*))
     (repl)))
 
@@ -36,17 +46,17 @@ Type ':quit' or press Ctrl-C to exit interpreter,
      (set! *prompt* (string:join args))
      (repl))
     (begin
-      (error "option :p requires an argument (example: ':p=new-prompt>')")
+      (error-plain "option :p requires an argument (example: ':p=new-prompt>')")
       (repl))))
 
 (define (show-license . args)
   (begin
-    (write (read-contents (++ (zepto:home) "assets/license_interactive.as")))
+    (write-plain (read-contents (++ (zepto:home) "assets/license_interactive.as")))
     (repl)))
 
 (define (show-complete-license . args)
   (begin
-    (write (read-contents (++ (zepto:home) "assets/complete_license.as")))
+    (write-plain (read-contents (++ (zepto:home) "assets/complete_license.as")))
     (repl)))
 
 (define meta-commands
@@ -93,7 +103,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 (let ((x (open-input-file *histfile*)))
   (if (not (eq? x #f))
     (begin
-      (map rl:add-history (string:split (read-contents *histfile*) #\newline))
+      (reduce (lambda (_ el) (rl:add-history el)) #f (string:split (read-contents *histfile*) #\newline))
       (close-input-file x))))
 
 (write *header*)
