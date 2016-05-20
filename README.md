@@ -37,7 +37,7 @@ It is pretty small, so the name might or might not be appropriate.
 
 ## Installation
 
-You will need cabal for using zepto.
+You will need cabal (the Haskell package manager) for using zepto.
 
 After cloning via git (using the `--recursive` flag to make sure you get all the
 submodules), building is done via invoking `cabal install` after pulling the latest
@@ -50,6 +50,7 @@ A typical installation workflow would look something like this:
 ```bash
 git clone --recursive git://github.com/zepto-lang/zepto.git
 cd zepto
+cabal update
 make
 make test
 # And then see whether none of the tests yield #f
