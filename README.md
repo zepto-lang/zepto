@@ -57,7 +57,7 @@ make test
 ```
 
 There is also a [Vim plugin](https://github.com/zepto-lang/zepto-vim) 
-for all of you terminal hackers (sorry emacs) and an [Atom plugin](https://github.com/hellerve/language.zepto).
+for all of you terminal hackers (sorry emacs) and an [Atom plugin](https://github.com/hellerve/language-zepto).
 
 ## Introduction
 

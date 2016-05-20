@@ -1,7 +1,6 @@
 module Zepto.Primitives.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
-import Data.List (find)
 import System.Directory (doesFileExist, getHomeDirectory)
 import System.Exit
 import System.IO
@@ -15,33 +14,6 @@ import qualified Data.ByteString as BS (readFile)
 import Zepto.Types
 
 import Paths_zepto
-
-escapeProc :: [LispVal] -> IOThrowsError LispVal
-escapeProc [SimpleVal (Number (NumI n))] = writeProc print' [fromSimple $ String $ "\x1b[" ++ show n ++ "m"]
-escapeProc [SimpleVal (Number (NumS n))] = writeProc print' [fromSimple $ String $ "\x1b[" ++ show n ++ "m"]
-escapeProc [badArg] = throwError $ TypeMismatch "integer" badArg
-escapeProc badArgList = throwError $ NumArgs 1 badArgList
-
-colorProc :: [LispVal] -> IOThrowsError LispVal
-colorProc [SimpleVal (Atom (':' : s))] =
-        case lookupColor s of
-           Just found -> escapeProc [SimpleVal (Number (NumI $ snd found))]
-           _          -> throwError $ BadSpecialForm "Color not found" $ fromSimple $ String s
-    where lookupColor color = find (\t -> color == fst t) colors
-          colors = [ ("black", 30)
-                   , ("red", 31)
-                   , ("green", 32)
-                   , ("yellow", 33)
-                   , ("blue", 34)
-                   , ("magenta", 35)
-                   , ("cyan", 36)
-                   , ("white", 37)
-                   , ("reset", 0)
-                   , ("none", 0)
-                   , ("", 0)
-                   ]
-colorProc [badArg] = throwError $ TypeMismatch "atom" badArg
-colorProc badArgs = throwError $ NumArgs 1 badArgs
 
 getHomeDir :: [LispVal] -> IOThrowsError LispVal
 getHomeDir [] = do

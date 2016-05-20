@@ -49,6 +49,18 @@ isProcedure (IOFunc _ _) = return $ fromSimple $ Bool True
 isProcedure (Cont _) = return $ fromSimple $ Bool True
 isProcedure _ = return $ fromSimple $ Bool False
 
+isPrim :: LispVal -> ThrowsError LispVal
+isPrim (PrimitiveFunc _ _) = return $ fromSimple $ Bool True
+isPrim _ = return $ fromSimple $ Bool False
+
+isFun :: LispVal -> ThrowsError LispVal
+isFun (Func _ _) = return $ fromSimple $ Bool True
+isFun _ = return $ fromSimple $ Bool False
+
+isEnv :: LispVal -> ThrowsError LispVal
+isEnv (Environ _) = return $ fromSimple $ Bool True
+isEnv _ = return $ fromSimple $ Bool False
+
 isSimple :: LispVal -> ThrowsError LispVal
 isSimple (SimpleVal _) = return $ fromSimple $ Bool True
 isSimple _ = return $ fromSimple $ Bool False

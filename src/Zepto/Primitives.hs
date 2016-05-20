@@ -2,7 +2,6 @@ module Zepto.Primitives(primitives
                        , ioPrimitives
                        , evalPrimitives
                        , eval
-                       , versionStr
                        , evalString
                        ) where
 import Data.Array
@@ -47,8 +46,10 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("ceiling", numRound ceiling, "ceils a number")
              , ("truncate", numRound truncate, "truncates a number")
              , ("arithmetic-shift", arithmeticShift, "do an arithmetic shift on an integer")
+             , ("unsigned-arithmetic-shift", unsignedArithmeticShift, "do an arithmetic shift (zero fill) on an integer")
              , ("bitwise-and", bitwiseAnd, "do a bitwise and on two integers")
              , ("bitwise-or", bitwiseOr, "do a bitwise or on two integers")
+             , ("bitwise-xor", bitwiseXor, "do a bitwise xor on two integers")
              , ("bitwise-not", bitwiseNot, "do a bitwise or on one integer")
              , ("real", unaryOp real, "gets real part of a number")
              , ("imaginary", unaryOp imaginary, "gets imaginary part of a number")
@@ -115,6 +116,9 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("simple?", unaryOp isSimple, "check whether arg is of simple type")
              , ("simple-list?", unaryOp isSimpleList, "check whether arg is a simple list")
              , ("hash-map?", unaryOp isHash, "check whether arg is a hash-map")
+             , ("primitive?", unaryOp isPrim, "check whether arg is a primitive")
+             , ("function?", unaryOp isFun, "check whether arg is a function")
+             , ("env?", unaryOp isEnv, "check whether arg is an environment")
              , ("typeof", unaryOp checkType, "return type string")
              , ("nil", noArg buildNil, "return nil")
              , ("inf", noArg buildInf, "return inf")
@@ -171,10 +175,7 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("hash:values", hashVals, "get vals from hashmap")
              , ("hash:contains?", inHash, "find out whether hashtable contains key")
              , ("zepto:version", noArg getVersion, "gets the version as a list")
-             , ("zepto:version-str", noArg getVersionStr, "gets the version as a string")
-             , ("zepto:major-version", noArg getMajVersion, "gets the major version number")
-             , ("zepto:minor-version", noArg getMinVersion, "gets the minor version number")
-             , ("zepto:patch-version", noArg getPatchVersion, "gets the patch version number")
+             , ("zepto:ghc", noArg getGhc, "gets the GHC version as an integer")
              ]
 
 -- | a list of all io-bound primitives
@@ -199,8 +200,6 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("exit", exitProc, "exit program")
                , ("system", systemProc, "call a system command")
                , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
-               , ("escape-sequence", escapeProc, "send escape sequence to shell")
-               , ("color", colorProc, "colorize output")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")
                , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
@@ -410,6 +409,9 @@ eval _ _ (List [Vector _, wrong@(SimpleVal (Atom (':' : _)))]) =
 eval env conti (List [Vector x, SimpleVal (Atom a)]) = do
         i <- getVar env a
         eval env conti (List [Vector x, i])
+eval env conti (List [Vector x, expr@(List _)]) = do
+        evald <- eval env conti expr
+        eval env conti (List [Vector x, evald])
 eval _ _ (List [Vector _, x]) = throwError $ TypeMismatch "integer" x
 eval _ _ (List [ByteVector x, SimpleVal (Number (NumI i))]) =
         return $ fromSimple $ Number $ NumS $ fromIntegral $ BS.index x (fromIntegral i)
@@ -569,7 +571,6 @@ eval env conti (List [SimpleVal (Atom "set-car!"), sth, form]) = do
           unpack _ = (fromSimple $ Nil "", "")
 eval _ _ (List (SimpleVal (Atom "set-car!") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "define")]) = throwError $ NumArgs 2 []
-eval _ _ (List [SimpleVal (Atom "ƒ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "define"), a@(SimpleVal (Atom (':' : _))), _]) =
             throwError $ TypeMismatch "symbol" a
 eval env conti (List [SimpleVal (Atom "define"), SimpleVal (Atom "_"), form]) = do
@@ -590,41 +591,16 @@ eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom va
 eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
         result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : SimpleVal (String doc) : b)) =  do
-        result <- makeDocFunc var env p b doc >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : List (SimpleVal (Atom var) : p) : b)) = do
-        result <- makeNormalFunc var env p b >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : SimpleVal (String doc) : b)) = do
-        result <- makeVarargs var varargs env p b doc >>= defineVar env var
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "ƒ") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
-        result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
-        contEval env conti result
-eval _ _ (List (SimpleVal (Atom "define") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List (SimpleVal (Atom "ƒ") : x)) = throwError $ NumArgs 2 x
 eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
-        result <- makeNormalFunc "lambda" env p b
-        contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : List p : b)) =  do
         result <- makeNormalFunc "lambda" env p b
         contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : b)) = do
         result <- makeVarargs "lambda" varargs env p b "lambda"
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : DottedList p varargs : b)) = do
-        result <- makeVarargs "lambda" varargs env p b "lambda"
-        contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : varargs@(SimpleVal (Atom _)) : b)) = do
         result <- makeVarargs "lambda" varargs env [] b "lambda"
         contEval env conti result
-eval env conti (List (SimpleVal (Atom "λ") : varargs@(SimpleVal (Atom _)) : b)) = do
-        result <- makeVarargs "lambda" varargs env [] b "lambda"
-        contEval env conti result
-eval _ _ (List [SimpleVal (Atom "λ")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "lambda")]) = throwError $ NumArgs 2 []
-eval _ _ (List (SimpleVal (Atom "λ") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List (SimpleVal (Atom "lambda") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "global-load")]) = throwError $ NumArgs 1 []
 eval env conti (List [SimpleVal (Atom "global-load"), SimpleVal (String file)]) = do
@@ -714,9 +690,31 @@ eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval _ _ (List [SimpleVal (Atom "help"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval env conti (List [SimpleVal (Atom "help"), val]) = do
+  case val of
+    f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+    IOFunc doc _ -> return $ fromSimple $ String $ doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+    x@(List _) -> do
+      mevald <- macroEval env x
+      evald <- eval env conti mevald
+      eval env conti (List [SimpleVal (Atom "help"), evald])
+    _ -> throwError $ Default $ show val ++ " cannot be resolved to a function"
 eval _ _ (List (SimpleVal (Atom "help") : x)) = throwError $ NumArgs 1 x
-eval _ _ (List [SimpleVal (Atom "doc"), x]) = throwError $ TypeMismatch "string/symbol" x
+eval env conti (List [SimpleVal (Atom "doc"), val]) = do
+  case val of
+    f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
+    IOFunc doc _ -> return $ fromSimple $ String $ doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
+    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
+    x@(List _) -> do
+      mevald <- macroEval env x
+      evald <- eval env conti mevald
+      eval env conti (List [SimpleVal (Atom "help"), evald])
+    _ -> throwError $ Default $ show val ++ " cannot be resolved to a function"
 eval _ _ (List (SimpleVal (Atom "doc") : x)) = throwError $ NumArgs 1 x
 eval _ _ (List [SimpleVal (Atom "quasiquote")]) = throwError $ NumArgs 1 []
 eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti =<<doUnQuote env val
@@ -867,7 +865,7 @@ readCharProc fun [Port p] = do
     input <-  liftIO $ tryIOError (liftIO $ fun p)
     liftIO $ hSetBuffering p LineBuffering
     case input of
-        Left _ -> throwError $ Default "IO error while reading from port"
+        Left _ -> return $ fromSimple $ Bool False
         Right inpChr -> return $ fromSimple $ Character inpChr
 readCharProc _ args = if length args == 1
                          then throwError $ TypeMismatch "port" $ List args

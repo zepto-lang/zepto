@@ -3,7 +3,6 @@ import Data.List
 import System.Environment
 
 import Zepto.Prompt
-import Zepto.Primitives
 
 -- |Prints the usage
 printUsage :: IO ()
@@ -19,10 +18,7 @@ printUsage = do printVersion
 
 -- |Prints the version
 printVersion :: IO ()
-printVersion = putStrLn ("zepto Version "
-                        ++ versionStr
-                        ++ ", compiled with GHC version "
-                        ++ show (__GLASGOW_HASKELL__::Integer))
+printVersion = putStrLn "This REPL will be deprecated."
 
 -- |Prints the commands that are possible within the REPL
 printCommands :: IO ()
@@ -45,10 +41,6 @@ main = do args <- getArgs
     where main' :: [String] -> IO ()
           main' arg
             | null arg = do
-              printVersion
-              printCopyright
-              printCommands
-              putStrLn ""
               runRepl
             | hasIn arg (makeArg "h" "help") =
               printUsage
