@@ -118,7 +118,7 @@
         ((special thing) state)
         (hash:update state
                      :acc
-                     (lambda (acc) (list:insert acc (state:pos) (string->list (++ "^[" thing)))))))))
+                     (lambda (acc) (list:insert acc (state :pos) (string->list (++ "^[" thing)))))))))
 
   (clean-prompt (lambda (state)
     (begin
