@@ -1,0 +1,11 @@
+(define-syntax list-comp
+  (syntax-rules (<- |)
+    ((_ (expr | x <- l))
+      (map (lambda (x) expr) l))))
+
+(define-syntax hash-comp
+  (syntax-rules (<- |)
+    ((_ (expr | x y <- l))
+      (make-hash
+        (hash:kv-map (lambda (kv) (let ((x (car kv)) (y (cadr kv))) expr))
+                     l)))))

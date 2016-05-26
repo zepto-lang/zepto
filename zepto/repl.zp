@@ -96,6 +96,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (if (truthy? env) (set! *env* (car env)))
     (define input (rl:readline (++ (if (function? *prompt*) (*prompt*) *prompt*)
                                    (color *input-highlight* #{:to-str #t}))))
+    (color :reset)
     (if (falsy? input)
       (repl))
     (set! *statement-count* (add1 *statement-count*))
