@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.9.3
+Version:             0.9.4
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:         
   zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
@@ -59,19 +59,16 @@ Executable           zepto
                      bytestring >= 0.10.2.0,
                      clock,
                      containers,
+                     cryptonite,
                      directory,
                      filepath,
-                     haskeline,
                      MissingH,
                      mtl >= 2.2.1,
                      network,
                      parsec,
                      process,
-                     random,
-                     split,
-                     strict,
-                     time,
                      transformers >= 0.4.2,
+                     strict,
                      utf8-string
     Extensions:      ExistentialQuantification 
                      CPP

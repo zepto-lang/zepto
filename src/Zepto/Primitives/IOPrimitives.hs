@@ -1,6 +1,7 @@
 module Zepto.Primitives.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
+import Crypto.Number.Generate (generateBetween)
 import System.Directory (doesFileExist, getHomeDirectory, setCurrentDirectory)
 import System.Exit
 import System.IO
@@ -154,6 +155,17 @@ systemProc [SimpleVal (String s), List given] = do
           notString (err:_) = err
 systemProc [x] = throwError $ TypeMismatch "string" x
 systemProc badArg = throwError $ NumArgs 1 badArg
+
+randIntProc :: [LispVal] -> IOThrowsError LispVal
+randIntProc [] = randIntProc [(fromSimple $ Number $ NumI $ toInteger (minBound :: Int)),
+                             (fromSimple $ Number $ NumI $ toInteger (maxBound :: Int))]
+randIntProc [mx] = randIntProc [(fromSimple $ Number $ NumI $ toInteger (minBound :: Int)), mx]
+randIntProc [SimpleVal (Number (NumI mn)), SimpleVal (Number (NumI mx))] = do
+  n <- liftIO $ generateBetween mn mx
+  return $ fromSimple $ Number $ NumI n
+randIntProc [SimpleVal (Number (NumI _)), x] = throwError $ TypeMismatch "integer" x
+randIntProc [x, _] = throwError $ TypeMismatch "integer" x
+randIntProc x = throwError $ NumArgs 2 x
 
 fst3 :: (a, b, c) -> a
 fst3 (x, _, _) = x

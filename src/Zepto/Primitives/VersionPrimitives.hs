@@ -2,7 +2,7 @@ module Zepto.Primitives.VersionPrimitives where
 import Zepto.Types
 
 version :: [Int]
-version = [0, 9, 3]
+version = [0, 9, 4]
 
 getGhc :: ThrowsError LispVal
 getGhc = return $ fromSimple $ Number $ NumI (__GLASGOW_HASKELL__::Integer)

@@ -80,7 +80,7 @@ runFile args = do
 
 
 -- | run the REPL
-runRepl :: IO ()
-runRepl = do
+runRepl :: [String] -> IO ()
+runRepl args = do
         repl <- getDataFileName "zepto/run-repl.zp"
-        runFile [repl]
+        runFile (repl : args)

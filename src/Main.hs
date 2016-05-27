@@ -10,7 +10,6 @@ printUsage = do printVersion
                 putStrLn("\nUsage: " ++
                          "\n\twithout arguments - runs REPL" ++
                          "\n\t-h/--help         - display this help message" ++
-                         "\n\t-S/--silent       - runs REPL without displaying the header" ++
                          "\n\t-s/--single       - runs single statement passed in as string" ++
                          "\n\t<zepto file>      - run file" ++
                          "\n\nMore information can be found at " ++
@@ -40,20 +39,15 @@ main = do args <- getArgs
           main' args
     where main' :: [String] -> IO ()
           main' arg
-            | null arg = do
-              runRepl
             | hasIn arg (makeArg "h" "help") =
               printUsage
-            | hasIn arg (makeArg "S" "silent") =
-              runRepl
             | any (`elem` (makeArg "s" "single")) arg =
               runSingleStatement (getOpt arg (makeArg "s" "single"))
             | hasIn arg (makeArg "v" "version") =
               printVersion
             | noMeta (head arg) = runFile arg
             | otherwise = do
-              putStrLn ("Unknown option: " ++ head arg)
-              printUsage
+              runRepl arg
           hasIn :: [String] -> [String] -> Bool
           hasIn x l = any (`elem` l) x && not (any noMeta x)
           makeArg :: String -> String -> [String]
