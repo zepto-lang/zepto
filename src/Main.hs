@@ -39,6 +39,8 @@ main = do args <- getArgs
           main' args
     where main' :: [String] -> IO ()
           main' arg
+            | null arg = do
+              runRepl arg
             | hasIn arg (makeArg "h" "help") =
               printUsage
             | any (`elem` (makeArg "s" "single")) arg =
