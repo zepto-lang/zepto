@@ -284,8 +284,8 @@ makeBaseEnv [] = do
 makeBaseEnv args = throwError $ NumArgs 0 args
 
 macroEvalFun :: [LispVal] -> IOThrowsError LispVal
-macroEvalFun [(Cont (Continuation env _ _ _ _ _)), val] = macroEval env val
-macroEvalFun [(Cont _), val, Environ env] = macroEval env val
+macroEvalFun [Cont (Continuation env _ _ _ _ _), val] = macroEval env val
+macroEvalFun [Cont _, val, Environ env] = macroEval env val
 macroEvalFun (_ : args) = throwError $ NumArgs 1 args
 macroEvalFun _ = throwError $ NumArgs 1 []
 
@@ -380,8 +380,8 @@ isNotNil (SimpleVal (Nil _)) = False
 isNotNil _ = True
 
 stringifyFunction :: LispVal -> String
-stringifyFunction (Func name (LispFun {params = args, vararg = varargs, body = _,
-                                       closure = _, docstring = doc})) =
+stringifyFunction (Func name LispFun {params = args, vararg = varargs, body = _,
+                                       closure = _, docstring = doc}) =
     doc ++ "\n  source: " ++
     "(" ++ name ++ " (" ++ unwords (fmap show args) ++
         (case varargs of
@@ -627,9 +627,9 @@ eval env _ (List [SimpleVal (Atom "help"), SimpleVal (String val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-                IOFunc doc _ -> return $ fromSimple $ String $ doc
-                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-                EvalFunc doc _ -> return $ fromSimple $ String $ doc
+                IOFunc doc _ -> return $ fromSimple $ String doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+                EvalFunc doc _ -> return $ fromSimple $ String doc
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
@@ -645,9 +645,9 @@ eval env _ (List [SimpleVal (Atom "doc"), SimpleVal (String val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-                IOFunc doc _ -> return $ fromSimple $ String $ doc
-                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-                EvalFunc doc _ -> return $ fromSimple $ String $ doc
+                IOFunc doc _ -> return $ fromSimple $ String doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+                EvalFunc doc _ -> return $ fromSimple $ String doc
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
     where
@@ -663,9 +663,9 @@ eval env conti (List [SimpleVal (Atom "help"), SimpleVal (Atom val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-                IOFunc doc _ -> return $ fromSimple $ String $ doc
-                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-                EvalFunc doc _ -> return $ fromSimple $ String $ doc
+                IOFunc doc _ -> return $ fromSimple $ String doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+                EvalFunc doc _ -> return $ fromSimple $ String doc
                 f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
                 err -> throwError $ Default $ val ++ " is not a function (is: " ++ typeString err ++ ")"
             else return $ fromSimple $ String x
@@ -682,9 +682,9 @@ eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
               var <- getVar env val
               case var of
                 f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-                IOFunc doc _ -> return $ fromSimple $ String $ doc
-                PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-                EvalFunc doc _ -> return $ fromSimple $ String $ doc
+                IOFunc doc _ -> return $ fromSimple $ String doc
+                PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+                EvalFunc doc _ -> return $ fromSimple $ String doc
                 f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
                 _ -> throwError $ Default $ val ++ " is not a function"
             else return $ fromSimple $ String x
@@ -692,12 +692,12 @@ eval env conti (List [SimpleVal (Atom "doc"), SimpleVal (Atom val)]) = do
           filterTuple tuple = (== val) $ firstElem tuple
           firstElem (x, _, _) = x
           thirdElem (_, _, x) = x
-eval env conti (List [SimpleVal (Atom "help"), val]) = do
+eval env conti (List [SimpleVal (Atom "help"), val]) =
   case val of
     f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-    IOFunc doc _ -> return $ fromSimple $ String $ doc
-    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    IOFunc doc _ -> return $ fromSimple $ String doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+    EvalFunc doc _ -> return $ fromSimple $ String doc
     f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
     x@(List _) -> do
       mevald <- macroEval env x
@@ -705,12 +705,12 @@ eval env conti (List [SimpleVal (Atom "help"), val]) = do
       eval env conti (List [SimpleVal (Atom "help"), evald])
     _ -> throwError $ Default $ show val ++ " cannot be resolved to a function"
 eval _ _ (List (SimpleVal (Atom "help") : x)) = throwError $ NumArgs 1 x
-eval env conti (List [SimpleVal (Atom "doc"), val]) = do
+eval env conti (List [SimpleVal (Atom "doc"), val]) =
   case val of
     f@(Func _ _) -> return $ fromSimple $ String $ stringifyFunction f
-    IOFunc doc _ -> return $ fromSimple $ String $ doc
-    PrimitiveFunc doc _ -> return $ fromSimple $ String $ doc
-    EvalFunc doc _ -> return $ fromSimple $ String $ doc
+    IOFunc doc _ -> return $ fromSimple $ String doc
+    PrimitiveFunc doc _ -> return $ fromSimple $ String doc
+    EvalFunc doc _ -> return $ fromSimple $ String doc
     f@(SimpleVal (Atom _)) -> eval env conti (List [SimpleVal (Atom "help"), f])
     x@(List _) -> do
       mevald <- macroEval env x
@@ -739,7 +739,7 @@ eval env conti (List [SimpleVal (Atom "quasiquote"), val]) = contEval env conti 
                     return $ Vector $ listArray (0, len) vList
                 _ -> eval e (nullCont e) (List [SimpleVal (Atom "quote"), v])
           unquoteListM e = foldlM (unquoteListFld e) []
-          unquoteListFld e (acc) v =
+          unquoteListFld e acc v =
             case v of
                 List [SimpleVal (Atom "unquote-splicing"), x] -> do
                     value <- eval e (nullCont e) x
@@ -829,7 +829,7 @@ eval env conti (List (SimpleVal (Atom "begin") : funs))
                                     _ <- eval env conti (head funs)
                                     eval env conti (List (SimpleVal (Atom "begin") : fs))
 eval env _ (List [SimpleVal (Atom "current-env")]) = return $ Environ env
-eval _ _ (List ((SimpleVal (Atom "current-env")) : x)) = throwError $ NumArgs 0 x
+eval _ _ (List (SimpleVal (Atom "current-env") : x)) = throwError $ NumArgs 0 x
 eval env conti (List (function : args)) = do
         func <- eval env (nullCont env) function
         argVals <- mapM (eval env (nullCont env)) args
@@ -856,7 +856,7 @@ readProc [] = readProc [Port stdin]
 readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
 readProc [x@(SimpleVal (Atom ":no-eval"))] = readProc [Port stdin, x]
 readProc [SimpleVal (Atom ":stdin"), x@(SimpleVal (Atom ":no-eval"))] = readProc [Port stdin, x]
-readProc [Port port, SimpleVal (Atom ":no-eval")] = liftIO (hGetLine port) >>= return . fromSimple . String
+readProc [Port port, SimpleVal (Atom ":no-eval")] = liftM (fromSimple . String) (liftIO (hGetLine port))
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
@@ -875,7 +875,7 @@ readCharProc _ args = if length args == 1
 
 apply :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (Cont (Continuation a b c d e cs)) fn args =
-  apply' (Cont (Continuation a b c d e $! (buildCallHistory (fn, showArgs args) cs))) fn args
+  apply' (Cont (Continuation a b c d e $! buildCallHistory (fn, showArgs args) cs)) fn args
 apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
 apply' :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal

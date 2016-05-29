@@ -21,12 +21,12 @@ cdr (List (_ : xs)) = return $ List xs
 cdr (SimpleVal (SimpleList (_ : xs))) = return $ fromSimple $ SimpleList xs
 cdr (DottedList [_] x) = return x
 cdr (DottedList (_ : xs) x) = return $ DottedList xs x
-cdr (badArg) = throwError $ TypeMismatch "pair" badArg
+cdr badArg = throwError $ TypeMismatch "pair" badArg
 
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x, List []] = return $ List [x]
 cons [x, List xs] = return $ List $ x : xs
-cons [(SimpleVal x), SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
+cons [SimpleVal x, SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x, y] = return $ DottedList [x] y
 cons badArgList = throwError $ NumArgs 2 badArgList
@@ -92,7 +92,7 @@ byteVectorRef [Vector _, badType] = throwError $ TypeMismatch "vector" badType
 byteVectorRef [badType, _] = throwError $ TypeMismatch "vector" badType
 byteVectorRef badArgList = throwError $ NumArgs 2 badArgList
 
-subArray :: (Int, Int) -> (Array Int LispVal) -> (Array Int LispVal)
+subArray :: (Int, Int) -> Array Int LispVal -> Array Int LispVal
 subArray (from, to) v = listArray (0,to-from) $ map (v!) [from..to]
 
 subVector [Vector v, SimpleVal (Number (NumI n))] = return $ Vector $ subArray (0, fromInteger n) v
@@ -107,7 +107,7 @@ subVector [Vector v, SimpleVal (Number (NumS from)), SimpleVal (Number (NumI to)
         return $ Vector $ subArray (from, fromInteger to) v
 subVector [Vector _, SimpleVal (Number (NumI _)), badType] = throwError $ TypeMismatch "integer" badType
 subVector [Vector _, SimpleVal (Number (NumS _)), badType] = throwError $ TypeMismatch "integer" badType
-subVector ((Vector _) : badType : _) = throwError $ TypeMismatch "integer" badType
+subVector (Vector _ : badType : _) = throwError $ TypeMismatch "integer" badType
 subVector (badType : _) = throwError $ TypeMismatch "vector" badType
 subVector badArgList = throwError $ NumArgs 2 badArgList
 
@@ -125,7 +125,7 @@ subByteVector [ByteVector v, SimpleVal (Number (NumS from)), SimpleVal (Number (
         return $ ByteVector $ BS.take (fromInteger to - from) $ BS.drop from v
 subByteVector [ByteVector _, SimpleVal (Number (NumI _)), badType] = throwError $ TypeMismatch "integer" badType
 subByteVector [ByteVector _, SimpleVal (Number (NumS _)), badType] = throwError $ TypeMismatch "integer" badType
-subByteVector ((ByteVector _) : badType : _) = throwError $ TypeMismatch "integer" badType
+subByteVector (ByteVector _ : badType : _) = throwError $ TypeMismatch "integer" badType
 subByteVector (badType : _) = throwError $ TypeMismatch "byte-vector" badType
 subByteVector badArgList = throwError $ NumArgs 2 badArgList
 
@@ -186,7 +186,7 @@ stringFind [SimpleVal (String match), SimpleVal (String sub)] =
   where substr pat str = findStrHelp pat str 0
         findStrHelp _ [] _ = -1
         findStrHelp pat s@(_:xs) n
-          | pat == (take (length pat) s) = n
+          | pat == take (length pat) s = n
           | otherwise = findStrHelp pat xs (n+1)
 stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
 stringFind [SimpleVal (String _), badType] = throwError $ TypeMismatch "character" badType
@@ -226,7 +226,7 @@ listAppend :: [LispVal] -> ThrowsError LispVal
 listAppend (vec@(List _) : t) = append' [vec] t
   where append' :: [LispVal] -> [LispVal] -> ThrowsError LispVal
         append' [] [v] = return $ List [v]
-        append' [x] [] = return $ x
+        append' [x] [] = return x
         append' [List x] (st : sts) = do
           rest <- append' [] sts
           case rest of
@@ -270,10 +270,10 @@ vectorAppend (badType : _) = throwError $ TypeMismatch "vector" badType
 vectorAppend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
 byteVectorAppend :: [LispVal] -> ThrowsError LispVal
-byteVectorAppend t = append' t
+byteVectorAppend = append'
   where append' :: [LispVal] -> ThrowsError LispVal
         append' [x@(ByteVector _)] = return x
-        append' [] = return $ ByteVector $ BS.empty
+        append' [] = return $ ByteVector BS.empty
         append' [SimpleVal (Number (NumI n))] = return $ ByteVector $ BS.singleton (fromInteger n :: Word8)
         append' [SimpleVal (Number (NumS n))] = return $ ByteVector $ BS.singleton (fromIntegral n :: Word8)
         append' [x] = throwError $ TypeMismatch "bytevector/element" x

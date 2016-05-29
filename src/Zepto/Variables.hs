@@ -22,7 +22,7 @@ vnamespace :: Char
 vnamespace = 'v'
 
 allBindings :: Env -> IO (Data.Map.Map String (IORef LispVal))
-allBindings (Environment Nothing b _) = readIORef $ b
+allBindings (Environment Nothing b _) = readIORef b
 allBindings (Environment (Just parent) b _) = do
         x <- readIORef b
         y <- allBindings parent
@@ -164,7 +164,7 @@ updatePointers envRef namespace var = do
           existingValue <- getNamespacedVar envRef namespace var
           setNamespacedVar pEnv namespace pVar existingValue
         [] -> return $ SimpleVal $ Nil ""
-        _ -> throwError $ InternalError $
+        _ -> throwError $ InternalError
                "non-pointer value found in updatePointers"
     Nothing -> return $ SimpleVal $ Nil ""
  where

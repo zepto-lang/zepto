@@ -21,8 +21,8 @@ eqv [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x], List $ ys ++ [y]
 -- all of those function checks are dirty hacks
 eqv [x@(EvalFunc _ _), y@(EvalFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [x@(PrimitiveFunc _ _), y@(PrimitiveFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
-eqv [(Func x _), (Func y _)] = return $ fromSimple $ Bool $ x == y
-eqv [(ByteVector x), (ByteVector y)] = return $ fromSimple $ Bool $ x == y
+eqv [Func x _, Func y _] = return $ fromSimple $ Bool $ x == y
+eqv [ByteVector x, ByteVector y] = return $ fromSimple $ Bool $ x == y
 eqv [x@(IOFunc _ _), y@(IOFunc _ _)] = return $ fromSimple $ Bool $ show x == show y
 eqv [SimpleVal (SimpleList arg1), SimpleVal (SimpleList arg2)] =
         return $ fromSimple $ Bool $ (length arg1 == length arg2) &&
@@ -89,11 +89,11 @@ numericMinop _ [SimpleVal (Number l)] = return $ fromSimple $ Number $ negate l
 numericMinop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
 
 numericTimesop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericTimesop _ [] = return $ fromSimple $ Number $ 1
+numericTimesop _ [] = return $ fromSimple $ Number 1
 numericTimesop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
 
 numericPlusop :: (LispNum -> LispNum -> LispNum) -> [LispVal] -> ThrowsError LispVal
-numericPlusop _ [] = return $ fromSimple $ Number $ 0
+numericPlusop _ [] = return $ fromSimple $ Number 0
 numericPlusop _ [SimpleVal (Number l)] = if l > 0 then return $ fromSimple $ Number l
                                       else return $ fromSimple $ Number $ negate l
 numericPlusop op p = liftM (fromSimple . Number . foldl1 op) (mapM unpackNum p)
@@ -125,11 +125,11 @@ unaryIOOp :: (LispVal -> IOThrowsError LispVal) -> [LispVal] -> IOThrowsError Li
 unaryIOOp f [v] = f v
 unaryIOOp _ l = throwError $ NumArgs 1 l
 
-noArg :: (ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+noArg :: ThrowsError LispVal -> [LispVal] -> ThrowsError LispVal
 noArg f [] = f
 noArg _ l = throwError $ NumArgs 0 l
 
-noIOArg :: (IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
+noIOArg :: IOThrowsError LispVal -> [LispVal] -> IOThrowsError LispVal
 noIOArg f [] = f
 noIOArg _ l = throwError $ NumArgs 0 l
 
@@ -189,7 +189,7 @@ unsignedArithmeticShift badArgList = throwError $ NumArgs 2 badArgList
 
 bitwiseAnd :: [LispVal] -> ThrowsError LispVal
 bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ n .&. s
-bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .&. (fromIntegral s)
+bitwiseAnd [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .&. fromIntegral s
 bitwiseAnd [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ n .&. s
 bitwiseAnd [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
 bitwiseAnd [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType
@@ -198,7 +198,7 @@ bitwiseAnd badArgList = throwError $ NumArgs 2 badArgList
 
 bitwiseOr :: [LispVal] -> ThrowsError LispVal
 bitwiseOr [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI s))] = return $ fromSimple $ Number $ NumI $ n .|. s
-bitwiseOr [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .|. (fromIntegral s)
+bitwiseOr [SimpleVal (Number (NumI n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumI $ n .|. fromIntegral s
 bitwiseOr [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS s))] = return $ fromSimple $ Number $ NumS $ n .|. s
 bitwiseOr [badType, SimpleVal (Number _)] = throwError $ TypeMismatch "integer" badType
 bitwiseOr [SimpleVal (Number _), badType] = throwError $ TypeMismatch "integer" badType

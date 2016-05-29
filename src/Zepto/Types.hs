@@ -361,8 +361,8 @@ type IOThrowsError = ExceptT LispError IO
 
 globalEnv :: Maybe Env -> Env -> Env
 globalEnv (Just prev) Environment{parentEnv=Nothing} = prev
-globalEnv Nothing val@(Environment{parentEnv=Nothing}) = val
-globalEnv _ val@(Environment{parentEnv=Just parent})=globalEnv (Just val) parent
+globalEnv Nothing val@Environment{parentEnv=Nothing} = val
+globalEnv _ val@Environment{parentEnv=Just parent}=globalEnv (Just val) parent
 
 showNum :: LispNum -> String
 showNum (NumF contents) = show contents
@@ -389,8 +389,8 @@ showVal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
 showVal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showVal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
 showVal (Port _) = "<IO port>"
-showVal (Func name (LispFun {params = args, vararg = varargs, body = _,
-                             closure = _, docstring = doc})) =
+showVal (Func name LispFun {params = args, vararg = varargs, body = _,
+                             closure = _, docstring = doc}) =
     doc ++ "\n  source: " ++
     "(" ++ name ++ " (" ++ unwords (fmap show args) ++
         (case varargs of
@@ -452,7 +452,7 @@ showCallHistory cs =
         "Backtrace (most recent call last): " ++ concatenate cs
     where concatenate [] = ""
           concatenate (x:xs) = "\n\t" ++ showInternal (fst x) ++ "\n\t\tcalled with: " ++
-                               (snd x) ++ concatenate xs
+                               snd x ++ concatenate xs
 
 showArgs :: [LispVal] -> String
 showArgs args = unwords (map showInternal args)
@@ -461,16 +461,16 @@ showInternal :: LispVal -> String
 showInternal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
 showInternal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showInternal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
-showInternal (Func name (LispFun {params = args, vararg = varargs, body = _,
-                             closure = _, docstring = doc})) =
+showInternal (Func name LispFun {params = args, vararg = varargs, body = _,
+                             closure = _, docstring = doc}) =
     "(" ++ name ++ " \"" ++ doc ++ "\" (" ++ unwords (fmap show args) ++
         (case varargs of
             Nothing -> ""
             Just arg -> " . " ++ arg) ++ ") ...)"
 showInternal (Cont _) = "<continuation>"
 showInternal (HashMap _) = "<hash-map>"
-showInternal (HashComprehension _ _ _ _) = "<hash-comprehension>"
-showInternal (ListComprehension _ _ _ _) = "<list-comprehension>"
+showInternal HashComprehension{} = "<hash-comprehension>"
+showInternal ListComprehension{} = "<list-comprehension>"
 showInternal (Environ _) = "<environment>"
 showInternal (Vector _) = "<vector>"
 showInternal (ByteVector _) = "<byte-vector>"
@@ -530,8 +530,8 @@ typeString (Port _) = "port"
 typeString (Func _ _) = "function"
 typeString (Pointer _ _) = "pointer"
 typeString (Cont _) = "continuation"
-typeString (ListComprehension{}) = "list comprehension"
-typeString (HashComprehension{}) = "hash comprehension"
+typeString ListComprehension{} = "list comprehension"
+typeString HashComprehension{} = "hash comprehension"
 typeString (ByteVector _) = "bytevector"
 
 unwordsList :: [LispVal] -> String

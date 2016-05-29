@@ -27,22 +27,22 @@ evalAndPrint env expr = evalString env expr >>= putStrLn . (++) "=> "
 stdlib :: Env -> IO String
 stdlib env = do
     _ <- loadFun env "zepto-stdlib/foldl.zp"
-    x <- mapM (\x -> loadFile env x) ["zepto-stdlib/let.zp",
-                                  "zepto-stdlib/extra.zp",
-                                  "zepto-stdlib/logical.zp",
-                                  "zepto-stdlib/util.zp",
-                                  "zepto-stdlib/math.zp",
-                                  "zepto-stdlib/zplist.zp",
-                                  "zepto-stdlib/zpstring.zp",
-                                  "zepto-stdlib/definitions.zp",
-                                  "zepto-stdlib/io.zp",
-                                  "zepto-stdlib/pairs.zp",
-                                  "zepto-stdlib/zphash.zp",
-                                  "zepto-stdlib/zpgenerics.zp",
-                                  "zepto-stdlib/zpvector.zp",
-                                  "zepto-stdlib/zpcollections.zp",
-                                  "zepto/load.zp",
-                                  "zepto-stdlib/module.zp"]
+    x <- mapM (loadFile env) ["zepto-stdlib/let.zp",
+                              "zepto-stdlib/extra.zp",
+                              "zepto-stdlib/logical.zp",
+                              "zepto-stdlib/util.zp",
+                              "zepto-stdlib/math.zp",
+                              "zepto-stdlib/zplist.zp",
+                              "zepto-stdlib/zpstring.zp",
+                              "zepto-stdlib/definitions.zp",
+                              "zepto-stdlib/io.zp",
+                              "zepto-stdlib/pairs.zp",
+                              "zepto-stdlib/zphash.zp",
+                              "zepto-stdlib/zpgenerics.zp",
+                              "zepto-stdlib/zpvector.zp",
+                              "zepto-stdlib/zpcollections.zp",
+                              "zepto/load.zp",
+                              "zepto-stdlib/module.zp"]
     return $ last x
 
 loadFun :: Env -> String -> IO String

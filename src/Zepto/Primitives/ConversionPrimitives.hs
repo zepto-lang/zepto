@@ -36,12 +36,12 @@ charToInteger (SimpleVal (Character c)) = return $ fromSimple $ Number $ NumI $ 
 charToInteger notChar = throwError $ TypeMismatch "character" notChar
 
 number2String :: [LispVal] -> ThrowsError LispVal
-number2String [(SimpleVal (Number x))] = return $ fromSimple $ String $ show x
-number2String [(SimpleVal (Number x)), (SimpleVal (Number (NumI y)))] = return $ fromSimple $ String $ interpolate (show x) (fromInteger y)
+number2String [SimpleVal (Number x)] = return $ fromSimple $ String $ show x
+number2String [SimpleVal (Number x), SimpleVal (Number (NumI y))] = return $ fromSimple $ String $ interpolate (show x) (fromInteger y)
     where interpolate s n = if length s < n then interpolate ('0' : s) n else s
-number2String [(SimpleVal (Number x)), (SimpleVal (Number (NumS y)))] = return $ fromSimple $ String $ interpolate (show x) y
+number2String [SimpleVal (Number x), SimpleVal (Number (NumS y))] = return $ fromSimple $ String $ interpolate (show x) y
     where interpolate s n = if length s < n then interpolate ('0' : s) n else s
-number2String [(SimpleVal (Number _)), notNumber] = throwError $ TypeMismatch "integer" notNumber
+number2String [SimpleVal (Number _), notNumber] = throwError $ TypeMismatch "integer" notNumber
 number2String [notNumber, _] = throwError $ TypeMismatch "number" notNumber
 number2String n = throwError $ NumArgs 1 n
 

@@ -25,7 +25,7 @@ changeDir x = throwError $ TypeMismatch "string" x
 
 getHomeDir :: IOThrowsError LispVal
 getHomeDir = do
-  dir <- liftIO $ getHomeDirectory
+  dir <- liftIO getHomeDirectory
   return $ fromSimple $ String dir
 
 getZeptoDir :: IOThrowsError LispVal
@@ -57,7 +57,7 @@ writeProc fun [obj, Port port] = do
 writeProc fun [obj, a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stdout, a]
 writeProc fun [obj, SimpleVal (Atom ":stdout"), a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stdout, a]
 writeProc fun [obj, SimpleVal (Atom ":stderr"), a@(SimpleVal (Atom ":flush"))] = writeProc fun [obj, Port stderr, a]
-writeProc fun [obj, Port port, (SimpleVal (Atom ":flush"))] = do
+writeProc fun [obj, Port port, SimpleVal (Atom ":flush")] = do
       out <- liftIO $ tryIOError (liftIO $ fun port obj)
       case out of
           Left _ -> throwError $ Default "IO Error writing to port"
@@ -95,7 +95,7 @@ readContents [x] = throwError $ TypeMismatch "string" x
 readContents badArgs = throwError $ NumArgs 1 badArgs
 
 readBinaryContents :: [LispVal] -> IOThrowsError LispVal
-readBinaryContents [SimpleVal (String filename)] = liftM (ByteVector) $ liftIO $ BS.readFile filename
+readBinaryContents [SimpleVal (String filename)] = liftM ByteVector $ liftIO $ BS.readFile filename
 readBinaryContents [x] = throwError $ TypeMismatch "string" x
 readBinaryContents badArgs = throwError $ NumArgs 1 badArgs
 
@@ -157,9 +157,9 @@ systemProc [x] = throwError $ TypeMismatch "string" x
 systemProc badArg = throwError $ NumArgs 1 badArg
 
 randIntProc :: [LispVal] -> IOThrowsError LispVal
-randIntProc [] = randIntProc [(fromSimple $ Number $ NumI $ toInteger (minBound :: Int)),
-                             (fromSimple $ Number $ NumI $ toInteger (maxBound :: Int))]
-randIntProc [mx] = randIntProc [(fromSimple $ Number $ NumI $ toInteger (minBound :: Int)), mx]
+randIntProc [] = randIntProc [fromSimple $ Number $ NumI $ toInteger (minBound :: Int),
+                              fromSimple $ Number $ NumI $ toInteger (maxBound :: Int)]
+randIntProc [mx] = randIntProc [fromSimple $ Number $ NumI $ toInteger (minBound :: Int), mx]
 randIntProc [SimpleVal (Number (NumI mn)), SimpleVal (Number (NumI mx))] = do
   n <- liftIO $ generateBetween mn mx
   return $ fromSimple $ Number $ NumI n

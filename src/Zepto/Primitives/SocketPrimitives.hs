@@ -51,19 +51,19 @@ socket [_, x, SimpleVal (Number (NumS _))] = throwError $ TypeMismatch "string" 
 socket [_, _, x] = throwError $ TypeMismatch "small-int" x
 socket [t@(SimpleVal (String type'))] = do
         sock <- liftIO (NS.socket (NS.unpackFamily 2) (lookupType type') 0)
-        let fd = fromSimple $ Number $ NumS $ fromIntegral (NS.fdSocket sock)
-        let sp = \ x -> fromSimple $ Number $ NumS x
+        let sp = fromSimple . Number . NumS
+        let fd = sp $ fromIntegral (NS.fdSocket sock)
         return $ List [fd, sp 2, t, sp 0]
 socket [t] = throwError $ TypeMismatch "string" t
 socket x = throwError $ NumArgs 3 x
 
 ls2AddrInfo :: LispVal -> Maybe NS.AddrInfo
-ls2AddrInfo (List [(List flags),
-                      (SimpleVal (Number (NumS family))),
-                      (SimpleVal (String type')),
-                      (SimpleVal (Number (NumS proto))),
-                      address,
-                      (SimpleVal cname)]) =
+ls2AddrInfo (List [List flags,
+                   SimpleVal (Number (NumS family)),
+                   SimpleVal (String type'),
+                   SimpleVal (Number (NumS proto)),
+                   address,
+                   SimpleVal cname]) =
           Just $ NS.AddrInfo (map parsefl flags)
                           (NS.unpackFamily $ fromIntegral family)
                           (lookupType type')
@@ -97,37 +97,37 @@ addrInfo2Ls (NS.AddrInfo flags family type' proto address cname) =
           ]
     where parsec (Just s) = fromSimple $ String s
           parsec Nothing  = fromSimple $ Nil ""
-          parsefl f = List $ map (\x -> fromSimple $ String $ show x) f
+          parsefl f = List $ map (fromSimple . String . show) f
 
 getAddrInfo :: [LispVal] -> IOThrowsError LispVal
-getAddrInfo [addrInfo@(List _), (SimpleVal n), (SimpleVal s)] = do
+getAddrInfo [addrInfo@(List _), SimpleVal n, SimpleVal s] = do
         let info = ls2AddrInfo addrInfo
         resolved <- liftIO $ NS.getAddrInfo info (toMaybe n) (toMaybe s)
         return $ addrInfo2Ls $ head resolved
     where toMaybe (String sth) = Just sth
           toMaybe _ = Nothing
-getAddrInfo [(SimpleVal n), (SimpleVal s)] = do
+getAddrInfo [SimpleVal n, SimpleVal s] = do
         resolved <- liftIO $ NS.getAddrInfo Nothing (toMaybe n) (toMaybe s)
         return $ addrInfo2Ls $ head resolved
     where toMaybe (String sth) = Just sth
           toMaybe _ = Nothing
-getAddrInfo [x, (SimpleVal _), (SimpleVal _)] = throwError $ TypeMismatch "list" x
-getAddrInfo [x, (SimpleVal _)] = throwError $ TypeMismatch "string/nil" x
+getAddrInfo [x, SimpleVal _, SimpleVal _] = throwError $ TypeMismatch "list" x
+getAddrInfo [x, SimpleVal _] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo [_, x] = throwError $ TypeMismatch "string/nil" x
-getAddrInfo [_, x, (SimpleVal _)] = throwError $ TypeMismatch "string/nil" x
+getAddrInfo [_, x, SimpleVal _] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo [_, _, x] = throwError $ TypeMismatch "string/nil" x
 getAddrInfo x = throwError $ NumArgs 2 x
 
 connect :: [LispVal] -> IOThrowsError LispVal
-connect [List [(SimpleVal (Number (NumS fd))),
-               (SimpleVal (Number (NumS fam))),
-               (SimpleVal (String type')),
-               (SimpleVal (Number (NumS protonum)))],
+connect [List [SimpleVal (Number (NumS fd)),
+               SimpleVal (Number (NumS fam)),
+               SimpleVal (String type'),
+               SimpleVal (Number (NumS protonum))],
          addrInfo@(List _)] = do
         let info' = ls2AddrInfo addrInfo
         case info' of
           Just info -> do
-            status <- liftIO (newMVar (NS.NotConnected))
+            status <- liftIO (newMVar NS.NotConnected)
             let sock = NS.MkSocket (fromIntegral fd)
                                    (NS.unpackFamily (fromIntegral fam))
                                    (lookupType type')
@@ -137,17 +137,17 @@ connect [List [(SimpleVal (Number (NumS fd))),
             return $ fromSimple $ Nil ""
           Nothing -> throwError $ Default "Could not construct addr-info type"
     where getSockAddr (NS.AddrInfo _ _ _ _ a _) = a
-connect [x, (List _)] = throwError $ TypeMismatch "list" x
+connect [x, List _] = throwError $ TypeMismatch "list" x
 connect [_, x] = throwError $ TypeMismatch "list" x
 connect x = throwError $ NumArgs 2 x
 
 recv :: [LispVal] -> IOThrowsError LispVal
-recv [List [(SimpleVal (Number (NumS fd))),
-            (SimpleVal (Number (NumS fam))),
-            (SimpleVal (String type')),
-            (SimpleVal (Number (NumS protonum)))],
-      (SimpleVal (Number (NumS n)))] = do
-        status <- liftIO (newMVar (NS.Connected))
+recv [List [SimpleVal (Number (NumS fd)),
+            SimpleVal (Number (NumS fam)),
+            SimpleVal (String type'),
+            SimpleVal (Number (NumS protonum))],
+      SimpleVal (Number (NumS n))] = do
+        status <- liftIO (newMVar NS.Connected)
         let sock = NS.MkSocket (fromIntegral fd)
                                (NS.unpackFamily (fromIntegral fam))
                                (lookupType type')
@@ -155,17 +155,17 @@ recv [List [(SimpleVal (Number (NumS fd))),
                                status
         datum <- liftIO $ NBS.recv sock n
         return $ ByteVector datum
-recv [x, (SimpleVal (Number (NumS _)))] = throwError $ TypeMismatch "list" x
+recv [x, SimpleVal (Number (NumS _))] = throwError $ TypeMismatch "list" x
 recv [_, x] = throwError $ TypeMismatch "small-int" x
 recv x = throwError $ NumArgs 2 x
 
 send :: [LispVal] -> IOThrowsError LispVal
-send [List [(SimpleVal (Number (NumS fd))),
-            (SimpleVal (Number (NumS fam))),
-            (SimpleVal (String type')),
-            (SimpleVal (Number (NumS protonum)))],
+send [List [SimpleVal (Number (NumS fd)),
+            SimpleVal (Number (NumS fam)),
+            SimpleVal (String type'),
+            SimpleVal (Number (NumS protonum))],
       ByteVector b] = do
-        status <- liftIO (newMVar (NS.Connected))
+        status <- liftIO (newMVar NS.Connected)
         let sock = NS.MkSocket (fromIntegral fd)
                                (NS.unpackFamily (fromIntegral fam))
                                (lookupType type')
@@ -178,15 +178,15 @@ send [_, x] = throwError $ TypeMismatch "byte-vector" x
 send x = throwError $ NumArgs 2 x
 
 bindSocket :: [LispVal] ->IOThrowsError LispVal
-bindSocket [List [(SimpleVal (Number (NumS fd))),
-                  (SimpleVal (Number (NumS fam))),
-                  (SimpleVal (String type')),
-                  (SimpleVal (Number (NumS protonum)))],
+bindSocket [List [SimpleVal (Number (NumS fd)),
+                  SimpleVal (Number (NumS fam)),
+                  SimpleVal (String type'),
+                  SimpleVal (Number (NumS protonum))],
             addrInfo@(List _)] = do
         let info' = ls2AddrInfo addrInfo
         case info' of
           Just info -> do
-            status <- liftIO (newMVar (NS.NotConnected))
+            status <- liftIO (newMVar NS.NotConnected)
             let sock = NS.MkSocket (fromIntegral fd)
                                    (NS.unpackFamily (fromIntegral fam))
                                    (lookupType type')
@@ -201,12 +201,12 @@ bindSocket [_, x] = throwError $ TypeMismatch "list (representing address-info)"
 bindSocket x = throwError $ NumArgs 2 x
 
 listen :: [LispVal] -> IOThrowsError LispVal
-listen [List [(SimpleVal (Number (NumS fd))),
-              (SimpleVal (Number (NumS fam))),
-              (SimpleVal (String type')),
-              (SimpleVal (Number (NumS protonum)))],
-            (SimpleVal (Number (NumS n)))] = do
-        status <- liftIO (newMVar (NS.Bound))
+listen [List [SimpleVal (Number (NumS fd)),
+              SimpleVal (Number (NumS fam)),
+              SimpleVal (String type'),
+              SimpleVal (Number (NumS protonum))],
+            SimpleVal (Number (NumS n))] = do
+        status <- liftIO (newMVar NS.Bound)
         let sock = NS.MkSocket (fromIntegral fd)
                                (NS.unpackFamily (fromIntegral fam))
                                (lookupType type')
@@ -214,22 +214,22 @@ listen [List [(SimpleVal (Number (NumS fd))),
                                status
         _ <- liftIO $ NS.listen sock n
         return $ fromSimple $ Nil ""
-listen [l@(List [(SimpleVal (Number (NumS _))),
-                 (SimpleVal (Number (NumS _))),
-                 (SimpleVal (String _)),
-                 (SimpleVal (Number (NumS _)))])] = do
-        listen [l, (fromSimple (Number (NumS 1)))]
+listen [l@(List [SimpleVal (Number (NumS _)),
+                 SimpleVal (Number (NumS _)),
+                 SimpleVal (String _),
+                 SimpleVal (Number (NumS _))])] =
+        listen [l, fromSimple (Number (NumS 1))]
 listen [x] = throwError $ TypeMismatch "list (representing socket" x
 listen [x, SimpleVal (Number (NumS _))] = throwError $ TypeMismatch "list (representing socket)" x
 listen [_, x] = throwError $ TypeMismatch "small-int" x
 listen x = throwError $ NumArgs 2 x
 
 accept :: [LispVal] -> IOThrowsError LispVal
-accept [List [(SimpleVal (Number (NumS fd))),
-              (SimpleVal (Number (NumS fam))),
-              (SimpleVal (String type')),
-              (SimpleVal (Number (NumS protonum)))]] = do
-        status <- liftIO (newMVar (NS.Listening))
+accept [List [SimpleVal (Number (NumS fd)),
+              SimpleVal (Number (NumS fam)),
+              SimpleVal (String type'),
+              SimpleVal (Number (NumS protonum))]] = do
+        status <- liftIO (newMVar NS.Listening)
         let sock = NS.MkSocket (fromIntegral fd)
                                (NS.unpackFamily (fromIntegral fam))
                                (lookupType type')
@@ -243,11 +243,11 @@ accept [x] = throwError $ TypeMismatch "list (representing socket)" x
 accept x = throwError $ NumArgs 1 x
 
 close :: [LispVal] -> IOThrowsError LispVal
-close [List [(SimpleVal (Number (NumS fd))),
-             (SimpleVal (Number (NumS fam))),
-             (SimpleVal (String type')),
-             (SimpleVal (Number (NumS protonum)))]] = do
-        status <- liftIO (newMVar (NS.Listening))
+close [List [SimpleVal (Number (NumS fd)),
+             SimpleVal (Number (NumS fam)),
+             SimpleVal (String type'),
+             SimpleVal (Number (NumS protonum))]] = do
+        status <- liftIO (newMVar NS.Listening)
         let sock = NS.MkSocket (fromIntegral fd)
                                (NS.unpackFamily (fromIntegral fam))
                                (lookupType type')

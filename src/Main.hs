@@ -39,16 +39,16 @@ main = do args <- getArgs
           main' args
     where main' :: [String] -> IO ()
           main' arg
-            | null arg = do
+            | null arg =
               runRepl arg
             | hasIn arg (makeArg "h" "help") =
               printUsage
-            | any (`elem` (makeArg "s" "single")) arg =
+            | any (`elem` makeArg "s" "single") arg =
               runSingleStatement (getOpt arg (makeArg "s" "single"))
             | hasIn arg (makeArg "v" "version") =
               printVersion
             | noMeta (head arg) = runFile arg
-            | otherwise = do
+            | otherwise =
               runRepl arg
           hasIn :: [String] -> [String] -> Bool
           hasIn x l = any (`elem` l) x && not (any noMeta x)
