@@ -52,7 +52,7 @@
                        (tl (substring (cdr str) (if (> i 0) i (length str)) (length str))))
                   (loop tl (++ acc (col :white) hd (col :reset)))))
             ((#\:)
-                (if (char:alpha? (get-from acc (length acc) #\a))
+                (if (char:alpha? (get-from acc (length acc) #\?))
                   (loop (cdr str) (++ acc (get-from str 0 "")))
                   (let* ((i (first-separator (cdr str)))
                          (hd (substring str 0 (if (> i 0) i (length str))))
