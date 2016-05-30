@@ -200,6 +200,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
                , ("system", systemProc, "call a system command")
+               , ("os:setenv", setEnvProc, "set an environment variable")
+               , ("os:getenv", unaryIOOp getEnvProc, "get an environment variable")
                , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
                , ("make-null-env", makeNullEnv, "make empty environment")
                , ("make-base-env", makeBaseEnv, "make standard environment")

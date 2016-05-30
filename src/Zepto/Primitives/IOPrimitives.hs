@@ -3,6 +3,7 @@ import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
 import Crypto.Number.Generate (generateBetween)
 import System.Directory (doesFileExist, getHomeDirectory, setCurrentDirectory)
+import System.Environment (getEnv, setEnv)
 import System.Exit
 import System.IO
 import System.IO.Error (tryIOError)
@@ -175,3 +176,17 @@ snd3 (_, x, _) = x
 
 thd3 :: (a, b, c) -> c
 thd3 (_, _, x) = x
+
+getEnvProc :: LispVal -> IOThrowsError LispVal
+getEnvProc (SimpleVal (String var)) = do
+  val <- liftIO $ getEnv var
+  return $ fromSimple $ String val
+getEnvProc x = throwError $ TypeMismatch "string" x
+
+setEnvProc :: [LispVal] -> IOThrowsError LispVal
+setEnvProc [SimpleVal (String var), SimpleVal (String val)] = do
+  _ <- liftIO $ setEnv var val
+  return $ fromSimple $ Nil ""
+setEnvProc [SimpleVal (String _), x] = throwError $ TypeMismatch "string" x
+setEnvProc [x, _] = throwError $ TypeMismatch "string" x
+setEnvProc x = throwError $ NumArgs 2 x

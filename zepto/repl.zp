@@ -8,6 +8,7 @@
 (define *output-highlight* :reset)
 (define *ret* "=> ")
 (define *statement-count* 1)
+(define *local-conf* "./.zeptorc")
 (define *conf* (++ (get-home-dir) "/.zeptorc"))
 (define *histfile* (++ (get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
@@ -112,6 +113,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
           (color *output-highlight*)
           (write res)
           (repl))))))
+
+(if (not (eq? (open-input-file *local-conf*) #f))
+  (load *local-conf*))
 
 (if (not (eq? (open-input-file *conf*) #f))
   (load *conf*))
