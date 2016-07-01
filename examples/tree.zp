@@ -1,14 +1,7 @@
-(load "srfi/srfi-9.zp")
-
-(define-record-type tree
-    (tree:make-tree left right val)
-    tree:tree?
-    (left tree:get-left tree:set-left)
-    (right tree:get-right tree:set-right)
-    (val tree:get-val tree:set-val))
+(define-struct tree (left right val))
 
 (define (tree:leaf? tree)
-  (and (null? (tree:get-left tree)) (null? (tree:get-right tree))))
+  (and (nil? (tree:get-left tree)) (nil? (tree:get-right tree))))
 
 (define (tree:make-leaf val)
   (tree:make-tree (nil) (nil) val))
@@ -30,3 +23,10 @@
         (if (> ldep rdep)
           (+ 1 ldep)
           (+ 1 rdep))))))
+
+(defimpl stringify tree:tree?
+         ((->string (lambda (t) (if (tree:leaf? t) (++ "Leaf<" (->string (tree:get-val t)) ">")
+                                                   (++ "Tree<" (->string (tree:get-left t))
+                                                       ", " (->string (tree:get-val t))
+                                                       ", " (->string (tree:get-right t))
+                                                       ">"))))))

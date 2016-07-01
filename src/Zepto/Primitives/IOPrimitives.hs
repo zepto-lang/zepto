@@ -2,7 +2,8 @@ module Zepto.Primitives.IOPrimitives where
 import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
 import Crypto.Number.Generate (generateBetween)
-import System.Directory (doesFileExist, getHomeDirectory, setCurrentDirectory)
+import System.Directory (doesFileExist, getHomeDirectory, getCurrentDirectory,
+                         setCurrentDirectory)
 import System.Environment (getEnv, setEnv)
 import System.Exit
 import System.IO
@@ -32,6 +33,11 @@ getHomeDir = do
 getZeptoDir :: IOThrowsError LispVal
 getZeptoDir = do
   dir <- liftIO $ getDataFileName ""
+  return $ fromSimple $ String dir
+
+getCurrentDir :: IOThrowsError LispVal
+getCurrentDir = do
+  dir <- liftIO getCurrentDirectory
   return $ fromSimple $ String dir
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
