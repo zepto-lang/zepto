@@ -1,9 +1,12 @@
 (module "readline"
   (export
     (list "readline" readline)
+    (list "add-completion" add-completion)
+    (list "reset-completions" reset-completions)
     (list "add-history" add-history))
 
   (-highlight #f)
+  (completions [])
 
   (first-separator (lambda (str)
     (let ((m (filter ($ (not (eq? % -1)))
@@ -147,6 +150,43 @@
         (remove-from-input 2)
         term))))
 
+  (_seps [#\space #\(])
+
+  (_split-at-last-separator (lambda (str)
+    (define (internal last-i i str)
+      (cond
+        ((null? str) last-i)
+        ((in? _seps (car str)) (internal i (add1 i) (cdr str)))
+        (else (internal last-i (add1 i) (cdr str)))))
+    (let ((sepi (internal -1 1 str)))
+      (if (> 0 sepi)
+        (list "" str)
+        (list (substring str 0 sepi) (substring str sepi (length str)))))))
+
+  (complete (lambda (state)
+    (begin
+      (let* ((acc (list->string (state :acc)))
+             (sep (_split-at-last-separator acc))
+             (term (cadr sep))
+             (matches (filter (lambda (item) (string:starts-with item term)) completions)))
+        (case (length matches)
+          ((0) state)
+          ((1) 
+            (let ((nstate (hash:set state :acc (string->list (++ (car sep) (car matches))))))
+              (hash:set nstate :pos (length (nstate :acc)))))
+          (else
+            (begin
+              (write "")
+              (reduce (lambda (acc x)
+                        (let ((len (length x)))
+                          (if (> (+ acc len) 80)
+                            (begin (display (++ "\n" x "\t")) len)
+                            (begin (display (++ x "\t")) (+ acc 4 len)))))
+                      0
+                      matches)
+              (write "")
+              state)))))))
+
   (_search (lambda (state term)
     (begin
       (remove-from-input (+ (length (state :acc)) (length (state :prompt)) 100))
@@ -205,11 +245,13 @@
       (let ((char (read-char)))
         (cond
           ((eq? #\newline char) (list->string (state :acc)))
+          ((eq? #\carriage char) (begin (remove-from-input 2) (write "") (list->string (state :acc))))
           ((eq? #\x1B char) (_readline (treat-special state)))
           ((eq? 1 (char->integer char)) (_readline (move-to-beginning state)))
           ((eq? 2 (char->integer char)) (_readline (cursor-left state)))
           ((eq? 5 (char->integer char)) (_readline (move-to-end state)))
           ((eq? 6 (char->integer char)) (_readline (cursor-right state)))
+          ((eq? 9 (char->integer char)) (_readline (complete state)))
           ((eq? 14 (char->integer char)) (_readline (history-up state)))
           ((eq? 16 (char->integer char)) (_readline (history-down state)))
           ((eq? 18 (char->integer char)) (reverse-search state))
@@ -223,6 +265,12 @@
 
   (add-history (lambda (item)
     (set! history (cons item history))))
+
+  (add-completion (lambda (item)
+    (set! completions (cons item completions))))
+
+  (reset-completions (lambda (comp)
+    (set! completions comp)))
 
   (new-state (lambda (prompt)
     (make-hash :cur -1 :pos 0 :acc [] :prompt prompt)))

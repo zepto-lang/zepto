@@ -21,6 +21,7 @@ Hail Eris, all rites reversed.
 
 Type ':quit' or press Ctrl-C to exit interpreter,
 ':help' to get a list of commands or ':license' to get the license text"))
+(define *record* #{:record? #f :file #f})
 
 (define (write-plain arg)
   (begin
@@ -35,6 +36,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 (define (do-exit . args)
   (begin
     (write-plain "Moriturus te saluto!")
+    (if (*record* :record?) (close-output-file (*record* :file)))
     (exit (if (null? args) 0 (string->number (car args))))))
 
 (define (show-commands . args)
@@ -62,12 +64,41 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (write-plain (read-contents (++ (zepto:home) "assets/complete_license.as")))
     (repl)))
 
+(define (record . args)
+  (if (not (null? args))
+    (begin
+     (set! *record* (make-hash :record? #t :file (open-output-file (car args))))
+     (write-plain (++ "Recording session to " (car args)))
+     (repl))
+    (begin
+      (error-plain "option :record-to requires an argument (example: ':record-to=output')")
+      (repl))))
+
+(define (stop-record . args)
+  (if (*record* :record?)
+    (begin
+      (close-output-file (*record* :file))
+      (set! *record* #{:record? #f :file #f})
+      (repl))
+    (begin
+      (error-plain "recording not active")
+      (repl))))
+
+(define (get-ddate . args)
+  (begin
+    (load "datetime/datetime")
+    (write (++ "It's " ((import "datetime:ddate-from-timestamp") (car (unix-timestamp)))))
+    (repl)))
+
 (define meta-commands
   (make-hash
     ":q" do-exit
+    ":record-to" record
+    ":stop-recording" stop-record
     ":quit" do-exit
     ":p" set-prompt
     ":license" show-license
+    ":ddate" get-ddate
     ":complete-license" show-complete-license
     ":help" show-commands
     ":prompt" set-prompt))
@@ -83,6 +114,16 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 
 (define (string:parseable? str) (not (in? (catch-vm-error `(string:parse ,str)) "Parse error at")))
 
+(define (enrich input str)
+  (let loop ((split (string:split str #\newline)))
+    (if (in? (car split) "Parse error at")
+      (let ((col (string->number (car (string:split (cadr (string:split (car split) "column ")) #\))))))
+        (++ (car split) "\n"
+            input "\n"
+            (string:replicate (sub1 col) " ") "^\n"
+            (string:join (cdr split) #\newline)))
+      (loop (cdr split)))))
+
 (define (repl . env)
   (define (check acc)
     (define (get-secondary)
@@ -92,7 +133,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
                  :input acc)
       (if (> (string:count acc #\() (string:count acc #\)))
         (check (++ acc " " (get-secondary)))
-        (make-hash :output (catch-vm-error `(string:parse ,acc))
+        (make-hash :output (enrich acc (catch-vm-error `(string:parse ,acc)))
                    :input acc))))
   (begin
     (if (truthy? env) (set! *env* (car env)))
@@ -114,6 +155,12 @@ Type ':quit' or press Ctrl-C to exit interpreter,
           (display (if (function? *ret*) (*ret*) *ret*))
           (color *output-highlight*)
           (write res)
+          (rl:reset-completions (hash:keys (env->hashmap *env*)))
+          (if (*record* :record?)
+            (begin
+              (display input (*record* :file))
+              (display " ; " (*record* :file))
+              (write res (*record* :file))))
           (repl))))))
 
 (if (not (eq? (open-input-file *local-conf*) #f))
@@ -125,7 +172,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 (let ((x (open-input-file *histfile*)))
   (if (not (eq? x #f))
     (begin
-      (reduce (lambda (_ el) (rl:add-history el)) #f (string:split (read-contents *histfile*) #\newline))
+      (map rl:add-history (reverse (string:split (read-contents *histfile*) #\newline)))
       (close-input-file x))))
+
+(map rl:add-completion (hash:keys (env->hashmap *env*)))
 
 (write *header*)
