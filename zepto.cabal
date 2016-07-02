@@ -54,7 +54,7 @@ Source-Repository head
 
 Executable           zepto
     Build-Depends:   array,
-                     base >= 4.7.0.0,
+                     base >= 4,
                      binary,
                      bytestring >= 0.10.2.0,
                      clock,
