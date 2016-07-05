@@ -10,7 +10,7 @@
 
 (defimpl traversable-collec gen:gen?
          ((car   (lambda (gen) ((gen:get-f gen))))
-          (cdr   (lambda (gen) (let ((_ ((gen:get-f gen)))) (gen:get-f gen))))
+          (cdr   (lambda (gen) (let ((_ ((gen:get-f gen)))) gen)))
           (null? (lambda (gen) (eq? ((gen:get-f gen)) :stop-generation)))))
 
 ; A helper to create generators that work out-of-the-box
@@ -29,8 +29,20 @@
           (begin
             (apply f (++ `(,ret ,stop) args))
             (cond
-              ((state :stopped) :stop-iteration)
+              ((state :stopped) :stop-generation)
               (else (state :res)))))))))
+
+(define (generator:next gen)
+  ((gen:get-f gen)))
+
+(define (generator:stop-generation? val)
+  (eq? :stop-generation val))
+
+(define (generator->list gen)
+  (let ((gen-val (generator:next gen)))
+    (if (generator:stop-generation? gen-val)
+      []
+      (cons gen-val (generator->list gen)))))
 
 ; An example implementation of a generator leveraging the previously
 ; defined datatypes and functions.
