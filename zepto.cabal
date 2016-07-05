@@ -72,7 +72,6 @@ Executable           zepto
                      utf8-string
     Extensions:      ExistentialQuantification 
                      CPP
-                     Strict
     ghc-options:     -Wall 
                      -Werror 
                      -O2
