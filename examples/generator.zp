@@ -1,0 +1,56 @@
+; An example implementation of how generators could be
+; implemented in zepto. Note that this means that the
+; generator is impure and has state.
+
+; The datatype generator, containing the generator function
+; It implements the stringify and traversable-collec protocols
+(define-struct gen (f))
+(defimpl stringify gen:gen?
+         ((->string (lambda (gen) "<generator object>"))))
+
+(defimpl traversable-collec gen:gen?
+         ((car   (lambda (gen) ((gen:get-f gen))))
+          (cdr   (lambda (gen) (let ((_ ((gen:get-f gen)))) (gen:get-f gen))))
+          (null? (lambda (gen) (eq? ((gen:get-f gen)) :stop-generation)))))
+
+; A helper to create generators that work out-of-the-box
+; A function passed into it will receive ret and stop as first arguments.
+; If it can provide more values, it should call ret with the next value,
+; if it cannot it should call stop without arguments.
+; Any other argument is passed through to the function.
+(define (generator f)
+  (let* ((state #{:res #f :stopped #f})
+         (ret   (lambda (v) (hash:set! state :res v)))
+         (stop  (lambda () (hash:set! state :stopped #t))))
+    (gen:make-gen
+      (lambda args
+        (if (state :stopped)
+          :stop-generation
+          (begin
+            (apply f (++ `(,ret ,stop) args))
+            (cond
+              ((state :stopped) :stop-iteration)
+              (else (state :res)))))))))
+
+; An example implementation of a generator leveraging the previously
+; defined datatypes and functions.
+; It implements a range generator.
+;
+; (range-generator 12) will result in a generator that counts up from 0 to 12
+; (range-generator 10 12) will result in a generator that counts up from 0 to 12
+; (range-generator 10 12 5) will result in a generator that counts up from 0 to 12 in increments of 5
+(define range-generator
+  (case-lambda
+    ((to) (range-generator 0 to 1))
+
+    ((from to) (range-generator from to 1))
+
+    ((from to step)
+      (generator
+        (let ((index from))
+          (lambda (ret stop)
+            (if (>= index to)
+              (stop)
+              (begin
+                (ret index)
+                (set! index (+ index step))))))))))
