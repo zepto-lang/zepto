@@ -227,6 +227,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
                  , ("catch-vm-error", catchVMError, "catches any vm error")
+                 , ("env:in?", inEnv, "checks whether a name is defined in an environment")
                  --, ("call-with-values", evalCallWValues, "call with values"),
                  --, ("load-ffi", evalFFI, "load foreign function")
                  ]
