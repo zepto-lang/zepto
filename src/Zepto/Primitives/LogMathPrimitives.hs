@@ -7,6 +7,7 @@ import Data.Complex
 import Data.Word (Word32)
 
 import qualified Data.Map as DM (toList)
+import qualified Data.Ratio as Ratio (numerator, denominator)
 
 import Zepto.Types
 
@@ -233,6 +234,14 @@ imaginary :: LispVal -> ThrowsError LispVal
 imaginary (SimpleVal (Number (NumC x))) = return $ fromSimple $ Number $ NumF $ imagPart x
 imaginary (SimpleVal (Number _)) = return $ fromSimple $ Number $ NumF 0
 imaginary x = throwError $ TypeMismatch "number" x
+
+numerator :: LispVal -> ThrowsError LispVal
+numerator (SimpleVal (Number (NumR x))) = return $ fromSimple $ Number $ NumI $ Ratio.numerator x
+numerator x = throwError $ TypeMismatch "number" x
+
+denominator :: LispVal -> ThrowsError LispVal
+denominator (SimpleVal (Number (NumR x))) = return $ fromSimple $ Number $ NumI $ Ratio.denominator x
+denominator x = throwError $ TypeMismatch "number" x
 
 numOp :: (Double -> Double) -> [LispVal] -> ThrowsError LispVal
 numOp op [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumF $ op $ fromInteger n

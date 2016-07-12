@@ -1,8 +1,8 @@
 module Zepto.Primitives.ConversionPrimitives where
 import Control.Exception (evaluate)
 import Control.Monad.Except (throwError, liftIO)
-import Data.Binary (encode)
-import Data.ByteString.Lazy (toStrict)
+import Data.Binary (encode, decode)
+import Data.ByteString.Lazy (toStrict, fromStrict)
 import Data.Char (ord, chr)
 import Data.Complex (realPart, imagPart)
 import Data.IORef (readIORef)
@@ -77,3 +77,7 @@ number2Bytes (SimpleVal (Number (NumR x))) = return $ ByteVector $ toStrict $ en
 number2Bytes (SimpleVal (Number (NumC x))) =
         return $ ByteVector $ toStrict $ BSL.concat $ map encode [realPart x, imagPart x]
 number2Bytes x = throwError $ TypeMismatch "number" x
+
+bytes2Float :: LispVal -> ThrowsError LispVal
+bytes2Float (ByteVector x) = return $ fromSimple $ Number $ NumF $ decode $ fromStrict x
+bytes2Float x = throwError $ TypeMismatch "byte-vector" x
