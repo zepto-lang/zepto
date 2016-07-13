@@ -19,6 +19,7 @@ import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
 import Zepto.Primitives.ConversionPrimitives
 import Zepto.Primitives.EnvironmentPrimitives
+import Zepto.Primitives.FunctionPrimitives
 import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
@@ -179,6 +180,10 @@ primitives = [ ("+", numericPlusop (+), "add two or more values")
              , ("hash:contains?", inHash, "find out whether hashtable contains key")
              , ("zepto:version", noArg getVersion, "gets the version as a list")
              , ("zepto:ghc", noArg getGhc, "gets the GHC version as an integer")
+             , ("function:name", unaryOp functionName, "get the name of a function")
+             , ("function:args", unaryOp functionArgs, "get the arguments of a function (does not work for primitives)")
+             , ("function:body", unaryOp functionBody, "get the body of a function (does not work for primitives)")
+             , ("function:docstring", unaryOp functionDocs, "get the docstring of a function (does not work for primitives)")
              ]
 
 -- | a list of all io-bound primitives
