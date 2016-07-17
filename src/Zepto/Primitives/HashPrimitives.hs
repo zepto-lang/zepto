@@ -1,7 +1,7 @@
 module Zepto.Primitives.HashPrimitives where
 
 import Control.Monad.Except
-import Data.Map hiding (map)
+import Data.Map (keys, elems, member, delete, fromList, toList)
 
 import Zepto.Types
 
@@ -32,3 +32,10 @@ makeHash l = case keyVal l [] of
           keyVal (SimpleVal x : y : r) acc = keyVal r $ (x, y) : acc
           keyVal (HashMap x : r) acc = keyVal r $ acc ++ toList x
           keyVal (x : _)  _ = Left x
+
+hashRemove :: [LispVal] -> ThrowsError LispVal
+hashRemove [HashMap x, SimpleVal e] = return $ HashMap $ delete e x
+hashRemove [x, SimpleVal _] = throwError $ TypeMismatch "hashmap" x
+hashRemove [HashMap _, e] = throwError $ TypeMismatch "simple value" e
+hashRemove [x, _] = throwError $ TypeMismatch "hashmap and simple value" x
+hashRemove badArgList = throwError $ NumArgs 2 badArgList
