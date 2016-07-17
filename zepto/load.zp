@@ -3,35 +3,34 @@
                                  :parsers #{}))
 (define *global-env* (current-env))
 
+(define (zepto:find-on-path file)
+  (let* ((with-ext (++ file ".zp"))
+         (stdlib (++ (zepto:home) (*load-params* :stdlib) file))
+         (stdlib-ext (++ (zepto:home) (*load-params* :stdlib) with-ext)))
+  (cond
+    ((file-exists? file) file)
+    ((file-exists? with-ext) with-ext)
+    ((file-exists? stdlib) stdlib)
+    ((file-exists? stdlib-ext) stdlib-ext)
+    (else
+      (let* ((paths (*load-params* :paths))
+             (found (reduce
+                      (lambda (acc p)
+                        (if (truthy? acc)
+                          acc
+                          (cond 
+                            ((file-exists? (++ p file)) (++ p file))
+                            ((file-exists? (++ p file ".zp")) (++ p file ".zp"))
+                            (else acc))))
+                      ""
+                      paths)))
+      (if (truthy? found)
+        found
+        (begin
+          (error "load: Did not find file" file "on the search path")
+          #f)))))))
+
 (define (load file . env)
-  (define (file-exists? file)
-    (not (boolean? (open-input-file file))))
-  (define (lookup file)
-    (let* ((with-ext (++ file ".zp"))
-           (stdlib (++ (zepto:home) (*load-params* :stdlib) file))
-           (stdlib-ext (++ (zepto:home) (*load-params* :stdlib) with-ext)))
-    (cond
-      ((file-exists? file) file)
-      ((file-exists? with-ext) with-ext)
-      ((file-exists? stdlib) stdlib)
-      ((file-exists? stdlib-ext) stdlib-ext)
-      (else
-        (let* ((paths (*load-params* :paths))
-               (found (reduce
-                        (lambda (acc p)
-                          (if (truthy? acc)
-                            acc
-                            (cond 
-                              ((file-exists? (++ p file)) (++ p file))
-                              ((file-exists? (++ p file ".zp")) (++ p file ".zp"))
-                              (else acc))))
-                        ""
-                        paths)))
-        (if (truthy? found)
-          found
-          (begin
-            (error "load: Did not find file" file "on the search path")
-            #f)))))))
   (define (iparse file)
     (let* ((firstline (read-line (open-input-file file)))
            (lang (get-from (string:split firstline #\space) 1 "")))
@@ -42,7 +41,7 @@
                                                   (read-contents file)))
           (else (begin (error "No parser found for language:" lang) #f)))
         (parse file))))
-  (let* ((file (lookup file))
+  (let* ((file (zepto:find-on-path file))
          (env (if (list:null? env) *global-env* (car env)))
          (parsed (and file (iparse file))))
     (if (not (eq? parsed #f))
