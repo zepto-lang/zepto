@@ -1,0 +1,7 @@
+(let ()
+  (begin
+    (define (wrap f)
+      (lambda (x)
+        (|> (string:split x #\newline) cdr string:join f list)))
+    (load "json/json")
+    (zepto:implements-lang (wrap json:parse) "json")))
