@@ -335,10 +335,10 @@ evalCallCC x = throwError $ NumArgs 1 x
 
 catchVMError :: [LispVal] -> IOThrowsError LispVal
 catchVMError [c, x, Environ env] = do
-          str <- liftIO $ CE.catch (runIOThrows $ liftM show $ eval env c x) handler
-          return $ fromSimple $ String str
-    where handler :: CE.SomeException -> IO String
-          handler msg@(CE.SomeException _) = return $ show (msg::CE.SomeException)
+          str <- liftIO $ CE.catch (runIOThrowsLispVal $ eval env c x) handler
+          return $ str
+    where handler :: CE.SomeException -> IO LispVal
+          handler msg@(CE.SomeException _) = return $ fromSimple $ String $ show (msg::CE.SomeException)
 catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchVMError [c, x, Environ env]
 catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
 catchVMError x = throwError $ NumArgs 1 (tail x)

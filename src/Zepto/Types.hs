@@ -21,6 +21,7 @@ module Zepto.Types (LispNum(..),
                     globalEnv,
                     liftThrows,
                     runIOThrows,
+                    runIOThrowsLispVal,
                     throwHistorial,
                     buildCallHistory
                     ) where
@@ -541,8 +542,8 @@ unwordsMap :: [(LispVal, LispVal)] -> String
 unwordsMap = unwords . fmap (\(x, y) -> showVal x ++ ": " ++ showVal y ++ ", ")
 
 -- | traps an error and shows it
-trapError :: (MonadError e m, Show e) =>  m String -> m String
-trapError action = catchError action (return . show)
+trapErrorShow :: (MonadError e m, Show e) =>  m String -> m String
+trapErrorShow action = catchError action (return . show)
 
 -- | extracts a value from a possible error
 extractValue :: ThrowsError a -> a
@@ -568,4 +569,12 @@ liftThrows (Right val) = return val
 
 -- | lift an IOThrowsError to an IO monad
 runIOThrows :: IOThrowsError String -> IO String
-runIOThrows action = liftM extractValue (runExceptT (trapError action))
+runIOThrows action = liftM extractValue (runExceptT (trapErrorShow action))
+
+-- | traps errors
+trapError :: IOThrowsError LispVal -> IOThrowsError LispVal
+trapError action = catchError action (\x -> return $ fromSimple $ String $ show x)
+
+-- | lift an IOThrowsError to an IO monad
+runIOThrowsLispVal :: IOThrowsError LispVal -> IO LispVal
+runIOThrowsLispVal action = liftM extractValue (runExceptT (trapError action))

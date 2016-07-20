@@ -112,7 +112,8 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (write item hist-to)
       (close-output-file hist-to))))
 
-(define (string:parseable? str) (not (in? (catch-vm-error `(string:parse ,str)) "Parse error at")))
+(define (string:parseable? str) (not (in? (->string (catch-vm-error `(string:parse ,str)))
+                                          "Parse error at")))
 
 (define (enrich input str)
   (let loop ((split (string:split str #\newline)))
@@ -133,7 +134,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
                  :input acc)
       (if (> (string:count acc #\() (string:count acc #\)))
         (check (++ acc " " (get-secondary)))
-        (make-hash :output (enrich acc (catch-vm-error `(string:parse ,acc)))
+        (make-hash :output (enrich acc (->string (catch-vm-error `(string:parse ,acc))))
                    :input acc))))
   (begin
     (if (truthy? env) (set! *env* (car env)))
@@ -146,9 +147,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (set! *statement-count* (add1 *statement-count*))
     (define checked (check input))
     (write-hist-item (checked :input))
-    (define res (checked :output))
-    (let* ((split (string:split (->string res) #\=))
-           (cmd (car split)))
+    (define res (->string (checked :output)))
+    (let* ((split (string:split res #\=))
+           (cmd   (car split)))
       (if (not (nil? (meta-commands cmd)))
         (apply (meta-commands cmd) (cdr split))
         (begin
