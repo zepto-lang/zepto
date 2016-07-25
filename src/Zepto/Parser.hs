@@ -314,9 +314,7 @@ parseHashMap = do vals <- many parseExprPair
           duplicate (x:xs) = if x `elem` xs then Just (fromSimple x) else duplicate xs
           parseExprPair :: Parser [LispVal]
           parseExprPair = do k <- parseExpr
-                             _ <- optionMaybe $ spaces
-                             _ <- optionMaybe $ char ':'
-                             _ <- optionMaybe $ spaces
+                             _ <- optionMaybe $ commaSpace
                              v <- parseExpr
                              _ <- optionMaybe $ commaSpace
                              return [k, v]

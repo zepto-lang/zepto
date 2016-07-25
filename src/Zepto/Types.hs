@@ -539,7 +539,7 @@ unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
 
 unwordsMap :: [(LispVal, LispVal)] -> String
-unwordsMap = unwords . fmap (\(x, y) -> showVal x ++ ": " ++ showVal y ++ ", ")
+unwordsMap = unwords . fmap (\(x, y) -> showVal x ++ " " ++ showVal y ++ ", ")
 
 -- | traps an error and shows it
 trapErrorShow :: (MonadError e m, Show e) =>  m String -> m String
