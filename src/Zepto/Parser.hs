@@ -6,6 +6,7 @@ import Data.Array
 import Data.ByteString (pack)
 import Data.Char
 import Data.Complex
+import Data.Maybe (isJust)
 import Data.Ratio
 import Data.Word (Word8)
 import Numeric
@@ -19,6 +20,16 @@ symbol = oneOf "!$%&|*+-/:<=>?@^_~"
 
 spaces :: Parser ()
 spaces = skipMany1 space
+
+commaSpace :: Parser ()
+commaSpace = do x <- optionMaybe $ spaces
+                y <- optionMaybe $ char ','
+                z <- optionMaybe $ spaces
+                case [x,z] of
+                  [Nothing, Nothing] ->
+                    if isJust y then return () else fail "Need a separator between values"
+                  _ -> return ()
+
 
 parseString :: Parser LispVal
 parseString = do _ <- char '"'
@@ -156,6 +167,10 @@ bin2digx digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in
 parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
 
+parseQList :: Parser LispVal
+parseQList = do l <- liftM List $ sepBy parseExpr commaSpace
+                return $ List [fromSimple $ Atom "quote", l]
+
 parseDottedList :: Parser LispVal
 parseDottedList = do h <- endBy parseExpr spaces
                      t <- char '.' >> spaces >> parseExpr
@@ -183,11 +198,11 @@ parseSpliced = do _ <- try (string ",@")
                   return $ List [fromSimple $ Atom "unquote-splicing", x]
 
 parseVect :: Parser LispVal
-parseVect = do vals <- sepBy parseExpr spaces
+parseVect = do vals <- sepBy parseExpr commaSpace
                return $ Vector (listArray (0, length vals -1) vals)
 
 parseByteVect :: Parser LispVal
-parseByteVect = do vals <- sepBy parseNumber spaces
+parseByteVect = do vals <- sepBy parseNumber commaSpace
                    return $ ByteVector $ pack $ map toB vals
     where toB :: LispVal -> Word8
           toB (SimpleVal (Number (NumI x))) = fromInteger x :: Word8
@@ -282,23 +297,29 @@ parseHashComp = do _    <- string "#{"
     where parseHashBody = parseExpr
 
 parseHashMap :: Parser LispVal
-parseHashMap = do vals <- sepBy parseExpr spaces
-                  if mod (length vals) 2 /= 0
-                    then fail "Number of keys/vals must be balanced"
-                    else
-                      case construct [] vals of
-                        Right m ->
-                          case duplicate (map fst m) of
-                            Just d  ->  fail $ "Duplicate key: " ++ show d
-                            Nothing -> return $ HashMap $ Data.Map.fromList m
-                        Left x  -> fail $ "All values must be simple (offending clause: " ++ show x ++ ")"
-    where construct :: [(Simple, LispVal)] -> [LispVal] -> Either LispVal [(Simple, LispVal)]
+parseHashMap = do vals <- many parseExprPair
+                  case construct [] vals of
+                    Right m ->
+                      case duplicate (map fst m) of
+                        Just d  ->  fail $ "Duplicate key: " ++ show d
+                        Nothing -> return $ HashMap $ Data.Map.fromList m
+                    Left x  -> fail $ "All values must be simple (offending clause: " ++ show x ++ ")"
+    where construct :: [(Simple, LispVal)] -> [[LispVal]] -> Either LispVal [(Simple, LispVal)]
           construct acc [] = Right acc
-          construct acc (SimpleVal a : b : l) = construct ((a, b) : acc) l
-          construct _ (x : _) = Left x
+          construct acc ((SimpleVal a : b : _) : l) = construct ((a, b) : acc) l
+          construct _ ((x : _) : _) = Left x
+          construct _ ([] : _) = Left $ fromSimple $ Nil ""
           duplicate :: [Simple] -> Maybe LispVal
           duplicate [] = Nothing
           duplicate (x:xs) = if x `elem` xs then Just (fromSimple x) else duplicate xs
+          parseExprPair :: Parser [LispVal]
+          parseExprPair = do k <- parseExpr
+                             _ <- optionMaybe $ spaces
+                             _ <- optionMaybe $ char ':'
+                             _ <- optionMaybe $ spaces
+                             v <- parseExpr
+                             _ <- optionMaybe $ commaSpace
+                             return [k, v]
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
@@ -342,9 +363,9 @@ parseExpr = parseComments
                return x
         <|> try parseListComp
         <|> do _ <- char '['
-               x <- parseList
+               x <- parseQList
                _ <- char ']'
-               return $ List [fromSimple (Atom "quote"), x]
+               return x
         <|> try parseAtom
 
 readOrThrow :: Parser a -> String -> ThrowsError a
