@@ -166,7 +166,10 @@
   (common-prefix (lambda (strings)
     (let loop ((prefix (->string (get-from strings [0 0]))))
       (if (all? ($ (string:starts-with % prefix)) strings)
-        (loop (++ prefix (get-from strings (list 0 (length prefix)))))
+        (let ((nprefix (get-from strings (list 0 (length prefix)))))
+          (if (nil? nprefix)
+            prefix
+            (loop (++ prefix nprefix))))
         (substring prefix 0 (sub1 (length prefix)))))))
 
   (complete (lambda (state)

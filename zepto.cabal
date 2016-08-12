@@ -31,6 +31,8 @@ Extra-Source-Files:  README.md
 Data-Files:          zepto-stdlib/*.zp
                      zepto-stdlib/srfi/*.zp
                      zepto-stdlib/argparse/*.zp
+                     zepto-stdlib/data/*.zp
+                     zepto-stdlib/data/*.impl.zp
                      zepto-stdlib/datetime/*.zp
                      zepto-stdlib/bench/*.zp
                      zepto-stdlib/json/*.zp
