@@ -163,6 +163,12 @@
         (list "" str)
         (list (substring str 0 sepi) (substring str sepi (length str)))))))
 
+  (common-prefix (lambda (strings)
+    (let loop ((prefix (->string (get-from strings [0 0]))))
+      (if (all? ($ (string:starts-with % prefix)) strings)
+        (loop (++ prefix (get-from strings (list 0 (length prefix)))))
+        (substring prefix 0 (sub1 (length prefix)))))))
+
   (complete (lambda (state)
     (begin
       (let* ((acc (list->string (state :acc)))
@@ -185,7 +191,8 @@
                       0
                       matches)
               (write "")
-              state)))))))
+              (let ((nstate (hash:set state :acc (string->list (common-prefix matches)))))
+                (hash:set nstate :pos (length (nstate :acc)))))))))))
 
   (_search (lambda (state term)
     (begin
