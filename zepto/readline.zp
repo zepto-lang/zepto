@@ -2,8 +2,11 @@
   (export
     (list "readline" readline)
     (list "add-completion" add-completion)
+    (list "add-completions" add-completions)
     (list "reset-completions" reset-completions)
-    (list "add-history" add-history))
+    (list "add-history" add-history)
+    (list "get-history" get-history)
+    (list "set-history!" set-history!))
 
   (-highlight #f)
   (completions [])
@@ -194,7 +197,9 @@
                       0
                       matches)
               (write "")
-              (let ((nstate (hash:set state :acc (string->list (common-prefix matches)))))
+              (let ((nstate (hash:set state :acc
+                                      (string->list (++ (car sep)
+                                                        (common-prefix matches))))))
                 (hash:set nstate :pos (length (nstate :acc)))))))))))
 
   (_search (lambda (state term)
@@ -276,8 +281,16 @@
   (add-history (lambda (item)
     (set! history (cons item history))))
 
+  (set-history! (lambda (hist)
+    (set! history hist)))
+
+  (get-history (lambda () history))
+
   (add-completion (lambda (item)
     (set! completions (cons item completions))))
+
+  (add-completions (lambda (items)
+    (set! completions (++ completions items))))
 
   (reset-completions (lambda (comp)
     (set! completions comp)))

@@ -1,7 +1,6 @@
 override CARGS+=-j2
 #Installs
-all:
-	make install
+all: install
 
 install:
 	cabal install $(CARGS)

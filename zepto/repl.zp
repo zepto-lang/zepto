@@ -173,9 +173,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 (let ((x (open-input-file *histfile*)))
   (if (not (eq? x #f))
     (begin
-      (map rl:add-history (reverse (string:split (read-contents *histfile*) #\newline)))
+      (rl:set-history! (reverse (string:split (read-contents *histfile*) #\newline)))
       (close-input-file x))))
 
-(map rl:add-completion (hash:keys (env->hashmap *env*)))
+(rl:add-completions (hash:keys (env->hashmap *env*)))
 
 (write *header*)
