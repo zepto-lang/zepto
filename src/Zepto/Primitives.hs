@@ -606,6 +606,9 @@ eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom va
 eval env conti (List (SimpleVal (Atom "define") : DottedList (SimpleVal (Atom var) : p) varargs : b)) = do
         result <- makeVarargs var varargs env p b "No documentation" >>= defineVar env var
         contEval env conti result
+eval env conti (List (SimpleVal (Atom "lambda") : List p : SimpleVal (String doc) : b)) =  do
+        result <- makeDocFunc "lambda" env p b doc
+        contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
         result <- makeNormalFunc "lambda" env p b
         contEval env conti result
