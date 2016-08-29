@@ -148,7 +148,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (define checked (check input))
     (write-hist-item (checked :input))
     (define res (->string (checked :output)))
-    (let* ((split (string:split res #\=))
+    (let* ((split (string:split (checked :input) #\=))
            (cmd   (car split)))
       (if (not (nil? (meta-commands cmd)))
         (apply (meta-commands cmd) (cdr split))
