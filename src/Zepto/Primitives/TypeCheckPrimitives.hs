@@ -51,6 +51,8 @@ isProcedure _ = return $ fromSimple $ Bool False
 
 isPrim :: LispVal -> ThrowsError LispVal
 isPrim (PrimitiveFunc _ _) = return $ fromSimple $ Bool True
+isPrim (EvalFunc _ _) = return $ fromSimple $ Bool True
+isPrim (IOFunc _ _) = return $ fromSimple $ Bool True
 isPrim _ = return $ fromSimple $ Bool False
 
 isFun :: LispVal -> ThrowsError LispVal
