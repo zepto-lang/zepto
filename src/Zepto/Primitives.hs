@@ -612,6 +612,9 @@ eval env conti (List (SimpleVal (Atom "lambda") : List p : SimpleVal (String doc
 eval env conti (List (SimpleVal (Atom "lambda") : List p : b)) =  do
         result <- makeNormalFunc "lambda" env p b
         contEval env conti result
+eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : SimpleVal (String doc) : ensure : b)) =  do
+        result <- makeVarargs "lambda" varargs env p (ensure : b) doc
+        contEval env conti result
 eval env conti (List (SimpleVal (Atom "lambda") : DottedList p varargs : b)) = do
         result <- makeVarargs "lambda" varargs env p b "lambda"
         contEval env conti result
