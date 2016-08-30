@@ -1,0 +1,32 @@
+; This is a wordcount example akin to the example found in
+; "Seven Concurrency Patterns in Seven Weeks", Chapter 3, Day 2.
+;
+; It partitions the work in a map-reduce like pattern.
+; You can call it like that to see it in action
+;   cat yourfile | xargs zepto examples/wordcount
+; or modify this script to take in a file directly, like this:
+;  -         (partition-all PARTITION-SIZE zepto:args))))
+;  +         (partition-all PARTITION-SIZE (read-contents (car zepto:args))))))
+; this will read in the file supplied as first argument instead of taking the args directly
+(define PARTITION-SIZE 10)
+
+(define (counter-fun acc words)
+  (if (null? words)
+    acc
+    (counter-fun (hash:merge-with + acc (make-hash (car words) 1))
+                 (cdr words))))
+
+(define (count-words)
+  (apply (curry hash:merge-with +)
+    (map (curry counter-fun #{})
+         (partition-all PARTITION-SIZE zepto:args))))
+
+(define (print-res res)
+  (begin
+    (write "Counts:")
+    (hash:kv-map (lambda (kv)
+                    (write (++ "-" (car kv) ": " (->string (cadr kv)))))
+                 res)))
+
+(print-res (count-words))
+(exit 0)
