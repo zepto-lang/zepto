@@ -23,6 +23,7 @@ import Zepto.Primitives.FunctionPrimitives
 import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
+import Zepto.Primitives.LoadPrimitives
 import Zepto.Primitives.LogMathPrimitives
 import Zepto.Primitives.SocketPrimitives
 import Zepto.Primitives.TypeCheckPrimitives
@@ -227,6 +228,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("net:accept", accept, "accept connection to a bound socket")
                , ("net:close-socket", close, "closes a socket; all future operations on thsi socket will fail")
                , ("crypto:randint", randIntProc, "get a random integer value")
+               , ("load-native", unaryIOOp loadNative, "load native library")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
