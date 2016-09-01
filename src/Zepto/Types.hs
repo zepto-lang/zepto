@@ -36,7 +36,7 @@ import Control.Monad
 import Control.Monad.Except
 import System.IO
 import Text.ParserCombinators.Parsec.Error
-import qualified Data.Map
+import qualified Data.Map as DM
 
 -- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
@@ -304,7 +304,7 @@ data LispVal = SimpleVal Simple
              | DottedList [LispVal] LispVal
              | Vector (Array Int LispVal)
              | ByteVector ByteString
-             | HashMap (Data.Map.Map Simple LispVal)
+             | HashMap (DM.Map Simple LispVal)
              | PrimitiveFunc  String ([LispVal] -> ThrowsError LispVal)
              | IOFunc String ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
@@ -351,8 +351,8 @@ instance Eq Env where
 -- | an Environment type where all variables are stored
 data Env = Environment {
         parentEnv :: Maybe Env
-      , bindings :: IORef (Data.Map.Map String (IORef LispVal))
-      , pointers :: IORef (Data.Map.Map String (IORef [LispVal]))
+      , bindings :: IORef (DM.Map String (IORef LispVal))
+      , pointers :: IORef (DM.Map String (IORef [LispVal]))
 }
 
 -- | a ThrowsError type containing either an error or a value
@@ -384,8 +384,8 @@ showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map Simple
 showVal (List contents) = "(" ++ unwordsList contents ++")"
 showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
 showVal (ByteVector contents) = "b{" ++ unwords (map show (unpack contents)) ++ "}"
-showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (Data.Map.keys contents))
-                                                     (Data.Map.elems contents)) ++ "}"
+showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (DM.keys contents))
+                                                     (DM.elems contents)) ++ "}"
 showVal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
 showVal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showVal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
@@ -555,8 +555,8 @@ extractValue (Left x) = error("This should not be happening. " ++
 -- | returns a new empty environment
 nullEnv :: IO Env
 nullEnv = do
-    nullb <- newIORef $ Data.Map.fromList []
-    nullp <- newIORef $ Data.Map.fromList []
+    nullb <- newIORef $ DM.fromList []
+    nullp <- newIORef $ DM.fromList []
     return $ Environment Nothing nullb nullp
 
 nullCont :: Env -> LispVal
