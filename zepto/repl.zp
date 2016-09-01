@@ -90,6 +90,27 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (write (++ "It's " ((import "datetime:ddate-from-timestamp") (car (unix-timestamp)))))
     (repl)))
 
+(define (time . args)
+  (define (sec-fmt nsecs)
+    (cond
+      ((> nsecs 10000000) (++ (->string (/ nsecs 1000000000.0)) "s"))
+      ((> nsecs 100000) (++ (->string (/ nsecs 1000000.0)) "ms"))
+      ((> nsecs 1000) (++ (->string (/ nsecs 1000.0)) "µs"))
+      (else (++ (->string nsecs) "ns"))))
+
+  (if (null? args)
+    (begin
+      (error-plain "option :time requires an argument")
+      (repl))
+    (let ((parsed (string:parse (car args))))
+      (begin
+        (load "bench/bench")
+        (let ((res (catch-vm-error `(,(import "bench:time") ,parsed))))
+          (if (number? res)
+            (write (sec-fmt ((import "bench:time") parsed)))
+            (write (++ "Caught error:\n\n" res))))
+        (repl)))))
+
 (define meta-commands
   (make-hash
     ":q" do-exit
@@ -101,6 +122,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     ":ddate" get-ddate
     ":complete-license" show-complete-license
     ":help" show-commands
+    ":time" time
     ":prompt" set-prompt))
 
 (define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
