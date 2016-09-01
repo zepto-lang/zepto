@@ -28,7 +28,7 @@ cons [x, List []] = return $ List [x]
 cons [x, List xs] = return $ List $ x : xs
 cons [SimpleVal x, SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
-cons [x, y] = return $ DottedList [x] y
+cons [x] = return $ DottedList [] x
 cons badArgList = throwError $ NumArgs 2 badArgList
 
 makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
