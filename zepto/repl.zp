@@ -24,28 +24,33 @@ Type ':quit' or press Ctrl-C to exit interpreter,
 (define *record* #{:record? #f :file #f})
 
 (define (write-plain arg)
+  "do not expose"
   (begin
     (color :reset)
     (write arg)))
 
 (define (error-plain . args)
+  "do not expose"
   (begin
     (color :reset)
     (apply error args)))
 
 (define (do-exit . args)
+  "do not expose"
   (begin
     (write-plain "Moriturus te saluto!")
     (if (*record* :record?) (close-output-file (*record* :file)))
     (exit (if (null? args) 0 (string->number (car args))))))
 
 (define (show-commands . args)
+  "do not expose"
   (begin
     (map (lambda (x) (write-plain (++ (car x) ": " (->string (cadr x)))))
          (zepto:get-bindings (if (null? args) "" (car args)) *env*))
     (repl)))
 
 (define (set-prompt . args)
+  "do not expose"
   (if (not (null? args))
     (begin
      (set! *prompt* (string:join args))
@@ -55,16 +60,19 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (repl))))
 
 (define (show-license . args)
+  "do not expose"
   (begin
     (write-plain (read-contents (++ (zepto:home) "assets/license_interactive.as")))
     (repl)))
 
 (define (show-complete-license . args)
+  "do not expose"
   (begin
     (write-plain (read-contents (++ (zepto:home) "assets/complete_license.as")))
     (repl)))
 
 (define (record . args)
+  "do not expose"
   (if (not (null? args))
     (begin
      (set! *record* (make-hash :record? #t :file (open-output-file (car args))))
@@ -75,6 +83,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (repl))))
 
 (define (stop-record . args)
+  "do not expose"
   (if (*record* :record?)
     (begin
       (close-output-file (*record* :file))
@@ -85,12 +94,14 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (repl))))
 
 (define (get-ddate . args)
+  "do not expose"
   (begin
     (load "datetime/datetime")
     (write (++ "It's " ((import "datetime:ddate-from-timestamp") (car (unix-timestamp)))))
     (repl)))
 
 (define (time . args)
+  "do not expose"
   (define (sec-fmt nsecs)
     (cond
       ((> nsecs 10000000) (++ (->string (/ nsecs 1000000000.0)) "s"))
@@ -125,7 +136,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     ":time" time
     ":prompt" set-prompt))
 
-(define (write-hist-item item) "Unbuffered writing, just to make sure nothing's lost"
+(define (write-hist-item item) "do not expose"
   (let* ((cont (read-contents *histfile*))
          (hist-to (open-output-file *histfile*)))
     (begin
@@ -134,10 +145,11 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (write item hist-to)
       (close-output-file hist-to))))
 
-(define (string:parseable? str) (not (in? (->string (catch-vm-error `(string:parse ,str)))
-                                          "Parse error at")))
+(define (string:parseable? str) "do not expose"
+  (not (in? (->string (catch-vm-error `(string:parse ,str)))
+            "Parse error at")))
 
-(define (enrich input str)
+(define (enrich input str) "do not expose"
   (let loop ((split (string:split str #\newline)))
     (if (in? (car split) "Parse error at")
       (let ((col (string->number (car (string:split (cadr (string:split (car split) "column ")) #\))))))
@@ -148,6 +160,12 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (loop (cdr split)))))
 
 (define (repl . env)
+  "starts a zepto REPL. Optionally takes an environment in which to run.
+
+   params:
+    - env: optional environment in which the REPL should run
+   complexity: O(1)
+   returns: this function terminates the program on exit"
   (define (check acc)
     (define (get-secondary)
       (rl:readline (++ *prompt2* (color *input-highlight* #{:to-str #t})) *syntax-highlight*))

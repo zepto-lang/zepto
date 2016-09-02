@@ -363,6 +363,14 @@ allExtend [badType] = throwError $ NumArgs 2 [badType]
 allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector/bytevector" badType
 allExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
 
+inspectDoc :: String
+inspectDoc = "inspect the source code of a zepto object\n\
+\n\
+  params:\n\
+    - obj: the object to inspect\n\
+  complexity: depends on the complexity of the object\n\
+  returns: a string representation of the object"
+
 inspect :: [LispVal] -> ThrowsError LispVal
 inspect [a] = return $ fromSimple $ String $ pprint a
 inspect a = throwError $ NumArgs 2 a
