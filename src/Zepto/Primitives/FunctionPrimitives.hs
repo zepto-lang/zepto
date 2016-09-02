@@ -25,4 +25,8 @@ functionBody x = throwError $ TypeMismatch "function" x
 
 functionDocs :: LispVal -> ThrowsError LispVal
 functionDocs (Func _ (LispFun {docstring=d})) = return $ fromSimple $ String $ d
+functionDocs (List ((SimpleVal (Atom "syntax-rules")) : (SimpleVal (String doc)) : _)) =
+  return $ fromSimple $ String doc
+functionDocs (List ((SimpleVal (Atom "syntax-rules")) : _)) =
+  return $ fromSimple $ String "No documentation"
 functionDocs x = throwError $ TypeMismatch "function" x
