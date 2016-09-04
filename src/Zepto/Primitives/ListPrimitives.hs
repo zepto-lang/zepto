@@ -10,11 +10,27 @@ import qualified Data.ByteString.UTF8 as BS (fromString, toString)
 
 import Zepto.Types
 
+carDoc :: String
+carDoc = "take the first element of the list <par>l</par>.\n\
+\n\
+  params:\n\
+    - l: the input list\n\
+  complexity: O(1)\n\
+  returns: the first element"
+
 car :: LispVal -> ThrowsError LispVal
 car (List (x : _)) = return x
 car (SimpleVal (SimpleList (x : _))) = return $ fromSimple x
 car (DottedList (x : _) _) = return x
 car badArg = throwError $ TypeMismatch "pair" badArg
+
+cdrDoc :: String
+cdrDoc = "take the tail of the list <par>l</par>.\n\
+\n\
+  params:\n\
+    - l: the input list\n\
+  complexity: O(1)\n\
+  returns: the tail"
 
 cdr :: LispVal -> ThrowsError LispVal
 cdr (List (_ : xs)) = return $ List xs
@@ -22,6 +38,17 @@ cdr (SimpleVal (SimpleList (_ : xs))) = return $ fromSimple $ SimpleList xs
 cdr (DottedList [_] x) = return x
 cdr (DottedList (_ : xs) x) = return $ DottedList xs x
 cdr badArg = throwError $ TypeMismatch "pair" badArg
+
+consDoc :: String
+consDoc = "construct a list or append a head to a list.\n\
+           If only one element is given, a singleton list will be created.\n\
+\n\
+\n\
+  params:\n\
+    - head: the head element\n\
+    - tail: the tail element (optional)\n\
+  complexity: O(1)\n\
+  returns: a new list of the form <zepto>(++ [head] tail)</zepto>"
 
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x, List []] = return $ List [x]
