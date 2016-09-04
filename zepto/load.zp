@@ -11,13 +11,15 @@
    complexity: O(1)
    returns: the filename of the found file or false"
   (let* ((with-ext (++ file ".zp"))
+         (native (++ file ".hs"))
          (stdlib (++ (zepto:home) (*load-params* :stdlib) file))
          (stdlib-ext (++ (zepto:home) (*load-params* :stdlib) with-ext)))
   (cond
-    ((file-exists? file) file)
-    ((file-exists? with-ext) with-ext)
-    ((file-exists? stdlib) stdlib)
-    ((file-exists? stdlib-ext) stdlib-ext)
+    ((file-exists? file) (list file #f))
+    ((file-exists? with-ext) (list with-ext #f))
+    ((file-exists? stdlib) (list stdlib #f))
+    ((file-exists? stdlib-ext) (list stdlib-ext #f))
+    ((file-exists? native) (list file #t))
     (else
       (let* ((paths (*load-params* :paths))
              (found (reduce
@@ -25,8 +27,9 @@
                         (if (truthy? acc)
                           acc
                           (cond 
-                            ((file-exists? (++ p file)) (++ p file))
-                            ((file-exists? (++ p file ".zp")) (++ p file ".zp"))
+                            ((file-exists? (++ p file)) (list (++ p file) #f))
+                            ((file-exists? (++ p file ".zp")) (list (++ p file ".zp") #f))
+                            ((file-exists? (++ p file ".hs")) (list (++ p file) #t))
                             (else acc))))
                       ""
                       paths)))
@@ -54,14 +57,24 @@
                                                   (read-contents file)))
           (else (begin (error "No parser found for language:" lang) #f)))
         (parse file))))
-  (let* ((file (zepto:find-on-path file))
-         (env (if (list:null? env) *global-env* (car env)))
-         (parsed (and file (iparse file))))
-    (if (not (eq? parsed #f))
-      (foldl (lambda (_ x) (eval x env))
-        []
-        (macro-expand parsed env))
-      #f)))
+  (let ((file (zepto:find-on-path file)))
+    (cond
+      ((falsy? file) (nil))
+      ((falsy? (cadr file))
+        (let ((env (if (list:null? env) *global-env* (car env)))
+              (parsed (iparse (car file))))
+          (if (not (eq? parsed #f))
+            (foldl (lambda (_ x) (eval x env))
+              []
+              (macro-expand parsed env))
+            #f)))
+      (else
+        (let ((loaded (load-native (car file)))
+              (env (if (list:null? env) *global-env* (car env))))
+          (map ($ (eval `(define ,(string->symbol (car %))
+                          (lambda args ,(cadr %)
+                            (apply ,(caddr %) args))) env))
+               loaded))))))
 
 (define (zepto:add-to-path path)
   "adds a directory/file to the zepto search path.

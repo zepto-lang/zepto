@@ -228,7 +228,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("net:accept", accept, "accept connection to a bound socket")
                , ("net:close-socket", close, "closes a socket; all future operations on thsi socket will fail")
                , ("crypto:randint", randIntProc, "get a random integer value")
-               , ("load-native", unaryIOOp loadNative, "load native library")
+               , ("load-native", loadNative, "load native library")
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
@@ -240,7 +240,6 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("catch-vm-error", catchVMError, "catches any vm error")
                  , ("env:in?", inEnv, "checks whether a name is defined in an environment")
                  --, ("call-with-values", evalCallWValues, "call with values"),
-                 --, ("load-ffi", evalFFI, "load foreign function")
                  ]
 
 printInternal :: Handle -> LispVal -> IO ()
