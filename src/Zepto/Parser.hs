@@ -33,7 +33,7 @@ commaSpace = do x <- optionMaybe $ spaces
                   _ -> return ()
 
 parseRegex :: Parser LispVal
-parseRegex = do _ <- char '/'
+parseRegex = do _ <- string "r/"
                 x <- many (noneOf "/")
                 _ <- char '/'
                 case compileM (C.pack x) [] of
@@ -330,6 +330,7 @@ parseHashMap = do vals <- many parseExprPair
 
 parseExpr :: Parser LispVal
 parseExpr = parseComments
+        <|> try parseRegex
         <|> parseNumber
         <|> do _ <- try $ string "#("
                x <- parseVect
@@ -374,7 +375,6 @@ parseExpr = parseComments
                _ <- char ']'
                return x
         <|> try parseAtom
-        <|> try parseRegex
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
