@@ -29,14 +29,15 @@ import Data.Array
 import Data.ByteString (ByteString, unpack)
 import Data.Complex
 import Data.Fixed
+import Data.IORef
 import Data.List (foldl')
 import Data.Ratio
-import Data.IORef
 import Control.Monad
 import Control.Monad.Except
 import System.IO
 import Text.ParserCombinators.Parsec.Error
 import qualified Data.Map as DM
+import qualified Text.Regex.PCRE.Light.Base as R
 
 -- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
@@ -291,6 +292,7 @@ data LispNum = NumI Integer
 data Simple = Atom String
             | Number LispNum
             | String String
+            | Regex R.Regex
             | Character Char
             | Bool Bool
             | Nil String
@@ -375,6 +377,7 @@ showNum (NumS contents) = show contents ++ "s"
 -- | a show function for all LispVals
 showVal :: LispVal -> String
 showVal (SimpleVal (String contents)) = contents
+showVal (SimpleVal (Regex (R.Regex _ s))) = show s
 showVal (SimpleVal (Atom name)) = name
 showVal (SimpleVal (Bool True)) = "#t"
 showVal (SimpleVal (Bool False)) = "#f"
@@ -515,6 +518,7 @@ typeString (SimpleVal (Number (NumC _))) = "complex"
 typeString (SimpleVal (Bool _)) = "boolean"
 typeString (SimpleVal (Character _)) = "character"
 typeString (SimpleVal (String _)) = "string"
+typeString (SimpleVal (Regex _)) = "regex"
 typeString (SimpleVal (Atom (':' : _))) = "atom"
 typeString (SimpleVal (Atom _)) = "symbol"
 typeString (SimpleVal (Nil _)) = "nil"

@@ -11,7 +11,9 @@ import Data.Ratio
 import Data.Word (Word8)
 import Numeric
 import Text.ParserCombinators.Parsec hiding (spaces)
+import Text.Regex.PCRE.Heavy (compileM)
 import qualified Data.Map
+import qualified Data.ByteString.Char8 as C (pack)
 
 import Zepto.Types
 
@@ -30,6 +32,13 @@ commaSpace = do x <- optionMaybe $ spaces
                     if isJust y then return () else fail "Need a separator between values"
                   _ -> return ()
 
+parseRegex :: Parser LispVal
+parseRegex = do _ <- char '/'
+                x <- many (noneOf "/")
+                _ <- char '/'
+                case compileM (C.pack x) [] of
+                  Left str -> fail str
+                  Right reg -> return $ fromSimple $ Regex reg
 
 parseString :: Parser LispVal
 parseString = do _ <- char '"'
@@ -54,7 +63,7 @@ parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol <|> oneOf "."
                rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
-               if atom == "."
+               if atom == "." || (length atom > 1 && first == '/' && last rest == '/')
                    then pzero
                    else return $ fromSimple $ Atom atom
 
@@ -365,6 +374,7 @@ parseExpr = parseComments
                _ <- char ']'
                return x
         <|> try parseAtom
+        <|> try parseRegex
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of

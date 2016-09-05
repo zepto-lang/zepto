@@ -25,6 +25,7 @@ import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
 import Zepto.Primitives.LoadPrimitives
 import Zepto.Primitives.LogMathPrimitives
+import Zepto.Primitives.RegexPrimitives
 import Zepto.Primitives.SocketPrimitives
 import Zepto.Primitives.TypeCheckPrimitives
 import Zepto.Primitives.VersionPrimitives
@@ -98,31 +99,32 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("eqv?", eqv, eqvDoc)
              , ("equal?", equal, eqvDoc)
 
-             , ("pair?", unaryOp isDottedList, "check whether arg is a pair")
-             , ("procedure?", unaryOp isProcedure, "check whether arg is a procedure")
-             , ("number?", unaryOp isNumber, "check whether arg is a number")
-             , ("integer?", unaryOp isInteger, "check whether arg is an integer")
-             , ("float?", unaryOp isFloat, "check whether arg is a float")
-             , ("small-int?", unaryOp isSmall, "check whether arg is a small int")
-             , ("rational?", unaryOp isRational, "check whether arg is a rational")
-             , ("real?", unaryOp isReal, "check whether arg is a real number")
-             , ("list?", unaryOp isList, "check whether arg is list")
+             , ("pair?", unaryOp isDottedList, typecheckDoc "a pair")
+             , ("procedure?", unaryOp isProcedure, typecheckDoc "a procedure")
+             , ("number?", unaryOp isNumber, typecheckDoc "a number")
+             , ("integer?", unaryOp isInteger, typecheckDoc "an integer")
+             , ("float?", unaryOp isFloat, typecheckDoc "a float")
+             , ("small-int?", unaryOp isSmall, typecheckDoc "a small int")
+             , ("rational?", unaryOp isRational, typecheckDoc "a rational")
+             , ("real?", unaryOp isReal, typecheckDoc "a real number")
+             , ("list?", unaryOp isList, typecheckDoc "list")
              , ("list:null?", unaryOp isNull, "check whether list is null")
-             , ("nil?", unaryOp isNil, "check whether arg is nil")
-             , ("symbol?", unaryOp isSymbol, "check whether arg is symbol")
-             , ("atom?", unaryOp isAtom, "check whether arg is atom")
-             , ("vector?", unaryOp isVector, "check whether arg is vector")
-             , ("byte-vector?", unaryOp isByteVector, "check whether arg is bytevector")
-             , ("string?", unaryOp isString, "check whether arg is string")
-             , ("port?", unaryOp isPort, "check whether arg is port")
-             , ("char?", unaryOp isChar, "check whether arg is char")
-             , ("boolean?", unaryOp isBoolean, "check whether arg is boolean")
-             , ("simple?", unaryOp isSimple, "check whether arg is of simple type")
-             , ("simple-list?", unaryOp isSimpleList, "check whether arg is a simple list")
-             , ("hash-map?", unaryOp isHash, "check whether arg is a hash-map")
-             , ("primitive?", unaryOp isPrim, "check whether arg is a primitive")
-             , ("function?", unaryOp isFun, "check whether arg is a function")
-             , ("env?", unaryOp isEnv, "check whether arg is an environment")
+             , ("nil?", unaryOp isNil, typecheckDoc "nil")
+             , ("symbol?", unaryOp isSymbol, typecheckDoc "symbol")
+             , ("atom?", unaryOp isAtom, typecheckDoc "atom")
+             , ("vector?", unaryOp isVector, typecheckDoc "vector")
+             , ("byte-vector?", unaryOp isByteVector, typecheckDoc "bytevector")
+             , ("string?", unaryOp isString, typecheckDoc "string")
+             , ("port?", unaryOp isPort, typecheckDoc "port")
+             , ("char?", unaryOp isChar, typecheckDoc "char")
+             , ("boolean?", unaryOp isBoolean, typecheckDoc "boolean")
+             , ("simple?", unaryOp isSimple, typecheckDoc "simple type")
+             , ("simple-list?", unaryOp isSimpleList, typecheckDoc "simple list")
+             , ("hash-map?", unaryOp isHash, typecheckDoc "hash-map")
+             , ("primitive?", unaryOp isPrim, typecheckDoc "primitive")
+             , ("function?", unaryOp isFun, typecheckDoc "function")
+             , ("env?", unaryOp isEnv, typecheckDoc "env")
+             , ("regex?", unaryOp isRegex, typecheckDoc "regex")
              , ("typeof", unaryOp checkType, "return type string")
              , ("nil", noArg buildNil, "return nil")
              , ("inf", noArg buildInf, "return inf")
@@ -175,6 +177,7 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("list:extend", listExtend, "extend list")
              , ("vector:extend", vectorExtend, "extend vector")
              , ("byte-vector:extend", byteVectorAppend, "extend bytevector")
+             , ("regex:pattern", unaryOp regexPattern, regexPatternDoc)
              , ("++", allExtend, "extend collection")
              , ("hash:keys", hashKeys, "get keys from hashmap")
              , ("hash:values", hashVals, "get vals from hashmap")
@@ -194,8 +197,8 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("open-output-file", makePort WriteMode, "open a file for writing")
                , ("close-input-file", closePort, "close a file opened for reading")
                , ("close-output-file", closePort, "close a file opened for writing")
-               , ("input-port?", unaryIOOp isInputPort, "check whether arg is input port")
-               , ("output-port?", unaryIOOp isOutputPort, "check whether arg is output port")
+               , ("input-port?", unaryIOOp isInputPort, typecheckDoc "input port")
+               , ("output-port?", unaryIOOp isOutputPort, typecheckDoc "output port")
                , ("get-home-dir", noIOArg getHomeDir, "get the home directory")
                , ("get-current-dir", noIOArg getCurrentDir, "get the current directory")
                , ("zepto:home", noIOArg getZeptoDir, "get the installation directory")
@@ -407,6 +410,7 @@ stringifyFunction _ = ""
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 eval env conti val@(SimpleVal (Nil _)) = contEval env conti val
 eval env conti val@(SimpleVal (String _)) = contEval env conti val
+eval env conti val@(SimpleVal (Regex _)) = contEval env conti val
 eval env conti val@(SimpleVal (Number _)) = contEval env conti val
 eval env conti val@(SimpleVal (Bool _)) = contEval env conti val
 eval env conti val@(SimpleVal (Character _)) = contEval env conti val

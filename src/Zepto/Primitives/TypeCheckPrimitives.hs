@@ -5,6 +5,14 @@ import System.IO (hIsReadable, hIsWritable)
 
 import Zepto.Types
 
+typecheckDoc :: String -> String
+typecheckDoc t = "checks whether <par>arg</par> is a " ++ t ++ ".\n\
+\n\
+  params:\n\
+    - arg: the object to check\n\
+  complexity: O(1)\n\
+  returns: a boolean"
+
 isNumber :: LispVal -> ThrowsError LispVal
 isNumber (SimpleVal (Number _)) = return $ fromSimple $ Bool True
 isNumber _ = return $ fromSimple $ Bool False
@@ -94,6 +102,10 @@ isSymbol _ = return $ fromSimple $ Bool False
 isAtom :: LispVal -> ThrowsError LispVal
 isAtom (SimpleVal (Atom (':' : _))) = return $ fromSimple $ Bool True
 isAtom _ = return $ fromSimple $ Bool False
+
+isRegex :: LispVal -> ThrowsError LispVal
+isRegex (SimpleVal (Regex _)) = return $ fromSimple $ Bool True
+isRegex _ = return $ fromSimple $ Bool False
 
 isString :: LispVal -> ThrowsError LispVal
 isString (SimpleVal (String _)) = return $ fromSimple $ Bool True

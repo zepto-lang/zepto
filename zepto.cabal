@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.9.4
+Version:             0.9.5
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:
   zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
@@ -80,6 +80,8 @@ Executable           zepto
                      mtl >= 2.2.1,
                      network,
                      parsec,
+                     pcre-heavy,
+                     pcre-light,
                      process,
                      transformers >= 0.4.2,
                      strict,

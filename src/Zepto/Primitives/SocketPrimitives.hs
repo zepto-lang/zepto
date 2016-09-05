@@ -192,7 +192,7 @@ bindSocket [List [SimpleVal (Number (NumS fd)),
                                    (lookupType type')
                                    (fromIntegral protonum)
                                    status
-            _ <- liftIO $ NS.bindSocket sock (getSockAddr info)
+            _ <- liftIO $ NS.bind sock (getSockAddr info)
             return $ fromSimple $ Nil ""
           Nothing -> throwError $ Default "Could not construct addr-info type"
     where getSockAddr (NS.AddrInfo _ _ _ _ a _) = a

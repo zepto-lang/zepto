@@ -413,6 +413,7 @@ pprint (SimpleVal (SimpleList x)) = "simple(" ++ unwords (map (pprint . fromSimp
 pprint (Vector x) = "{" ++ unwords (map pprint (elems x)) ++ "}"
 pprint (ByteVector x) = "u8{" ++ show x ++ "}"
 pprint (SimpleVal (String x)) = "\"" ++ x ++ "\""
+pprint (SimpleVal (Regex x)) = "/" ++ show x ++ "/"
 pprint (SimpleVal (Number x)) = show x
 pprint (HashMap _) = "<hashmap>"
 pprint (PrimitiveFunc s _) = "<primitive: " ++ s ++ ">"

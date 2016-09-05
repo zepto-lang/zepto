@@ -52,6 +52,7 @@ eqv [HashMap arg1, HashMap arg2] = eqv [List $ mkList (DM.toList arg1), List $ m
     where mkList [] = []
           mkList ((a, b) : cs) = [fromSimple a, b] ++ mkList cs
 eqv [Environ x, Environ y] = return $ fromSimple $ Bool $ x == y
+eqv [SimpleVal (Regex x), SimpleVal (Regex y)] = return $ fromSimple $ Bool $ x == y
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
