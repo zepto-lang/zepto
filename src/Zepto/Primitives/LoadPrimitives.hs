@@ -9,6 +9,15 @@ import qualified DynFlags
 
 import Zepto.Types
 
+loadNativeDoc :: String
+loadNativeDoc = "load a native (i.e. Haskell) library.\n\
+  It is mostly internal and <fun>load</fun> abstracts over it.\n\
+\n\
+  params:\n\
+    - name: the module and file name\n\
+  complexity: depends on the complexity of the library\n\
+  returns: a list of lists of the form [name<string>, documentation<string>, primitive<function>]"
+
 loadNative :: [LispVal] -> IOThrowsError LispVal
 loadNative [SimpleVal (String file)] = do
   result <- liftIO $ GHC.defaultErrorHandler DynFlags.defaultFatalMessager
