@@ -6,6 +6,12 @@ import Zepto.Variables
 
 -- | evaluates a macro
 macroEval :: Env -> LispVal -> IOThrowsError LispVal
+macroEval env (List [SimpleVal (Atom "define-syntax"), SimpleVal (Atom keyword),
+                syntaxRules@(List (SimpleVal (Atom "syntax-rules") :
+                              ((SimpleVal (String _))) :
+                              (List _ : _)))]) = do
+  _ <- defineNamespacedVar env mnamespace keyword syntaxRules
+  return $ fromSimple $ Nil ""
 macroEval env (List [SimpleVal (Atom "define-syntax"), SimpleVal (Atom keyword), syntaxRules@(List (SimpleVal (Atom "syntax-rules") : (List _ : _)))]) = do
   _ <- defineNamespacedVar env mnamespace keyword syntaxRules
   return $ fromSimple $ Nil ""
@@ -17,11 +23,17 @@ macroEval env lisp@(List (SimpleVal (Atom x) : xs)) = do
   isDefined <- liftIO $ isNamespaceBound env mnamespace x
   if isDefined
      then do
-       (List (SimpleVal (Atom "syntax-rules") : (List identifiers : rules))) <- getNamespacedVar env mnamespace x
+       v <- getNamespacedVar env mnamespace x
+       let (identifiers, rules) = destructure v
        macroEval env =<< macroTransform env (List identifiers) rules lisp
      else do
        rest <- mapM (macroEval env) xs
        return $ List $ fromSimple (Atom x) : rest
+    where destructure (List (SimpleVal (Atom "syntax-rules") :
+                        (List identifiers : rules))) = (identifiers, rules)
+          destructure (List (SimpleVal (Atom "syntax-rules") : (SimpleVal (String _)) :
+                        (List identifiers : rules))) = (identifiers, rules)
+          destructure _ = ([], []) -- should never be called
 macroEval _ lisp@_ = return lisp
 
 macroTransform :: Env -> LispVal -> [LispVal] -> LispVal -> IOThrowsError LispVal

@@ -10,11 +10,27 @@ import qualified Data.ByteString.UTF8 as BS (fromString, toString)
 
 import Zepto.Types
 
+carDoc :: String
+carDoc = "take the first element of the list <par>l</par>.\n\
+\n\
+  params:\n\
+    - l: the input list\n\
+  complexity: O(1)\n\
+  returns: the first element"
+
 car :: LispVal -> ThrowsError LispVal
 car (List (x : _)) = return x
 car (SimpleVal (SimpleList (x : _))) = return $ fromSimple x
 car (DottedList (x : _) _) = return x
 car badArg = throwError $ TypeMismatch "pair" badArg
+
+cdrDoc :: String
+cdrDoc = "take the tail of the list <par>l</par>.\n\
+\n\
+  params:\n\
+    - l: the input list\n\
+  complexity: O(1)\n\
+  returns: the tail"
 
 cdr :: LispVal -> ThrowsError LispVal
 cdr (List (_ : xs)) = return $ List xs
@@ -23,12 +39,23 @@ cdr (DottedList [_] x) = return x
 cdr (DottedList (_ : xs) x) = return $ DottedList xs x
 cdr badArg = throwError $ TypeMismatch "pair" badArg
 
+consDoc :: String
+consDoc = "construct a list or append a head to a list.\n\
+           If only one element is given, a singleton list will be created.\n\
+\n\
+\n\
+  params:\n\
+    - head: the head element\n\
+    - tail: the tail element (optional)\n\
+  complexity: O(1)\n\
+  returns: a new list of the form <zepto>(++ [head] tail)</zepto>"
+
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x, List []] = return $ List [x]
 cons [x, List xs] = return $ List $ x : xs
 cons [SimpleVal x, SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
-cons [x, y] = return $ DottedList [x] y
+cons [x] = return $ DottedList [] x
 cons badArgList = throwError $ NumArgs 2 badArgList
 
 makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
@@ -362,6 +389,14 @@ allExtend v@(ByteVector _ : _) = byteVectorAppend v
 allExtend [badType] = throwError $ NumArgs 2 [badType]
 allExtend (badType : _) = throwError $ TypeMismatch "string/list/vector/bytevector" badType
 allExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
+
+inspectDoc :: String
+inspectDoc = "inspect the source code of a zepto object\n\
+\n\
+  params:\n\
+    - obj: the object to inspect\n\
+  complexity: depends on the complexity of the object\n\
+  returns: a string representation of the object"
 
 inspect :: [LispVal] -> ThrowsError LispVal
 inspect [a] = return $ fromSimple $ String $ pprint a

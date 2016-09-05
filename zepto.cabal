@@ -55,6 +55,14 @@ Source-Repository head
     Type:            git
     Location:        git://github.com/zepto-lang/zepto.git
 
+Library
+  Build-Depends:   array,
+                   bytestring,
+                   parsec
+  Extensions:      ExistentialQuantification
+  Hs-Source-Dirs:  src
+  Exposed-Modules: Zepto.Types
+
 Executable           zepto
     Build-Depends:   array,
                      base >= 4.7.0.0,
@@ -65,6 +73,9 @@ Executable           zepto
                      cryptonite,
                      directory,
                      filepath,
+                     ghc,
+                     ghc-prim,
+                     ghc-paths,
                      MissingH,
                      mtl >= 2.2.1,
                      network,
@@ -75,8 +86,8 @@ Executable           zepto
                      utf8-string
     Extensions:      ExistentialQuantification 
                      CPP
-    ghc-options:     -Wall 
-                     -Werror 
+    ghc-options:     -Wall
+                     -Werror
                      -O2
     Main-is:         Main.hs
     Hs-Source-Dirs:  src/
