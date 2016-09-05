@@ -21,20 +21,25 @@ loadNative [SimpleVal (String file)] = do
     case r of
        GHC.Failed -> return $ Nothing
        GHC.Succeeded -> do
-           _ <- GHC.findModule (GHC.mkModuleName file) Nothing
+           _ <- GHC.findModule (GHC.mkModuleName moduleName) Nothing
            GHC.setContext
              [ GHC.IIDecl $
-               (GHC.simpleImportDecl . GHC.mkModuleName $ file)
+               (GHC.simpleImportDecl . GHC.mkModuleName $ moduleName)
                {GHC.ideclQualified = True}
              ]
-           fetched <- GHC.compileExpr (file ++ ".exports")
+           fetched <- GHC.compileExpr (moduleName ++ ".exports")
            let res = (unsafeCoerce fetched :: [(String, [LispVal] -> IOThrowsError LispVal, String)])
            return $ Just res
   case result of
     Just res -> return $ List $ map def res
     Nothing -> return $ fromSimple $ Bool False
-    where def (name, fun, doc) = List [fromSimple $ String name,
-                                       fromSimple $ String doc,
-                                       IOFunc name fun]
+  where def (name, fun, doc) = List [fromSimple $ String name,
+                                     fromSimple $ String doc,
+                                     IOFunc name fun]
+        moduleName = last $ split '/' file
+        split p s =  case dropWhile (== p) s of
+                      "" -> []
+                      s' -> w : split p s''
+                            where (w, s'') = break (== p) s'
 loadNative [x] = throwError $ TypeMismatch "string" x
 loadNative x = throwError $ NumArgs 1 x
