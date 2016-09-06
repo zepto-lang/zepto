@@ -52,3 +52,24 @@ regexScan [SimpleVal (Regex r), SimpleVal (String pattern)] =
 regexScan [SimpleVal (Regex _), x] = throwError $ TypeMismatch "string" x
 regexScan [x, SimpleVal (String _)] = throwError $ TypeMismatch "regex" x
 regexScan x = throwError $ NumArgs 2 x
+
+
+regexScanODoc :: String
+regexScanODoc = "scans a string <par>pattern</par> for occurences of the regex <par>r</par>\n\
+and returns a list of lists of the start and end indices.\n\
+  params:\n\
+    - r: the regex against which we match\n\
+    - check: the string to scan\n\
+  complexity: heavily dependent on the input regex\n\
+  returns: a list of lists of the form <zepto>[start, end]</zepto>"
+
+regexScanO :: [LispVal] -> ThrowsError LispVal
+regexScanO [SimpleVal (Regex r), SimpleVal (String pattern)] =
+  return $  List $ map convert (scanRanges r pattern)
+    where convert (range, ranges) = List [build range,
+                                          List $ map build ranges]
+          build (start, end) = List [fromSimple $ Number $ NumS start,
+                                     fromSimple $ Number $ NumS end]
+regexScanO [SimpleVal (Regex _), x] = throwError $ TypeMismatch "string" x
+regexScanO [x, SimpleVal (String _)] = throwError $ TypeMismatch "regex" x
+regexScanO x = throwError $ NumArgs 2 x
