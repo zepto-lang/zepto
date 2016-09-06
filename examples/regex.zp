@@ -1,0 +1,2 @@
+(regex:matches? r/\s+/ "let there be whitespace")
+(regex:gsub r/\s+/ "," "let there be no whitespace")
