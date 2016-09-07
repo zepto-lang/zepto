@@ -12,6 +12,14 @@ import qualified Data.ByteString.Lazy as BSL (concat)
 import Zepto.Types
 import Zepto.Variables (allBindings)
 
+env2HashMapDoc :: String
+env2HashMapDoc = "converts an environment to a hashmap.\n\
+\n\
+  params:\n\
+    - env: the environment to convert\n\
+  complexity: O(n)\n\
+  returns: a hashmap mapping the function names as strings to the functions"
+
 env2HashMap :: LispVal -> IOThrowsError LispVal
 env2HashMap (Environ x) = do
         env <- liftIO $ allBindings x

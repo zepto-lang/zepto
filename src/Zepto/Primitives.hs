@@ -189,12 +189,12 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("hash:values", hashVals, "get vals from hashmap")
              , ("hash:contains?", inHash, "find out whether hashtable contains key")
              , ("hash:remove", hashRemove, "remove a key from a dictionary")
-             , ("zepto:version", noArg getVersion, "gets the version as a list")
-             , ("zepto:ghc", noArg getGhc, "gets the GHC version as an integer")
-             , ("function:name", unaryOp functionName, "get the name of a function")
-             , ("function:args", unaryOp functionArgs, "get the arguments of a function (does not work for primitives)")
-             , ("function:body", unaryOp functionBody, "get the body of a function (does not work for primitives)")
-             , ("function:docstring", unaryOp functionDocs, "get the docstring of a function (does not work for primitives)")
+             , ("zepto:version", noArg getVersion, versionDoc)
+             , ("zepto:ghc", noArg getGhc, ghcDoc)
+             , ("function:name", unaryOp functionName, functionNameDoc)
+             , ("function:args", unaryOp functionArgs, functionArgsDoc)
+             , ("function:body", unaryOp functionBody, functionBodyDoc)
+             , ("function:docstring", unaryOp functionDocs, functionDocsDoc)
              ]
 
 -- | a list of all io-bound primitives
@@ -223,9 +223,9 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("os:setenv", setEnvProc, "set an environment variable")
                , ("os:getenv", unaryIOOp getEnvProc, "get an environment variable")
                , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
-               , ("make-null-env", makeNullEnv, "make empty environment")
-               , ("make-base-env", makeBaseEnv, "make standard environment")
-               , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
+               , ("make-null-env", makeNullEnv, makeNullEnvDoc)
+               , ("make-base-env", makeBaseEnv, makeBaseEnvDoc)
+               , ("env->hashmap", unaryIOOp env2HashMap, env2HashMapDoc)
 
                , ("net:socket", socket, "opens a socket")
                , ("net:get-addr-info", getAddrInfo, "create an address info object")
@@ -247,7 +247,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
                  , ("catch-vm-error", catchVMError, "catches any vm error")
-                 , ("env:in?", inEnv, "checks whether a name is defined in an environment")
+                 , ("env:in?", inEnv, inEnvDoc)
                  --, ("call-with-values", evalCallWValues, "call with values"),
                  ]
 
@@ -291,9 +291,12 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing _)) val =
         (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing [])) lval
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
-stringParse :: LispVal -> ThrowsError LispVal
-stringParse (SimpleVal (String x)) = readExpr x
-stringParse x = throwError $ TypeMismatch "string" x
+
+makeBaseEnvDoc :: String
+makeBaseEnvDoc = "makes a bae environment as created at zepto startup.\n\
+\n\
+  complexity: O(1)\n\
+  returns: a base environment"
 
 makeBaseEnv :: [LispVal] -> IOThrowsError LispVal
 makeBaseEnv [] = do
@@ -305,6 +308,11 @@ makeBaseEnv [] = do
                                   fmap (makeBind EvalFunc) evalPrimitives)
                   where makeBind constructor (var, func, _) = ((vnamespace, var), constructor var func)
 makeBaseEnv args = throwError $ NumArgs 0 args
+
+
+stringParse :: LispVal -> ThrowsError LispVal
+stringParse (SimpleVal (String x)) = readExpr x
+stringParse x = throwError $ TypeMismatch "string" x
 
 macroEvalFun :: [LispVal] -> IOThrowsError LispVal
 macroEvalFun [Cont (Continuation env _ _ _ _ _), val] = macroEval env val
