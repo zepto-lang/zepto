@@ -8,6 +8,7 @@ module Zepto.Types (LispNum(..),
                     ThrowsError,
                     Env(..),
                     IOThrowsError,
+                    dynToLispVal,
                     showVal,
                     showError,
                     showArgs,
@@ -28,6 +29,7 @@ module Zepto.Types (LispNum(..),
 import Data.Array
 import Data.ByteString (ByteString, unpack)
 import Data.Complex
+import Data.Dynamic
 import Data.Fixed
 import Data.IORef
 import Data.List (foldl')
@@ -315,6 +317,7 @@ data LispVal = SimpleVal Simple
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Environ Env
              | Cont Continuation
+             | Opaque Dynamic
              | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
              | HashComprehension (LispVal, LispVal) (LispVal, LispVal) LispVal (Maybe LispVal)
 
@@ -393,6 +396,7 @@ showVal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
 showVal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showVal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
 showVal (Port _) = "<IO port>"
+showVal (Opaque _) = "<opaque>"
 showVal (Func name LispFun {params = args, vararg = varargs, body = _,
                              closure = _, docstring = doc}) =
     doc ++ "\n  source: " ++
@@ -483,6 +487,7 @@ showInternal (DottedList _ _) = "<dotted-list>"
 showInternal (Port _) = "<port>"
 showInternal (Pointer _ _) = "<pointer>"
 showInternal (SimpleVal (String _)) = "<string>"
+showInternal (Opaque _) = "<opaque>"
 showInternal x@(SimpleVal _) = show x
 
 buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
@@ -538,6 +543,7 @@ typeString (Cont _) = "continuation"
 typeString ListComprehension{} = "list comprehension"
 typeString HashComprehension{} = "hash comprehension"
 typeString (ByteVector _) = "bytevector"
+typeString (Opaque _) = "opaque"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
@@ -582,3 +588,6 @@ trapError action = catchError action (\x -> return $ fromSimple $ String $ show 
 -- | lift an IOThrowsError to an IO monad
 runIOThrowsLispVal :: IOThrowsError LispVal -> IO LispVal
 runIOThrowsLispVal action = liftM extractValue (runExceptT (trapError action))
+
+dynToLispVal :: Dynamic -> LispVal
+dynToLispVal = flip fromDyn (fromSimple $ Nil "")

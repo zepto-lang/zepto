@@ -429,6 +429,7 @@ pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
 pprint (Port _) = "<port>"
 pprint (Cont _) = "<continuation>"
 pprint (Pointer _ _) = "<pointer>"
+pprint (Opaque _) = "<opaque>"
 pprint (ListComprehension a b c d) =
   let x = "[" ++ pprint a ++ " | " ++ pprint b ++ " <- " ++ pprint c
   in case d of

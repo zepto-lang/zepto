@@ -107,6 +107,10 @@ isRegex :: LispVal -> ThrowsError LispVal
 isRegex (SimpleVal (Regex _)) = return $ fromSimple $ Bool True
 isRegex _ = return $ fromSimple $ Bool False
 
+isOpaque :: LispVal -> ThrowsError LispVal
+isOpaque (Opaque _) = return $ fromSimple $ Bool True
+isOpaque _ = return $ fromSimple $ Bool False
+
 isString :: LispVal -> ThrowsError LispVal
 isString (SimpleVal (String _)) = return $ fromSimple $ Bool True
 isString _ = return $ fromSimple $ Bool False
