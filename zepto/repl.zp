@@ -122,6 +122,17 @@ Type ':quit' or press Ctrl-C to exit interpreter,
             (write (++ "Caught error:\n\n" res))))
         (repl)))))
 
+(define (get-type . args)
+  "do not expose"
+  (if (null? args)
+    (begin
+      (error-plain "option :type requires an argument")
+      (repl))
+    (let ((parsed (string:parse (car args))))
+      (begin
+        (write-plain (catch-vm-error [typeof (catch-error parsed)]))
+        (repl)))))
+
 (define meta-commands
   (make-hash
     ":q" do-exit
@@ -133,6 +144,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     ":ddate" get-ddate
     ":complete-license" show-complete-license
     ":help" show-commands
+    ":type" get-type
     ":time" time
     ":prompt" set-prompt))
 

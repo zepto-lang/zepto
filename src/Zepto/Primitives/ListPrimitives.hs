@@ -1,5 +1,5 @@
 module Zepto.Primitives.ListPrimitives where
-import Data.Array (elems, listArray, (!), Array)
+import Data.Array
 import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
@@ -420,6 +420,7 @@ pprint (PrimitiveFunc s _) = "<primitive: " ++ s ++ ">"
 pprint (IOFunc s _) = "<io primitive: " ++ s ++ ">"
 pprint (EvalFunc s _) = "<eval primitive: " ++ s ++ ">"
 pprint (Environ _) = "<environment>"
+pprint (Error _) = "<error>"
 pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
   where printFunc (LispFun p v b _ d) = let x = unwords p
                                             y = unwords (map pprint b)

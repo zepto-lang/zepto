@@ -11,14 +11,15 @@ import Control.Monad.Except
 import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
-import qualified Control.Exception as CE
 import qualified Data.Map
+import qualified Control.Exception as CE
 import qualified Data.ByteString as BS (hPut, cons, splitAt, append, tail, index)
 
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
 import Zepto.Primitives.ConversionPrimitives
 import Zepto.Primitives.EnvironmentPrimitives
+import Zepto.Primitives.ErrorPrimitives
 import Zepto.Primitives.FunctionPrimitives
 import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
@@ -99,6 +100,7 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("eqv?", eqv, eqvDoc)
              , ("equal?", equal, eqvDoc)
 
+             , ("error?", unaryOp isError, typecheckDoc "an error")
              , ("pair?", unaryOp isDottedList, typecheckDoc "a pair")
              , ("procedure?", unaryOp isProcedure, typecheckDoc "a procedure")
              , ("number?", unaryOp isNumber, typecheckDoc "a number")
@@ -149,6 +151,7 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("make-small", makeSmall, "create a small integer")
              , ("make-hash", makeHash, "create a hashmap")
              , ("make-byte-vector", makeByteVector, "create a byte vector")
+             , ("make-error", unaryOp makeError, makeErrorDoc)
              , ("char->integer", unaryOp charToInteger, "makes integer from char")
              , ("integer->char", unaryOp integer2Char, "makes char from integer")
              , ("vector->list", unaryOp vectorToList, "makes list from vector")
@@ -196,6 +199,8 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("function:args", unaryOp functionArgs, functionArgsDoc)
              , ("function:body", unaryOp functionBody, functionBodyDoc)
              , ("function:docstring", unaryOp functionDocs, functionDocsDoc)
+             , ("error:text", unaryOp errorText, errorTextDoc)
+             , ("error:throw", unaryOp throwZError, throwZErrorDoc)
              ]
 
 -- | a list of all io-bound primitives
@@ -247,6 +252,7 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("apply", evalApply, "apply function to values")
                  , ("call-with-current-continuation", evalCallCC, "call with current continuation")
                  , ("call/cc", evalCallCC, "call with current continuation")
+                 , ("catch-error", catchZError, "catches any zepto-generated error")
                  , ("catch-vm-error", catchVMError, "catches any vm error")
                  , ("env:in?", inEnv, inEnvDoc)
                  --, ("call-with-values", evalCallWValues, "call with values"),
@@ -352,12 +358,22 @@ evalCallCC [conti@(Cont _), fun] =
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
 evalCallCC x = throwError $ NumArgs 1 x
 
+catchZError :: [LispVal] -> IOThrowsError LispVal
+catchZError [c, x, Environ env] = do
+    let res = trapError $ eval env c x
+    resX <- liftIO $ runExceptT res
+    case resX of
+      (Left err) -> return $ Error err
+      (Right val) -> return $ val
+catchZError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchZError [c, x, Environ env]
+catchZError [x, _] = throwError $ TypeMismatch "continuation" x
+catchZError x = throwError $ NumArgs 1 (tail x)
+
 catchVMError :: [LispVal] -> IOThrowsError LispVal
-catchVMError [c, x, Environ env] = do
-          str <- liftIO $ CE.catch (runIOThrowsLispVal $ eval env c x) handler
-          return $ str
+catchVMError [c, x, Environ env] =
+          liftIO $ CE.catch (runIOThrowsLispVal $ eval env c x) handler
     where handler :: CE.SomeException -> IO LispVal
-          handler msg@(CE.SomeException _) = return $ fromSimple $ String $ show (msg::CE.SomeException)
+          handler msg = return $ fromSimple $ String $ CE.displayException msg
 catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchVMError [c, x, Environ env]
 catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
 catchVMError x = throwError $ NumArgs 1 (tail x)
@@ -434,6 +450,7 @@ eval env conti val@(Func _ _) = contEval env conti val
 eval env conti val@(IOFunc _ _) = contEval env conti val
 eval env conti val@(EvalFunc _ _) = contEval env conti val
 eval env conti val@(PrimitiveFunc _ _) = contEval env conti val
+eval env conti val@(Opaque _) = contEval env conti val
 eval env conti val@(ByteVector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
 eval env conti val@(Environ _) = contEval env conti val

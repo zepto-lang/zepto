@@ -86,10 +86,9 @@ Executable           zepto
                      transformers >= 0.4.2,
                      strict,
                      utf8-string
-    Extensions:      ExistentialQuantification 
+    Extensions:      ExistentialQuantification
                      CPP
     ghc-options:     -Wall
-                     -Werror
                      -O2
     Main-is:         Main.hs
     Hs-Source-Dirs:  src/

@@ -13,6 +13,10 @@ typecheckDoc t = "checks whether <par>arg</par> is a " ++ t ++ ".\n\
   complexity: O(1)\n\
   returns: a boolean"
 
+isError :: LispVal -> ThrowsError LispVal
+isError (Error _) = return $ fromSimple $ Bool True
+isError _ = return $ fromSimple $ Bool False
+
 isNumber :: LispVal -> ThrowsError LispVal
 isNumber (SimpleVal (Number _)) = return $ fromSimple $ Bool True
 isNumber _ = return $ fromSimple $ Bool False

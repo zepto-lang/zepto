@@ -53,6 +53,8 @@ eqv [HashMap arg1, HashMap arg2] = eqv [List $ mkList (DM.toList arg1), List $ m
           mkList ((a, b) : cs) = [fromSimple a, b] ++ mkList cs
 eqv [Environ x, Environ y] = return $ fromSimple $ Bool $ x == y
 eqv [SimpleVal (Regex x), SimpleVal (Regex y)] = return $ fromSimple $ Bool $ x == y
+-- TODO: that's both dumb and inefficient
+eqv [Error x, Error y] = return $ fromSimple $ Bool $ show x == show y
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
@@ -202,22 +204,6 @@ unaryDoc complexity returns = "\n\
     - x: the function argument\n\
   complexity: " ++ complexity ++ "\n\
   returns: " ++ returns
-
-unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
-unaryOp f [v] = f v
-unaryOp _ l = throwError $ NumArgs 1 l
-
-unaryIOOp :: (LispVal -> IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
-unaryIOOp f [v] = f v
-unaryIOOp _ l = throwError $ NumArgs 1 l
-
-noArg :: ThrowsError LispVal -> [LispVal] -> ThrowsError LispVal
-noArg f [] = f
-noArg _ l = throwError $ NumArgs 0 l
-
-noIOArg :: IOThrowsError LispVal -> [LispVal] -> IOThrowsError LispVal
-noIOArg f [] = f
-noIOArg _ l = throwError $ NumArgs 0 l
 
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (SimpleVal (Number n)) = return n
