@@ -7,7 +7,7 @@ import qualified GHC
 import qualified GHC.Paths (libdir)
 import qualified DynFlags
 
-import Zepto.Types.Export
+import Zepto.Types
 
 loadNativeDoc :: String
 loadNativeDoc = "load a native (i.e. Haskell) library.\n\

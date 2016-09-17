@@ -2,6 +2,7 @@
   (export
     (list "readline" readline)
     (list "add-completion" add-completion)
+    (list "add-completions" add-completions)
     (list "reset-completions" reset-completions)
     (list "add-history" add-history)
     (list "get-history" get-history)

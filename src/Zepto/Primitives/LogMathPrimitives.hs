@@ -8,6 +8,7 @@ import Data.Word (Word32)
 
 import qualified Data.Map as DM (toList)
 import qualified Data.Ratio as Ratio (numerator, denominator)
+import qualified Text.Regex.PCRE.Light.Base as R
 
 import Zepto.Types
 
@@ -55,6 +56,8 @@ eqv [Environ x, Environ y] = return $ fromSimple $ Bool $ x == y
 eqv [SimpleVal (Regex x), SimpleVal (Regex y)] = return $ fromSimple $ Bool $ x == y
 -- TODO: that's both dumb and inefficient
 eqv [Error x, Error y] = return $ fromSimple $ Bool $ show x == show y
+eqv [SimpleVal (Regex (R.Regex _ x)), SimpleVal (Regex (R.Regex _ y))] =
+  return $ fromSimple $ Bool $ x == y
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
