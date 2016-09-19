@@ -53,7 +53,6 @@ eqv [HashMap arg1, HashMap arg2] = eqv [List $ mkList (DM.toList arg1), List $ m
     where mkList [] = []
           mkList ((a, b) : cs) = [fromSimple a, b] ++ mkList cs
 eqv [Environ x, Environ y] = return $ fromSimple $ Bool $ x == y
-eqv [SimpleVal (Regex x), SimpleVal (Regex y)] = return $ fromSimple $ Bool $ x == y
 -- TODO: that's both dumb and inefficient
 eqv [Error x, Error y] = return $ fromSimple $ Bool $ show x == show y
 eqv [SimpleVal (Regex (R.Regex _ x)), SimpleVal (Regex (R.Regex _ y))] =
