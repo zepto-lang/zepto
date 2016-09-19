@@ -62,6 +62,7 @@ Library
   Extensions:      ExistentialQuantification
   Hs-Source-Dirs:  src
   Exposed-Modules: Zepto.Types
+                   Zepto.Types.Export
 
 Executable           zepto
     Build-Depends:   array,
