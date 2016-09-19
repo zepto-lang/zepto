@@ -570,58 +570,6 @@ eval _ _ (List [SimpleVal (Atom "set!"), x, _]) = throwError $ BadSpecialForm
                             ++ "its new value")
                             x
 eval _ _ (List (SimpleVal (Atom "set!") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [SimpleVal (Atom "set-cdr!")]) = throwError $ NumArgs 2 []
-eval env conti (List [SimpleVal (Atom "set-cdr!"), var@(SimpleVal (Atom name)), form]) = do
-            resolved_var <- eval env (nullCont env) var
-            resolved_form <- eval env (nullCont env) form
-            x <- set_cdr resolved_var resolved_form
-            contEval env conti =<< setVar env name x
-    where set_cdr (List old) (List new_cdr) = return $ List $ head old : new_cdr
-          set_cdr _ _ = return $ fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "set-cdr!"), sth, form]) = do
-            resolved <- eval env (nullCont env) sth
-            if matches resolved
-              then do
-                let var = fst $ unpack resolved
-                let name = snd $ unpack resolved
-                resolved_var <- eval env (nullCont env) var
-                resolved_form <- eval env (nullCont env) form
-                x <- set_cdr resolved_var resolved_form
-                contEval env conti =<< setVar env name x
-              else throwError $ TypeMismatch "symbol" resolved
-    where set_cdr (List old) (List new_cdr) = return $ List $ head old : new_cdr
-          set_cdr _ _ = return $ fromSimple $ Nil "This should never happen"
-          matches (SimpleVal (Atom _)) = True
-          matches _ = False
-          unpack var@(SimpleVal (Atom name)) = (var, name)
-          unpack _ = (fromSimple $ Nil "", "")
-eval _ _ (List (SimpleVal (Atom "set-cdr!") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [SimpleVal (Atom "set-car!")]) = throwError $ NumArgs 2 []
-eval env conti (List [SimpleVal (Atom "set-car!"), var@(SimpleVal (Atom name)), form]) = do
-            resolved_var <- eval env (nullCont env) var
-            resolved_form <- eval env (nullCont env) form
-            x <- set_car resolved_var resolved_form
-            contEval env conti =<< setVar env name x
-    where set_car (List old) new_car = return $ List $ new_car : tail old
-          set_car _ _ = return $ fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "set-car!"), sth, form]) = do
-            resolved <- eval env (nullCont env) sth
-            if matches resolved
-              then do
-                let var = fst $ unpack resolved
-                let name = snd $ unpack resolved
-                resolved_var <- eval env (nullCont env) var
-                resolved_form <- eval env (nullCont env) form
-                x <- set_car resolved_var resolved_form
-                contEval env conti =<< setVar env name x
-              else throwError $ TypeMismatch "symbol" resolved
-    where set_car (List old) new_car = return $ List $ new_car : tail old
-          set_car _ _ = return $ fromSimple $ Nil "This should never happen"
-          matches (SimpleVal (Atom _)) = True
-          matches _ = False
-          unpack var@(SimpleVal (Atom name)) = (var, name)
-          unpack _ = (fromSimple $ Nil "", "")
-eval _ _ (List (SimpleVal (Atom "set-car!") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "define")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "define"), a@(SimpleVal (Atom (':' : _))), _]) =
             throwError $ TypeMismatch "symbol" a
