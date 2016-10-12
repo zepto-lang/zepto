@@ -1,6 +1,4 @@
 ; A minimal queue
-(load "srfi/srfi-9.zp")
-
 (define-record-type queue
     (queue:make-queue data size)
     queue:queue?

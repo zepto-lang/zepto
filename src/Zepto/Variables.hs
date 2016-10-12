@@ -110,7 +110,7 @@ getNamespacedObj' envRef namespace var unpackFun = do
         binds <- liftIO $ readIORef $ bindings envRef
         case Data.Map.lookup (getVarName namespace var) binds of
             Just a -> do
-                v <- liftIO $unpackFun a
+                v <- liftIO $ unpackFun a
                 return $ Just v
             Nothing -> case parentEnv envRef of
                         Just par -> getNamespacedObj' par namespace var unpackFun

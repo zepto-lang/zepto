@@ -189,7 +189,7 @@ makeString [SimpleVal (Number n)] = return $ fromSimple $ _makeString n ' ' ""
 makeString badArgList = throwError $ NumArgs 1 badArgList
 
 stringLength :: LispVal -> ThrowsError LispVal
-stringLength (SimpleVal (String s)) = return $ fromSimple $ Number $ foldr (const (+1)) 0 s
+stringLength (SimpleVal (String s)) = return $ fromSimple $ Number $ NumI $ fromIntegral $ length s
 stringLength badType = throwError $ TypeMismatch "string" badType
 
 stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =

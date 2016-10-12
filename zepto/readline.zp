@@ -12,10 +12,7 @@
   (completions [])
 
   (first-separator (lambda (str)
-    (let ((m (filter ($ (not (eq? % -1)))
-               (map (lambda (x) (index-of str x))
-                [#\[ #\] #\{ #\} #\) #\( #\' #\space #\newline #\tab]))))
-      (if (truthy? m) (add1 (list:min m)) -1))))
+    (add1 (get-from (regex:matches-indices r/\s|\[|\]|\{|\}|\)|\(|\'/ str) [0 0] -1))))
 
   (zhighlight (lambda (str)
     (let ((col (lambda (x) (color x #{:to-str #t})))
