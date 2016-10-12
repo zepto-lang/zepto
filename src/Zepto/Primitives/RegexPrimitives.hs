@@ -1,11 +1,25 @@
 module Zepto.Primitives.RegexPrimitives where
 
 import Control.Monad.Except (throwError)
-import Data.ByteString.Char8 (unpack)
+import Data.ByteString.Char8 (unpack, pack)
 import Text.Regex.PCRE.Heavy
 import qualified Text.Regex.PCRE.Light.Base as R
 
 import Zepto.Types
+
+makeRegexDoc :: String
+makeRegexDoc = "creates a new regex from a string <par>s</par>.\n\
+\n\
+  params:\n\
+    - s: the string to convert\n\
+  complexity: O(n)\n\
+  returns: a new regex"
+
+makeRegex :: LispVal -> ThrowsError LispVal
+makeRegex (SimpleVal (String s)) = case compileM (pack s) [] of
+  Left msg -> throwError $ Default msg
+  Right r  -> return $ fromSimple $ Regex $ r
+makeRegex x = throwError $ TypeMismatch "string" x
 
 regexPatternDoc :: String
 regexPatternDoc = "gets the regex pattern as a string.\n\
