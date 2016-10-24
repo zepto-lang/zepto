@@ -166,8 +166,10 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (if (in? (car split) "Parse error at")
       (let ((col (string->number (car (string:split (cadr (string:split (car split) "column ")) #\))))))
         (++ (car split) "\n"
-            input "\n"
-            (string:replicate (sub1 col) " ") "^\n"
+            "  " input "\n"
+            (color :yellow #{:to-str #t})
+            "  " (string:replicate (sub1 col) " ") "^\n"
+            (color :reset #{:to-str #t})
             (string:join (cdr split) #\newline)))
       (loop (cdr split)))))
 
