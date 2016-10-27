@@ -4,6 +4,7 @@ all: install
 
 install:
 	cabal install $(CARGS)
+	if [ ! -f ~/.zeptorc ]; then touch ~/.zeptorc; fi
 
 debug:
 	cabal configure --enable-executable-profiling
