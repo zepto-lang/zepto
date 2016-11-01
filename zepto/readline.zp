@@ -80,8 +80,9 @@
       (++ (string (integer->char 27)) "[" (number->string n) "D")))
 
   (remove-from-input (lambda (count)
-    (let ((b (string:replicate count #\backspace)))
-      (display (++ b (string:replicate count #\space) b) :flush))))
+    (let* ((p (curry string:replicate count))
+           (b (p #\backspace)))
+      (display (++ b (p #\space) b) :flush))))
 
   (replace-input (lambda (old new)
     (begin
