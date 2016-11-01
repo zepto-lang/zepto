@@ -5,8 +5,25 @@ import System.IO (hIsReadable, hIsWritable)
 
 import Zepto.Types
 
+-- TODO: does this really belong here?
+buildDoc :: String -> String
+buildDoc t = "build a new " ++ t ++ ".\n\
+\n\
+  complexity: O(1)\n\
+  returns: a new " ++ t
+
+-- TODO: does this really belong here?
+typeofDoc :: String
+typeofDoc = "return the type of <par>arg</par> as a string.\n\
+This implementation might be made a protocol in the future.
+\n\
+  params:\n\
+    - arg: the object to stringify\n\
+  complexity: O(1)\n\
+  returns: the type of <par>arg</par> as a string"
+
 typecheckDoc :: String -> String
-typecheckDoc t = "checks whether <par>arg</par> is a " ++ t ++ ".\n\
+typecheckDoc t = "check whether <par>arg</par> is a " ++ t ++ ".\n\
 \n\
   params:\n\
     - arg: the object to check\n\
