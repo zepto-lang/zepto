@@ -5,13 +5,15 @@
       (net:listen sock)
       (let* ((conn-data (net:accept sock))
              (conn (car conn-data)))
-        (write (net:recv conn (make-small 1000)))))))
+        (write (net:recv conn (make-small 1000))))
+      (net:close-socket sock))))
 
 (define (get)
   (let ((sock (net:socket "stream")))
     (begin
       (net:connect sock (net:get-addr-info "127.0.0.1" "5000"))
-      (net:send sock (string->byte-vector "hello there")))))
+      (net:send sock (string->byte-vector "hello there"))
+      (net:close-socket sock))))
 
 (if (eq? (car zepto:args) "server")
   (serve)
