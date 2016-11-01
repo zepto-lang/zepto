@@ -15,7 +15,7 @@ buildDoc t = "build a new " ++ t ++ ".\n\
 -- TODO: does this really belong here?
 typeofDoc :: String
 typeofDoc = "return the type of <par>arg</par> as a string.\n\
-This implementation might be made a protocol in the future.
+This implementation might be made a protocol in the future.\n\
 \n\
   params:\n\
     - arg: the object to stringify\n\
