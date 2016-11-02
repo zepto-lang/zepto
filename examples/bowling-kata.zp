@@ -1,0 +1,29 @@
+; An implementation of the bowling game kata by Uncle Bob.
+; A description of the algorithm can be found here:
+; http://codingdojo.org/cgi-bin/index.pl?KataBowling
+(define (bowling-game l)
+  (define (conv char)
+    (cond
+      ((eq? char #\-) 0)
+      ((eq? char #\X) 10)
+      (else (- (char->integer char) 48))))
+
+  (define (get-roll score l)
+    (case (car l)
+      ((#\X) (list (+ score 10 (conv (cadr l)) (conv (caddr l))) (cdr l)))
+      (else
+        (case (cadr l)
+          ((#\/) (list (+ score 10 (conv (caddr l))) (cddr l)))
+          (else (list (+ score (conv (car l)) (conv (cadr l))) (cddr l)))))))
+
+  (let loop ((it 0)
+             (sm 0)
+             (l l))
+    (if (= it 10)
+      sm
+      (apply loop (cons (add1 it) (get-roll sm l))))))
+
+(write (bowling-game "XXXXXXXXXXXX"))
+(write (bowling-game "XXXXXXXXXXX3"))
+(write (bowling-game "9-9-9-9-9-9-9-9-9-9-"))
+(write (bowling-game "5/5/5/5/5/5/5/5/5/5/5"))

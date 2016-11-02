@@ -1,4 +1,4 @@
-override CARGS+=-j2 --force-reinstalls
+override CARGS+=-j2
 #Installs
 all: install
 
