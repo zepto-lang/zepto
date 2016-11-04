@@ -17,6 +17,17 @@ lookupType s = case s of
                 "seq-packet"     -> NS.SeqPacket
                 _                -> NS.NoSocketType
 
+socketDoc :: String
+socketDoc = "create a new socket; takes a family <par>f</par>,
+a type <par>t</par>and a protocol number <par>p</par>.\n\
+\n\
+  params:\n\
+    - f: the family (small-int)\n\
+    - t: the socket type (string)\n\
+    - p: the protocol number (small-int)\n\
+  complexity: O(1)\n\
+  returns: an opaque datatype representing a socket"
+
 socket :: [LispVal] -> IOThrowsError LispVal
 socket [f@(SimpleVal (Number (NumS fam))),
         t@(SimpleVal (String type')),

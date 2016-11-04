@@ -2,8 +2,9 @@
 ![general version](http://img.shields.io/badge/version-0.9.6-yellow.svg)
 ![GPL Licensed](http://img.shields.io/badge/license-GPLv2-blue.svg)
 ![GHC Version](http://img.shields.io/badge/GHC_Version-8.0-grey.svg)
+[![Gitter](https://badges.gitter.im/zepto-lang/Lobby.svg)](https://gitter.im/zepto-lang/Lobby)
 
-A simple Scheme interpreter in Haskell (originally based on 
+A simple Scheme interpreter in Haskell (originally based on
 [this tutorial](http://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf),
 extended massively, some code taken from [husk-scheme](https://github.com/justinethier/husk-scheme)).
 It implements a good enough subset of R<sup>5</sup>RS to make real programming possible,

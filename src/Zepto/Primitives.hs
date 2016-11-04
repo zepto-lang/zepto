@@ -236,7 +236,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
 
                , ("net:socket", socket, "opens a socket")
                , ("net:get-addr-info", getAddrInfo, "create an address info object")
-               , ("net:connect", connect, "connect a socket to an address")
+               , ("net:connect", connect, connectDoc)
                , ("net:recv", recv, "receive data from a connected socket")
                , ("net:send", send, "send data to a connected socket")
                , ("net:bind-socket", bindSocket, "bind a socket to a specific address")
