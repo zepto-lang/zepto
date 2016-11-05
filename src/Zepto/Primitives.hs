@@ -224,7 +224,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("display", writeProc print', "print to stdout")
                , ("read-contents", readContents, "read contents of file")
                , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
-               , ("parse", readAll, "read and parse file")
+               , ("parse", readAll, readAllDoc)
                , ("exit", exitProc, exitDoc)
                , ("system", systemProc, systemDoc)
                , ("os:setenv", setEnvProc, setEnvDoc)
@@ -846,6 +846,14 @@ eval env conti (List (function : args)) = do
           ByteVector _  -> eval env conti (List (func : args))
           _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+
+readAllDoc :: String
+readAllDoc = "read and parse a file. It returns the parsed file as an S-Expression.\n\
+\n\
+  params:\n\
+    - filename: the name of the file to parse\n\
+  complexity: O(n)\n\
+  returns: a list of expressions"
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [SimpleVal (String filename)] = liftM List $ load filename
