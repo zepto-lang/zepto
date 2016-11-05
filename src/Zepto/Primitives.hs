@@ -226,10 +226,10 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
                , ("parse", readAll, "read and parse file")
                , ("exit", exitProc, "exit program")
-               , ("system", systemProc, "call a system command")
-               , ("os:setenv", setEnvProc, "set an environment variable")
-               , ("os:getenv", unaryIOOp getEnvProc, "get an environment variable")
-               , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
+               , ("system", systemProc, systemDoc)
+               , ("os:setenv", setEnvProc, setEnvDoc)
+               , ("os:getenv", unaryIOOp getEnvProc, getEnvDoc)
+               , ("unix-timestamp", noIOArg timeProc, timeDoc)
                , ("make-null-env", makeNullEnv, makeNullEnvDoc)
                , ("make-base-env", makeBaseEnv, makeBaseEnvDoc)
                , ("env->hashmap", unaryIOOp env2HashMap, env2HashMapDoc)
@@ -243,7 +243,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("net:listen", listen, listenDoc)
                , ("net:accept", accept, acceptDoc)
                , ("net:close-socket", close, closeDoc)
-               , ("crypto:randint", randIntProc, "get a random integer value")
+               , ("crypto:randint", randIntProc, randIntDoc)
                , ("load-native", loadNative, loadNativeDoc)
                ]
 
@@ -256,7 +256,6 @@ evalPrimitives = [ ("eval", evalFun, "evaluate list")
                  , ("catch-error", catchZError, "catches any zepto-generated error")
                  , ("catch-vm-error", catchVMError, "catches any vm error")
                  , ("env:in?", inEnv, inEnvDoc)
-                 --, ("call-with-values", evalCallWValues, "call with values"),
                  ]
 
 printInternal :: Handle -> LispVal -> IO ()

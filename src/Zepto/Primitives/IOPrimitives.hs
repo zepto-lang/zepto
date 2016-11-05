@@ -122,10 +122,27 @@ exitProc [SimpleVal (Number (NumS x))] = do _ <- liftIO $ tryIOError $ liftIO $
 exitProc [x] = throwError $ TypeMismatch "integer" x
 exitProc badArg = throwError $ NumArgs 1 badArg
 
+timeDoc :: String
+timeDoc = "get the UNIX timestamp as a pair of the seconds since the UNIX\n\
+epoch and the nanoseconds since the last second.\n\
+\n\
+  complexity: O(1)\n\
+  returns: a pair of the format <zepto>[secs, nanosecs]</zepto>"
+
 timeProc :: IOThrowsError LispVal
 timeProc = do x <- liftIO $ getTime Realtime
               return $ List [makeNum (sec x), makeNum (nsec x)]
     where makeNum n = fromSimple $ Number $ NumI $ fromIntegral n
+
+systemDoc :: String
+systemDoc = "call the command <par>cmd</par> with an optional list of arguments\n\
+<par>args</par>.\n\
+\n\
+  params:\n\
+    - cmd: the command to call\n\
+    - args: the list of CLI arguments (optional)\n\
+  complexity: the complexity of <par>cmd</par>\n\
+  returns: <zepto>[return-code, std-output, error-output]</zepto>"
 
 systemProc :: [LispVal] -> IOThrowsError LispVal
 systemProc [SimpleVal (String s)] = do
@@ -163,6 +180,18 @@ systemProc [SimpleVal (String s), List given] = do
 systemProc [x] = throwError $ TypeMismatch "string" x
 systemProc badArg = throwError $ NumArgs 1 badArg
 
+randIntDoc :: String
+randIntDoc = "generate a random integer in a cryptographically secure manner.\n\
+Optionally provide an upper or lower bound. If none are provided, the bounds\n\
+will be the minimum and maximum bound of the integer hardware data type.\n\
+If only one is provided, it is interpreted as the upper bound.\n\
+\n\
+  params:\n\
+    - lo: the lower bound (optional)\n\
+    - hi: the upper bound (optional)\n\
+  complexity: O(1)\n\
+  returns: a random small-int"
+
 randIntProc :: [LispVal] -> IOThrowsError LispVal
 randIntProc [] = randIntProc [fromSimple $ Number $ NumI $ toInteger (minBound :: Int),
                               fromSimple $ Number $ NumI $ toInteger (maxBound :: Int)]
@@ -183,11 +212,28 @@ snd3 (_, x, _) = x
 thd3 :: (a, b, c) -> c
 thd3 (_, _, x) = x
 
+getEnvDoc :: String
+getEnvDoc = "get an environment variable <par>var</par>.\n\
+\n\
+  params:\n\
+    - var: the name of the environment variable\n\
+  complexity: O(1)\n\
+  returns: a string of the environment variable"
+
 getEnvProc :: LispVal -> IOThrowsError LispVal
 getEnvProc (SimpleVal (String var)) = do
   val <- liftIO $ getEnv var
   return $ fromSimple $ String val
 getEnvProc x = throwError $ TypeMismatch "string" x
+
+setEnvDoc :: String
+setEnvDoc = "set an environment variable <par>var</par> to <par>val</par>.\n\
+\n\
+  params:\n\
+    - var: the name of the environment variable\n\
+    - val: the value that <par>var</par> should be set to (string)\n\
+  complexity: O(1)\n\
+  returns: nil"
 
 setEnvProc :: [LispVal] -> IOThrowsError LispVal
 setEnvProc [SimpleVal (String var), SimpleVal (String val)] = do
