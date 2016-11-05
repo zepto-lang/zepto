@@ -106,6 +106,14 @@ readBinaryContents [SimpleVal (String filename)] = liftM ByteVector $ liftIO $ B
 readBinaryContents [x] = throwError $ TypeMismatch "string" x
 readBinaryContents badArgs = throwError $ NumArgs 1 badArgs
 
+exitDoc :: String
+exitDoc = "exit zepto.\n\
+\n\
+  params:\n\
+    - return code: the program return code (optional); defaults to 0\n\
+  complexity: O(1)\n\
+  returns: this procedure exits the program"
+
 exitProc :: [LispVal] -> IOThrowsError LispVal
 exitProc [] = do _ <- liftIO $ tryIOError $ liftIO exitSuccess
                  return $ fromSimple $ Nil ""

@@ -225,7 +225,7 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                , ("read-contents", readContents, "read contents of file")
                , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
                , ("parse", readAll, "read and parse file")
-               , ("exit", exitProc, "exit program")
+               , ("exit", exitProc, exitDoc)
                , ("system", systemProc, systemDoc)
                , ("os:setenv", setEnvProc, setEnvDoc)
                , ("os:getenv", unaryIOOp getEnvProc, getEnvDoc)
