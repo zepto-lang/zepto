@@ -31,6 +31,14 @@ env2HashMap (Environ x) = do
             return $ insert (String $ drop 2 k) nv nacc
 env2HashMap x = throwError $ TypeMismatch "env" x
 
+conversionDoc :: String -> String -> String
+conversionDoc from to = "convert a " ++ from ++ " to a " ++ to ++ ".\n\
+\n\
+  params:\n\
+    - input: the input " ++ from ++ " to convert\n\
+  complexity: O(n)\n\
+  returns: " ++ to
+
 symbol2String :: LispVal -> ThrowsError LispVal
 symbol2String (SimpleVal (Atom a)) = return $ fromSimple $ String a
 symbol2String notAtom = throwError $ TypeMismatch "symbol" notAtom
