@@ -909,7 +909,7 @@ apply' conti@(Cont (Continuation _ _ _ _ _ cs)) (Func _ (LispFun fparams varargs
             then throwError $ NumArgs (num fparams) args
             else liftIO (extendEnv fclosure $ zip (fmap ((,) vnamespace) fparams) args)
                   >>= bindVarArgs varargs
-                  >>= evalBody fbody
+                  >>= evalBody [(List ((fromSimple $ Atom "begin") : fbody))]
     where
         remainingArgs = drop (length fparams) args
         num = toInteger . length
