@@ -2,7 +2,7 @@
 
 (define *prompt* "zepto> ")
 (define *ret* "=> ")
-(define *conf* (++ (get-home-dir) "/.zeptorc"))
+(define *conf* (++ (os:get-home-dir) "/.zeptorc"))
 
 (define (do-exit)
   (begin

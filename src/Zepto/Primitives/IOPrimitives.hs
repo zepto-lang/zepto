@@ -32,6 +32,11 @@ changeDir (SimpleVal (String dir)) = do
   return $ fromSimple $ Bool True
 changeDir x = throwError $ TypeMismatch "string" x
 
+getHomeDirDoc :: String
+getHomeDirDoc = "get user's home directory.\n\
+\n\
+  complexity: O(1)\n\
+  returns: the home directory as string"
 
 getHomeDir :: IOThrowsError LispVal
 getHomeDir = do
@@ -48,6 +53,12 @@ getZeptoDir :: IOThrowsError LispVal
 getZeptoDir = do
   dir <- liftIO $ getDataFileName ""
   return $ fromSimple $ String dir
+
+getCurrentDirDoc :: String
+getCurrentDirDoc = "get the current directory.\n\
+\n\
+  complexity: O(1)\n\
+  returns: the current directory as string"
 
 getCurrentDir :: IOThrowsError LispVal
 getCurrentDir = do

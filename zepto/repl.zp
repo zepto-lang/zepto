@@ -10,8 +10,8 @@
 (define *ret* "=> ")
 (define *statement-count* 1)
 (define *local-conf* "./.zeptorc")
-(define *conf* (++ (get-home-dir) "/.zeptorc"))
-(define *histfile* (++ (get-home-dir) "/.zepto_history"))
+(define *conf* (++ (os:get-home-dir) "/.zeptorc"))
+(define *histfile* (++ (os:get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
 (define *header* (++ "zepto Version " zepto:version-str ", compiled with GHC version " zepto:ghc-str "
 Copyright (C) 2016 Veit Heller (GPL)
