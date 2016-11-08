@@ -248,13 +248,13 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-evalPrimitives = [ ("eval", evalFun, "evaluate list")
-                 , ("macro-expand", macroEvalFun, "treat list as code and expand the macros")
-                 , ("apply", evalApply, "apply function to values")
-                 , ("call-with-current-continuation", evalCallCC, "call with current continuation")
-                 , ("call/cc", evalCallCC, "call with current continuation")
-                 , ("catch-error", catchZError, "catches any zepto-generated error")
-                 , ("catch-vm-error", catchVMError, "catches any vm error")
+evalPrimitives = [ ("eval", evalFun, evalDoc)
+                 , ("macro-expand", macroEvalFun, macroEvalDoc)
+                 , ("apply", evalApply, applyDoc)
+                 , ("call-with-current-continuation", evalCallCC, callCCDoc)
+                 , ("call/cc", evalCallCC, callCCDoc)
+                 , ("catch-error", catchZError, catchErrorDoc)
+                 , ("catch-vm-error", catchVMError, catchVMErrorDoc)
                  , ("env:in?", inEnv, inEnvDoc)
                  ]
 
@@ -321,11 +321,44 @@ stringParse :: LispVal -> ThrowsError LispVal
 stringParse (SimpleVal (String x)) = readExpr x
 stringParse x = throwError $ TypeMismatch "string" x
 
+macroEvalDoc :: String
+macroEvalDoc = "expand all the macros in a given S-Expression.\n\
+  Optionally takes an environment which should be used as a context for\n\
+  the expansion.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (macro-expand [let ((x 1)) x]) ; => ((lambda (x) x) 1)\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - stmt: the list in which the macros should be expanded\n\
+    - env: the environment to use (optional)\n\
+  complexity: O(n)\n\
+  returns: the expanded version of <zepto>stmt</zepto> as a list"
+
+
 macroEvalFun :: [LispVal] -> IOThrowsError LispVal
 macroEvalFun [Cont (Continuation env _ _ _ _ _), val] = macroEval env val
 macroEvalFun [Cont _, val, Environ env] = macroEval env val
 macroEvalFun (_ : args) = throwError $ NumArgs 1 args
 macroEvalFun _ = throwError $ NumArgs 1 []
+
+evalDoc :: String
+evalDoc = "evaluate a list as an S-Expression.\n\
+  Optionally takes an environment which should be used as a context for\n\
+  the evaluation.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (eval `(,+ 1 2)) ; => 3\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - stmt: the list to interpret as a statement\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of the input expression\n\
+  returns: the result of the output of <zepto>stmt</zepto>"
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
 evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
@@ -333,12 +366,35 @@ evalFun [c@(Cont _), val, Environ env] = eval env c val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
 
+applyDoc :: String
+applyDoc = "take a function <par>f</par> and a list of arguments\n\
+  <par>args</par> and call the function with those.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (apply + [1 2 3]) ; => 6\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - f: the function to call\n\
+    - args: the arguments for <par>f</par>\n\
+  complexity: that of the function <par>f</par> called with the arguments <par>args</par>\n\
+  returns: the result of <par>f</par> called with the arguments <par>args</par>"
+
 evalApply :: [LispVal] -> IOThrowsError LispVal
 evalApply [conti@(Cont _), fun, List args] = apply conti fun args
 evalApply (conti@(Cont _) : fun : args) = apply conti fun args
 evalApply [_, _, arg] = throwError $ TypeMismatch "list" arg
 evalApply (_ : args) = throwError $ NumArgs 2 args
 evalApply _ = throwError $ NumArgs 2 []
+
+callCCDoc :: String
+callCCDoc = "call the function <par>f</par> with the current continuation.\n\
+\n\
+  params:\n\
+    - f: the function to call\n\
+  complexity: that of <par>f</par>\n\
+  returns: the result of <par>f</par>"
 
 evalCallCC :: [LispVal] -> IOThrowsError LispVal
 evalCallCC [conti@(Cont _), fun] =
@@ -358,6 +414,17 @@ evalCallCC [conti@(Cont _), fun] =
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
 evalCallCC x = throwError $ NumArgs 1 x
 
+catchErrorDoc :: String
+catchErrorDoc = "catches any zepto-defined error in the given quoted\n\
+  expression <par>expr</par>. Optionally takes an environment in which\n\
+  to call <par>expr</par>.\n\
+\n\
+  params:\n\
+    - expr: the expression to call\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of <par>expr</par>\n\
+  returns: the result of <par>expr</par> or the error that was returned"
+
 catchZError :: [LispVal] -> IOThrowsError LispVal
 catchZError [c, x, Environ env] = do
     let res = trapError $ eval env c x
@@ -368,6 +435,19 @@ catchZError [c, x, Environ env] = do
 catchZError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchZError [c, x, Environ env]
 catchZError [x, _] = throwError $ TypeMismatch "continuation" x
 catchZError x = throwError $ NumArgs 1 (tail x)
+
+catchVMErrorDoc :: String
+catchVMErrorDoc = "catches any zepto-defined error in the given quoted\n\
+  expression <par>expr</par>. Similar to <fun>catch-error</fun>, but\n\
+  also catches VM-internal errors. Optionally takes an environment in which\n\
+  to call <par>expr</par>.\n\
+\n\
+  params:\n\
+    - expr: the expression to call\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of <par>expr</par>\n\
+  returns: the result of <par>expr</par> or the error that was returned"
+
 
 catchVMError :: [LispVal] -> IOThrowsError LispVal
 catchVMError [c, x, Environ env] =
