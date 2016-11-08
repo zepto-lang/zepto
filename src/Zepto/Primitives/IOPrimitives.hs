@@ -18,6 +18,14 @@ import Zepto.Types
 
 import Paths_zepto
 
+changeDirDoc :: String
+changeDirDoc = "changes directory of the current program.\n\
+\n\
+  params:\n\
+    - dir: the directory to change to\n\
+  complexity: O(1)\n\
+  returns: boolean"
+
 changeDir :: LispVal -> IOThrowsError LispVal
 changeDir (SimpleVal (String dir)) = do
   _ <- liftIO $ setCurrentDirectory dir
@@ -29,6 +37,12 @@ getHomeDir :: IOThrowsError LispVal
 getHomeDir = do
   dir <- liftIO getHomeDirectory
   return $ fromSimple $ String dir
+
+zeptoDirDoc :: String
+zeptoDirDoc = "get zepto installation directory.\n\
+\n\
+  complexity: O(1)\n\
+  returns: the directory as string"
 
 getZeptoDir :: IOThrowsError LispVal
 getZeptoDir = do
