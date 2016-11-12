@@ -106,6 +106,14 @@ isByteVector _ = return $ fromSimple $ Bool False
 isSimpleList (SimpleVal (SimpleList _)) = return $ fromSimple $ Bool True
 isSimpleList _ = return $ fromSimple $ Bool False
 
+isNullDoc :: String
+isNullDoc = "checks whether list is empty.\n\
+\n\
+  params:\n\
+    - lst: the list to check\n\
+  complexity: O(1)\n\
+  returns: boolean"
+
 isNull :: LispVal -> ThrowsError LispVal
 isNull (List []) = return $ fromSimple $ Bool True
 isNull (SimpleVal (Nil _)) = return $ fromSimple $ Bool True

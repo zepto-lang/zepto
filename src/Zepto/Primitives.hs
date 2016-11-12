@@ -110,7 +110,7 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("rational?", unaryOp isRational, typecheckDoc "a rational")
              , ("real?", unaryOp isReal, typecheckDoc "a real number")
              , ("list?", unaryOp isList, typecheckDoc "list")
-             , ("list:null?", unaryOp isNull, "check whether list is null")
+             , ("list:null?", unaryOp isNull, isNullDoc)
              , ("nil?", unaryOp isNil, typecheckDoc "nil")
              , ("symbol?", unaryOp isSymbol, typecheckDoc "symbol")
              , ("atom?", unaryOp isAtom, typecheckDoc "atom")
@@ -206,24 +206,24 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
 
 -- | a list of all io-bound primitives
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading")
-               , ("open-output-file", makePort WriteMode, "open a file for writing")
-               , ("close-input-file", closePort, "close a file opened for reading")
-               , ("close-output-file", closePort, "close a file opened for writing")
+ioPrimitives = [ ("open-input-file", makePort ReadMode, openDoc "reading")
+               , ("open-output-file", makePort WriteMode, openDoc "writing")
+               , ("close-input-file", closePort, closeFDoc "reading")
+               , ("close-output-file", closePort, closeFDoc "writing")
                , ("input-port?", unaryIOOp isInputPort, typecheckDoc "input port")
                , ("output-port?", unaryIOOp isOutputPort, typecheckDoc "output port")
                , ("os:get-home-dir", noIOArg getHomeDir, getHomeDirDoc)
                , ("os:get-current-dir", noIOArg getCurrentDir, getCurrentDirDoc)
                , ("zepto:home", noIOArg getZeptoDir, zeptoDirDoc)
                , ("os:change-dir", unaryIOOp changeDir, changeDirDoc)
-               , ("read", readProc, "read from file")
-               , ("write", writeProc printInternal, "write to file")
-               , ("read-char", readCharProc hGetChar, "peek char from file")
-               , ("peek-char", readCharProc hLookAhead, "read char from file")
-               , ("write-char", writeCharProc, "write char to file")
-               , ("display", writeProc print', "print to stdout")
-               , ("read-contents", readContents, "read contents of file")
-               , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
+               , ("read", readProc, readDoc)
+               , ("write", writeProc printInternal, writeDoc)
+               , ("read-char", readCharProc hGetChar, peekCharDoc)
+               , ("peek-char", readCharProc hLookAhead, readCharDoc)
+               , ("write-char", writeCharProc, writeCharDoc)
+               , ("display", writeProc print', displayDoc)
+               , ("read-contents", readContents, readContentsDoc)
+               , ("read-contents-binary", readBinaryContents, readBinContentsDoc)
                , ("parse", readAll, readAllDoc)
                , ("exit", exitProc, exitDoc)
                , ("system", systemProc, systemDoc)
@@ -953,6 +953,16 @@ load filename = do
         then liftIO (readFile filename) >>= liftThrows . readExprList
         else throwError $ Default $ "File does not exist: " ++ filename
 
+readDoc :: String
+readDoc = "read a line from a file and evaluate the expression, unless\n\
+<zepto>:no-eval</zepto> is passed.\n\
+If no argument is provided, a line will be read from the standard input.\n\
+\n\
+  params:\n\
+    - args: variable arguments: accepts a port to read from, <zepto>:stdin</zepto> if the line should be read from the standard input or a port\n\
+  complexity: O(1)\n\
+  returns: the line that was read"
+
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
 readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
@@ -961,6 +971,23 @@ readProc [SimpleVal (Atom ":stdin"), x@(SimpleVal (Atom ":no-eval"))] = readProc
 readProc [Port port, SimpleVal (Atom ":no-eval")] = liftM (fromSimple . String) (liftIO (hGetLine port))
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+readCharDoc :: String
+readCharDoc = "read a character from a file <par>f</par> or the standard input.\n\
+\n\
+  params:\n\
+    - f: the file to read a character from; defaults to the standard input (optional)\n\
+  complexity: O(1)\n\
+  returns: the read character"
+
+peekCharDoc :: String
+peekCharDoc = "read a character from a file <par>f</par> or the standard input.\n\
+Does not consume the character, i.e. multiple calls to this function will return the same character.\n\
+\n\
+  params:\n\
+    - f: the file to read a character from; defaults to the standard input (optional)\n\
+  complexity: O(1)\n\
+  returns: the read character"
 
 readCharProc :: (Handle -> IO Char) -> [LispVal] -> IOThrowsError LispVal
 readCharProc fun [] = readCharProc fun [Port stdin]

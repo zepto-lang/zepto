@@ -65,6 +65,14 @@ getCurrentDir = do
   dir <- liftIO getCurrentDirectory
   return $ fromSimple $ String dir
 
+openDoc :: String -> String
+openDoc mode = "open a file for " ++ mode ++ ".\n\
+\n\
+  params:\n\
+    - filename: the filename of the file to open\n\
+  complexity: O(1)\n\
+  returns: the file port"
+
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [SimpleVal (String filename)] = do
          fex <- liftIO $ doesFileExist filename
@@ -73,9 +81,36 @@ makePort mode [SimpleVal (String filename)] = do
            else liftM Port $ liftIO $ openFile filename mode
 makePort _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
+closeFDoc :: String -> String
+closeFDoc mode = "close a file that was opened for " ++ mode ++ ".\n\
+\n\
+  params:\n\
+    - port: the port to close\n\
+  complexity: O(1)\n\
+  returns: nil"
+
+
 closePort :: [LispVal] -> IOThrowsError LispVal
 closePort [Port port] = liftIO $ hClose port >> return (fromSimple (Bool True))
 closePort _ = return $ fromSimple $ Bool False
+
+displayDoc :: String
+displayDoc = "write <par>obj</par> to file <par>f</par>. Does not append newline.\n\
+\n\
+  params:\n\
+    - obj: the object to write\n\
+    - file: the file to write to; also accepts <zepto>:stdout</zepto> or <zepto>:stderr</zepto> (optional, defaults to standard output)\n\
+  complexity: O(1)\n\
+  returns: nil"
+
+writeDoc :: String
+writeDoc = "write <par>obj</par> to file <par>f</par>. Appends newline.\n\
+\n\
+  params:\n\
+    - obj: the object to write\n\
+    - file: the file to write to; also accepts <zepto>:stdout</zepto> or <zepto>:stderr</zepto> (optional, defaults to standard output)\n\
+  complexity: O(1)\n\
+  returns: nil"
 
 writeProc :: (Handle -> LispVal -> IO a) -> [LispVal] -> IOThrowsError LispVal
 writeProc fun [obj] = writeProc fun [obj, Port stdout]
@@ -101,6 +136,16 @@ writeProc fun [obj, Port port, SimpleVal (Atom ":flush")] = do
 writeProc _ [] = throwError $ NumArgs 1 []
 writeProc _ badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
 
+writeCharDoc :: String
+writeCharDoc = "write <par>obj</par> to a file <par>f</par>, defaults to the\n\
+standard output.\n\
+\n\
+  params:\n\
+    - obj: the object to write\n\
+    - f: the file to write to; also accepts <zepto>:stdout</zepto> and <zepto>:stderr</zepto> (optional)\n\
+  complexity: O(1)\n\
+  returns: nil"
+
 writeCharProc :: [LispVal] -> IOThrowsError LispVal
 writeCharProc [obj] = writeCharProc [obj, Port stdout]
 writeCharProc [obj, SimpleVal (Atom ":stdout")] = writeCharProc [obj, Port stdout]
@@ -120,11 +165,27 @@ print' port obj =
           SimpleVal (String str) -> hPutStr port str
           _ -> hPutStr port $ show obj
 
+readContentsDoc :: String
+readContentsDoc = "read the contents of a file or port <par>f</par>.\n\
+\n\
+  params:\n\
+    - f: the file or port to read\n\
+  complexity: O(n)\n\
+  returns: the contents as a string"
+
 readContents :: [LispVal] -> IOThrowsError LispVal
 readContents [SimpleVal (String filename)] = liftM (SimpleVal . String) $ liftIO $ S.readFile filename
 readContents [Port handle] = liftM (SimpleVal . String) $ liftIO $ hGetContents handle
 readContents [x] = throwError $ TypeMismatch "string" x
 readContents badArgs = throwError $ NumArgs 1 badArgs
+
+readBinContentsDoc :: String
+readBinContentsDoc = "read the contents of a file or port <par>f</par> as a byte vector.\n\
+\n\
+  params:\n\
+    - f: the file or port to read\n\
+  complexity: O(n)\n\
+  returns: the contents as a byte vector"
 
 readBinaryContents :: [LispVal] -> IOThrowsError LispVal
 readBinaryContents [SimpleVal (String filename)] = liftM ByteVector $ liftIO $ BS.readFile filename
