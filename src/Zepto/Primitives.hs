@@ -138,11 +138,11 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("char:upper-case", unaryOp charUpcase, "converts a char to upper case")
              , ("string:lower-case", unaryOp stringDowncase, "converts a string to lower case")
              , ("string:upper-case", unaryOp stringUpcase, "converts a string to upper case")
-             , ("vector:length", unaryOp vectorLength, "get length of vector")
-             , ("byte-vector:length", unaryOp byteVectorLength, "get length of byte vector")
+             , ("vector:length", unaryOp vectorLength, lengthDoc "vector")
+             , ("byte-vector:length", unaryOp byteVectorLength, lengthDoc "byte vector")
              , ("vector:subvector", subVector, "get subvector from element to element")
              , ("byte-vector:subvector", subByteVector, "get subvector from element to element")
-             , ("string:length", unaryOp stringLength, "get length of string")
+             , ("string:length", unaryOp stringLength, lengthDoc "string")
              , ("string:substitute", stringSub, "substitute pattern within string by string")
              , ("make-string", makeString, "make a new string")
              , ("make-regex", unaryOp makeRegex, makeRegexDoc)
@@ -167,7 +167,7 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("list->string", unaryOp listToString, conversionDoc "list" "string")
              , ("byte-vector->string", unaryOp byteVectorToString, conversionDoc "byte vector" "string")
              , ("string->byte-vector", unaryOp stringToByteVector, conversionDoc "string" "byte vector")
-             , ("string:parse", unaryOp stringParse, "parse string")
+             , ("string:parse", unaryOp stringParse, stringParseDoc)
              , ("substring", substring, "makes substring from string")
              , ("vector:ref", vectorRef, "get element from vector")
              , ("byte-vector:ref", byteVectorRef, "get element from byte vector")
@@ -316,6 +316,13 @@ makeBaseEnv [] = do
                   where makeBind constructor (var, func, _) = ((vnamespace, var), constructor var func)
 makeBaseEnv args = throwError $ NumArgs 0 args
 
+stringParseDoc :: String
+stringParseDoc = "parse a string <par>str</par>.\n\
+\n\
+  params:\n\
+    - str: the string to parse\n\
+  complexity: O(n)\n\
+  returns: a zepto data structure"
 
 stringParse :: LispVal -> ThrowsError LispVal
 stringParse (SimpleVal (String x)) = readExpr x

@@ -98,6 +98,14 @@ makeByteVector [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS x))] =
 makeByteVector [badType] = throwError $ TypeMismatch "integer" badType
 makeByteVector badArgList = throwError $ NumArgs 1 badArgList
 
+lengthDoc :: String -> String
+lengthDoc name = "get the length of a " ++ name ++ ".\n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+  complexity: O(1)\n\
+  returns: the length (integer)"
+
 vectorLength, byteVectorLength, vectorToList, listToVector :: LispVal -> ThrowsError LispVal
 vectorLength (Vector v) = return $ fromSimple $ Number $ NumI $ toInteger $ length (elems v)
 vectorLength badType = throwError $ TypeMismatch "vector" badType
