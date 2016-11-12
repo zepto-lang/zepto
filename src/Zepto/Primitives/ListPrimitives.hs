@@ -113,6 +113,16 @@ vectorLength badType = throwError $ TypeMismatch "vector" badType
 byteVectorLength (ByteVector v) = return $ fromSimple $ Number $ NumI $ toInteger $ BS.length v
 byteVectorLength badType = throwError $ TypeMismatch "bytevector" badType
 
+refDoc :: String -> String
+refDoc name = "get the "++ name ++ " element at index <par>i</par>.\n\
+\n\
+  params:\n\
+    - input: the " ++ name ++ " to search\n\
+    - i: the index of the element to get\n\
+  complexity: O(n)\n\
+  returns: the element at <par>i</par>"
+
+
 vectorRef [Vector v, SimpleVal (Number (NumI n))] = return $ v ! fromInteger n
 vectorRef [Vector v, SimpleVal (Number (NumS n))] = return $ v ! n
 vectorRef [Vector _, badType] = throwError $ TypeMismatch "integer" badType
@@ -238,6 +248,15 @@ substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Num
 substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
+extendDoc :: String -> String
+extendDoc name = "extend " ++ name ++ " <par>inp</par>. \n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+    - args: the elements to append (varargs)\n\
+  complexity: O(n)\n\
+  returns: list"
+
 stringExtend :: [LispVal] -> ThrowsError LispVal
 stringExtend v@(SimpleVal (String _) : _) = extend' v
   where extend' :: [LispVal] -> ThrowsError LispVal
@@ -256,6 +275,16 @@ stringExtend v@(SimpleVal (String _) : _) = extend' v
 stringExtend [badType] = throwError $ NumArgs 2 [badType]
 stringExtend (badType : _) = throwError $ TypeMismatch "string" badType
 stringExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
+
+appendDoc :: String -> String
+appendDoc name = "append to " ++ name ++ " <par>inp</par>. \n\
+Merges flatly if any of the elements to append is also a " ++ name ++ ".\n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+    - args: the elements to append (varargs)\n\
+  complexity: O(n+m1+..+mn) where m1 to mn is the length of all of the lists to append\n\
+  returns: list"
 
 listAppend :: [LispVal] -> ThrowsError LispVal
 listAppend (vec@(List _) : t) = append' [vec] t
