@@ -41,7 +41,7 @@ import Data.Complex
 import Data.Dynamic
 import Data.Fixed
 import Data.IORef
-import Data.List (foldl')
+import Data.List (foldl', intercalate)
 import Data.Ratio
 import Control.Monad
 import Control.Monad.Except
@@ -337,7 +337,7 @@ data Continuation = Continuation { contClosure :: Env
                                  , cont :: LispVal
                                  , frameFunc :: Maybe LispVal
                                  , frameEvaledArgs :: Maybe [LispVal]
-                                 , callStack :: [(LispVal, String)]
+                                 , callStack :: [(String, String)]
                                  }
 
 -- | a LispFun data type
@@ -360,7 +360,7 @@ data LispError = NumArgs Integer [LispVal]
                | UnboundVar String String
                | InternalError String
                | Default String
-               | Historial [(LispVal, String)] LispError
+               | Historial [(String, String)] LispError
 
 instance Eq Env where
     (Environment _ xb xp) == (Environment _ yb yp) = (xb == yb) && (xp == yp)
@@ -467,20 +467,15 @@ showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
 showError (Historial cs err) = showCallHistory cs ++ "\n" ++ show err
 
-showCallHistory :: [(LispVal, String)] -> String
+showCallHistory :: [(String, String)] -> String
 showCallHistory cs =
         "Backtrace (most recent call last): " ++ concatenate cs
     where concatenate [] = ""
-          concatenate (x:xs) = "\n\t" ++ getFName (fst x) ++ "\n\t\tcalled with: " ++
+          concatenate (x:xs) = "\n\t" ++ fst x ++ "\n\t\tcalled with: " ++
                                snd x ++ concatenate xs
-          getFName (PrimitiveFunc n _) = n
-          getFName (IOFunc n _) = n
-          getFName (Func n _) = n
-          getFName (EvalFunc n _) = n
-          getFName _ = "<faulty traceback element>"
 
 showArgs :: [LispVal] -> String
-showArgs args = unwords (map showInternal args)
+showArgs args = intercalate ", " (map showInternal args)
 
 showInternal :: LispVal -> String
 showInternal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
@@ -508,7 +503,7 @@ showInternal (Opaque _) = "<opaque>"
 showInternal (Error _) = "<error>"
 showInternal x@(SimpleVal _) = show x
 
-buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
+buildCallHistory :: (String, String) -> [(String, String)] -> [(String, String)]
 buildCallHistory f h
   | null h = [f]
   | show f == show (last h) = h --dirty dirty hack
@@ -524,7 +519,7 @@ toSimple _ = Nil ""
 lastN :: Int -> [a] -> [a]
 lastN n xs = foldl' (const . drop 1) xs (drop n xs)
 
-throwHistorial :: [(LispVal, String)] -> LispError -> IOThrowsError LispVal
+throwHistorial :: [(String, String)] -> LispError -> IOThrowsError LispVal
 throwHistorial cs (Historial ics e) = throwError $ Historial (mergeCs cs ics) e
     where mergeCs stack merged
             | null stack = merged
