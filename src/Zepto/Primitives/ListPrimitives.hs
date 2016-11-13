@@ -1,6 +1,5 @@
 module Zepto.Primitives.ListPrimitives where
 import Data.Array
-import Data.List (findIndex)
 import Data.Word (Word8)
 import Control.Monad.Except
 
@@ -58,7 +57,7 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x] = return $ DottedList [] x
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
+makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef :: [LispVal] -> ThrowsError LispVal
 makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
@@ -140,6 +139,19 @@ byteVectorRef badArgList = throwError $ NumArgs 2 badArgList
 subArray :: (Int, Int) -> Array Int LispVal -> Array Int LispVal
 subArray (from, to) v = listArray (0,to-from) $ map (v!) [from..to]
 
+subvectorDoc :: String
+subvectorDoc = "get a subvector of <par>vec</par> between indices\n\
+<par>start</par> and <par>end</par>. Will error if <par>end</par> is more\n\
+than the length of <par>vec</par>.\n\
+\n\
+  params:\n\
+    - vec: the string to get a substring from\n\
+    - start: the start index\n\
+    - end: the end index\n\
+  complexity: O(1)\n\
+  returns: the subvector between <par>start</par> and <par>end</par>"
+
+
 subVector [Vector v, SimpleVal (Number (NumI n))] = return $ Vector $ subArray (0, fromInteger n) v
 subVector [Vector v, SimpleVal (Number (NumS n))] = return $ Vector $ subArray (0, n) v
 subVector [Vector v, SimpleVal (Number (NumI from)), SimpleVal (Number (NumI to))] =
@@ -220,33 +232,6 @@ stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
            else return $ fromSimple $ Character $ v !! (length v - n)
 stringRef [badType] = throwError $ TypeMismatch "string integer" badType
 stringRef badArgList = throwError $ NumArgs 2 badArgList
-
-stringFind [SimpleVal (String v), SimpleVal (Character x)] =
-        case findIndex (\m -> x == m) v of
-           Just n -> return $ SimpleVal $ Number $ NumI $ toInteger n
-           _      -> return $ SimpleVal $ Number $ NumI $ -1
-stringFind [SimpleVal (String match), SimpleVal (String sub)] =
-        return $ SimpleVal $ Number $ NumI $ substr sub match
-  -- TODO: Advance to next match of first element instead?
-  where substr pat str = findStrHelp pat str 0
-        findStrHelp _ [] _ = -1
-        findStrHelp pat s@(_:xs) n
-          | pat == take (length pat) s = n
-          | otherwise = findStrHelp pat xs (n+1)
-stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
-stringFind [SimpleVal (String _), badType] = throwError $ TypeMismatch "character" badType
-stringFind badArgList = throwError $ NumArgs 2 badArgList
-
-substring :: [LispVal] -> ThrowsError LispVal
-substring [SimpleVal (String s), SimpleVal (Number (NumI start)), SimpleVal (Number (NumI end))] = do
-    let len = fromInteger $ end - start
-    let begin = fromInteger start
-    return $ fromSimple $ String $ (take len . drop begin) s
-substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Number (NumS end))] = do
-    let len = end - start
-    return $ fromSimple $ String $ (take len . drop start) s
-substring [badType] = throwError $ TypeMismatch "string integer integer" badType
-substring badArgList = throwError $ NumArgs 3 badArgList
 
 extendDoc :: String -> String
 extendDoc name = "extend " ++ name ++ " <par>inp</par>. \n\

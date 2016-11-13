@@ -5,6 +5,14 @@ import Data.Map (keys, elems, member, delete, fromList, toList)
 
 import Zepto.Types
 
+hashKVDoc :: String -> String
+hashKVDoc name = "get " ++ name ++ " from hashmap <par>hash</par>.\n\
+\n\
+  params:\n\
+    - hash: the hashmap from which to get the  " ++ name ++ "\n\
+  complexity: O(1)\n\
+  returns: a list of " ++ name
+
 hashKeys :: [LispVal] -> ThrowsError LispVal
 hashKeys [HashMap x] = return $ List $ map SimpleVal (keys x)
 hashKeys [x] = throwError $ TypeMismatch "hashmap" x
@@ -14,6 +22,16 @@ hashVals :: [LispVal] -> ThrowsError LispVal
 hashVals [HashMap x] = return $ List $ elems x
 hashVals [x] = throwError $ TypeMismatch "hashmap" x
 hashVals badArgList = throwError $ NumArgs 1 badArgList
+
+inHashDoc :: String
+inHashDoc = "check whether an element under the key <par>el</par> is in a\n\
+hashmap <par>hash</par>.\n\
+\n\
+  params:\n\
+    - hash: the hashmap to check\n\
+    - el: the element to find\n\
+  complexity: O(1)\n\
+  returns: boolean"
 
 inHash :: [LispVal] -> ThrowsError LispVal
 inHash [HashMap x, SimpleVal e] = return $ fromSimple $ Bool $ member e x
@@ -32,6 +50,16 @@ makeHash l = case keyVal l [] of
           keyVal (SimpleVal x : y : r) acc = keyVal r $ (x, y) : acc
           keyVal (HashMap x : r) acc = keyVal r $ acc ++ toList x
           keyVal (x : _)  _ = Left x
+
+hashRemoveDoc :: String
+hashRemoveDoc = "remove an element under the key <par>el</par> from a hashmap\n\
+<par>hash</par>.\n\
+\n\
+  params:\n\
+    - hash: the hashmap from which to delete <par>el</par>\n\
+    - el: the element to delete\n\
+  complexity: O(1)\n\
+  returns: the hashmap without <par>el</par>"
 
 hashRemove :: [LispVal] -> ThrowsError LispVal
 hashRemove [HashMap x, SimpleVal e] = return $ HashMap $ delete e x

@@ -1,5 +1,6 @@
 module Zepto.Primitives.CharStrPrimitives where
 import Data.Char
+import Data.List (findIndex)
 import Data.List.Utils
 import Control.Monad.Except
 
@@ -14,6 +15,14 @@ listToString :: LispVal -> ThrowsError LispVal
 listToString (List []) = return $ fromSimple $ String ""
 listToString (List l) = buildString l
 listToString badType = throwError $ TypeMismatch "list" badType
+
+strCharConvDoc :: String -> String -> String -> String
+strCharConvDoc typ form cplx = "convert a " ++ typ ++ " to " ++ form ++ " case.\n\
+\n\
+  params:\n\
+    - elem: the " ++ typ ++ " to " ++ form ++ "case\n\
+  complexity: O(" ++ cplx ++ ")\n\
+  returns: the " ++ form ++ "cased " ++ typ
 
 charDowncase :: LispVal -> ThrowsError LispVal
 charDowncase (SimpleVal (Character c)) = return $ fromSimple $ Character $ toLower c
@@ -31,6 +40,17 @@ stringUpcase :: LispVal -> ThrowsError LispVal
 stringUpcase (SimpleVal (String c)) = return $ fromSimple $ String $ map toUpper c
 stringUpcase badType = throwError $ TypeMismatch "string" badType
 
+stringSubDoc :: String
+stringSubDoc = "substite all occurences of a pattern <par>pat</par> in a\n\
+string <par>str</par> with a pattern <par>subst</par>.\n\
+\n\
+  params:\n\
+    - str: the string in which the patterns should be substituted\n\
+    - pat: the pattern to substitute out\n\
+    - subst: the pattern to substitute in\n\
+  complexity: O(n)\n\
+  returns: the string with all occurences of <par>pat</par> substituted"
+
 stringSub :: [LispVal] -> ThrowsError LispVal
 stringSub [SimpleVal (String source), SimpleVal (String pattern), SimpleVal (String substitute)] =
   return $ fromSimple $ String $ replace pattern substitute source
@@ -38,3 +58,55 @@ stringSub [err@_, SimpleVal (String _), SimpleVal (String _)] = throwError $ Typ
 stringSub [SimpleVal (String _), err@_, SimpleVal (String _)] = throwError $ TypeMismatch "string" err
 stringSub [SimpleVal (String _), SimpleVal (String _), err@_] = throwError $ TypeMismatch "string" err
 stringSub badArgList = throwError $ NumArgs 3 badArgList
+
+stringFindDoc :: String
+stringFindDoc = "find a substring or character <par>fnd</par> in a string\n\
+<par>str</par> and return its index or -1 if nothing was found.\n\
+\n\
+  params:\n\
+    - str: the string to search\n\
+    - fnd: the pattern to find\n\
+  complexity: O(n)\n\
+  returns: the index or -1 if nothing was found"
+
+stringFind :: [LispVal] -> ThrowsError LispVal
+stringFind [SimpleVal (String v), SimpleVal (Character x)] =
+        case findIndex (\m -> x == m) v of
+           Just n -> return $ SimpleVal $ Number $ NumI $ toInteger n
+           _      -> return $ SimpleVal $ Number $ NumI $ -1
+stringFind [SimpleVal (String match), SimpleVal (String sub)] =
+        return $ SimpleVal $ Number $ NumI $ substr sub match
+  -- TODO: Advance to next match of first element instead?
+  where substr pat str = findStrHelp pat str 0
+        findStrHelp _ [] _ = -1
+        findStrHelp pat s@(_:xs) n
+          | pat == take (length pat) s = n
+          | otherwise = findStrHelp pat xs (n+1)
+stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
+stringFind [SimpleVal (String _), badType] = throwError $ TypeMismatch "character" badType
+stringFind badArgList = throwError $ NumArgs 2 badArgList
+
+substringDoc :: String
+substringDoc = "get a substring of <par>str</par> between indices\n\
+<par>start</par> and <par>end</par>. If <par>end</par> is more than the\n\
+length of <par>str</par>, it will behave as if the parameter was equal to\n\
+the length instead (i.e. it will return the complete rest).\n\
+\n\
+  params:\n\
+    - str: the string to get a substring from\n\
+    - start: the start index\n\
+    - end: the end index\n\
+  complexity: O(n)\n\
+  returns: the substring between <par>start</par> and <par>end</par>"
+
+substring :: [LispVal] -> ThrowsError LispVal
+substring [SimpleVal (String s), SimpleVal (Number (NumI start)), SimpleVal (Number (NumI end))] = do
+    let len = fromInteger $ end - start
+    let begin = fromInteger start
+    return $ fromSimple $ String $ (take len . drop begin) s
+substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Number (NumS end))] = do
+    let len = end - start
+    return $ fromSimple $ String $ (take len . drop start) s
+substring [badType] = throwError $ TypeMismatch "string integer integer" badType
+substring badArgList = throwError $ NumArgs 3 badArgList
+
