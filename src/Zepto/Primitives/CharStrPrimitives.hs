@@ -110,3 +110,38 @@ substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Num
 substring [badType] = throwError $ TypeMismatch "string integer integer" badType
 substring badArgList = throwError $ NumArgs 3 badArgList
 
+makeStringDoc :: String
+makeStringDoc = "create an empty string. Optionally takes a number\n\
+<par>n</par>, in which case a string containing only spaces of length\n\
+<par>n</par> will be created.\n\
+\n\
+  params:\n\
+    - n: the length of the string to create (optional)\n\
+  complexity: O(n)\n\
+  returns: an empty string or a string of spaces of length <par>n</par>"
+
+makeString :: [LispVal] -> ThrowsError LispVal
+makeString [SimpleVal (Number n)] = return $ fromSimple $ _makeString n ' ' ""
+    where _makeString count ch s =
+            if count == 0
+                then String s
+                else _makeString (count - 1) ch (s ++ [ch])
+makeString [] = return $ fromSimple $ String ""
+makeString badArgList = throwError $ NumArgs 1 badArgList
+
+stringLength :: LispVal -> ThrowsError LispVal
+stringLength (SimpleVal (String s)) = return $ fromSimple $ Number $ NumI $ fromIntegral $ length s
+stringLength badType = throwError $ TypeMismatch "string" badType
+
+stringRef :: [LispVal] -> ThrowsError LispVal
+stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =
+        if n >= 0
+           then return $ fromSimple $ Character $ v !! fromInteger n
+           else return $ fromSimple $ Character $ v !! (length v - fromInteger n)
+stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
+        if n >= 0
+           then return $ fromSimple $ Character $ v !! n
+           else return $ fromSimple $ Character $ v !! (length v - n)
+stringRef [badType] = throwError $ TypeMismatch "string integer" badType
+stringRef badArgList = throwError $ NumArgs 2 badArgList
+

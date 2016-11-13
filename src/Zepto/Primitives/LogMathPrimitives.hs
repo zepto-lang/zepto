@@ -240,7 +240,19 @@ numRound op [SimpleVal (Number (NumR n))] = return $ fromSimple $ Number $ NumI 
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
+makeSmallDoc :: String
+makeSmallDoc = "create a small integer from an integer <par>n</par>. If no\n\
+number <par>n</par> is provided, 0 will be returned.\n\
+\n\
+Warning: The number can overflow!\n\
+\n\
+  params:\n\
+    - n: the number to convert\n\
+  complexity: O(1)\n\
+  returns: small integer"
+
 makeSmall :: [LispVal] -> ThrowsError LispVal
+makeSmall [] = return $ fromSimple $ Number $ NumS $ fromInteger 0
 makeSmall [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumS $ fromInteger n
 makeSmall [badType] = throwError $ TypeMismatch "integer" badType
 makeSmall badArgList = throwError $ NumArgs 1 badArgList

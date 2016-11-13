@@ -57,8 +57,19 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x] = return $ DottedList [] x
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef :: [LispVal] -> ThrowsError LispVal
-makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
+makeVectorDoc :: String
+makeVectorDoc = "create a vector of length <par>n</par>, initialized to\n\
+<par>elem</par>. If <par>elem</par> is not provided, it will default to\n\
+0.\n\
+\n\
+  params:\n\
+    - n: the length of the vector to create\n\
+    - elem: the value to initialize the fields to\n\
+  complexity: O(n)\n\
+  returns: a vector of length <par>n</par>"
+
+makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector :: [LispVal] -> ThrowsError LispVal
+makeVector [n@(SimpleVal (Number _))] = makeVector [n, fromSimple $ Number $ NumI 0]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
     return $ Vector $ listArray (0, length l - 1) l
@@ -84,6 +95,17 @@ buildByteVector l = case verify l of
             Right z  -> Right ((fromIntegral x :: Word8) : z)
             Left err -> Left err
         verify (x : _) = Left x
+
+makeBVDoc :: String
+makeBVDoc = "create a byte vector of length <par>n</par>, initialized to\n\
+<par>elem</par>. If <par>elem</par> is not provided, it will default to\n\
+0.\n\
+\n\
+  params:\n\
+    - n: the length of the byte vector to create\n\
+    - elem: the value to initialize the fields to\n\
+  complexity: O(n)\n\
+  returns: a byte vector of length <par>n</par>"
 
 makeByteVector [n@(SimpleVal (Number _))] = makeByteVector [n, fromSimple $ Number $ NumI 0]
 makeByteVector [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI x))] =
@@ -209,29 +231,6 @@ buildString (SimpleVal (String h) : rest) = do
         badType -> throwError $ TypeMismatch "character" badType
 buildString [badType] = throwError $ TypeMismatch "character" badType
 buildString badArgList = throwError $ NumArgs 1 badArgList
-
-makeString :: [LispVal] -> ThrowsError LispVal
-makeString [SimpleVal (Number n)] = return $ fromSimple $ _makeString n ' ' ""
-    where _makeString count ch s =
-            if count == 0
-                then String s
-                else _makeString (count - 1) ch (s ++ [ch])
-makeString badArgList = throwError $ NumArgs 1 badArgList
-
-stringLength :: LispVal -> ThrowsError LispVal
-stringLength (SimpleVal (String s)) = return $ fromSimple $ Number $ NumI $ fromIntegral $ length s
-stringLength badType = throwError $ TypeMismatch "string" badType
-
-stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =
-        if n >= 0
-           then return $ fromSimple $ Character $ v !! fromInteger n
-           else return $ fromSimple $ Character $ v !! (length v - fromInteger n)
-stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
-        if n >= 0
-           then return $ fromSimple $ Character $ v !! n
-           else return $ fromSimple $ Character $ v !! (length v - n)
-stringRef [badType] = throwError $ TypeMismatch "string integer" badType
-stringRef badArgList = throwError $ NumArgs 2 badArgList
 
 extendDoc :: String -> String
 extendDoc name = "extend " ++ name ++ " <par>inp</par>. \n\
