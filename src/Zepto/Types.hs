@@ -471,8 +471,13 @@ showCallHistory :: [(LispVal, String)] -> String
 showCallHistory cs =
         "Backtrace (most recent call last): " ++ concatenate cs
     where concatenate [] = ""
-          concatenate (x:xs) = "\n\t" ++ showInternal (fst x) ++ "\n\t\tcalled with: " ++
+          concatenate (x:xs) = "\n\t" ++ getFName (fst x) ++ "\n\t\tcalled with: " ++
                                snd x ++ concatenate xs
+          getFName (PrimitiveFunc n _) = n
+          getFName (IOFunc n _) = n
+          getFName (Func n _) = n
+          getFName (EvalFunc n _) = n
+          getFName _ = "<faulty traceback element>"
 
 showArgs :: [LispVal] -> String
 showArgs args = unwords (map showInternal args)
