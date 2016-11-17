@@ -74,9 +74,15 @@ runFile args = do
                                  >>= flip extendEnv[((vnamespace, "zepto:name"),
                                                     fromSimple $ String $ head args)]
         _   <- stdlib env
-        smt  <- runIOThrows (liftM show $ eval env (nullCont env)
-          (List [fromSimple (Atom "load"), fromSimple $ String $ head args]))
-        putStrLn smt
+        val <- runIOThrowsLispVal
+              (eval env (nullCont env)
+                (List [fromSimple (Atom "load"),
+                       fromSimple $ String $ head args]))
+        case val of
+          (Error err) -> do
+            _ <- putStrLn $ show err
+            return ()
+          _ -> return ()
 
 
 -- | run the REPL

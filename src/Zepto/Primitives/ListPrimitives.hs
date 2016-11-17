@@ -1,6 +1,5 @@
 module Zepto.Primitives.ListPrimitives where
-import Data.Array (elems, listArray, (!), Array)
-import Data.List (findIndex)
+import Data.Array
 import Data.Word (Word8)
 import Control.Monad.Except
 
@@ -58,8 +57,19 @@ cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x] = return $ DottedList [] x
 cons badArgList = throwError $ NumArgs 2 badArgList
 
-makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector, stringRef, stringFind :: [LispVal] -> ThrowsError LispVal
-makeVector [n@(SimpleVal (Number _))] = makeVector [n, List []]
+makeVectorDoc :: String
+makeVectorDoc = "create a vector of length <par>n</par>, initialized to\n\
+<par>elem</par>. If <par>elem</par> is not provided, it will default to\n\
+0.\n\
+\n\
+  params:\n\
+    - n: the length of the vector to create\n\
+    - elem: the value to initialize the fields to\n\
+  complexity: O(n)\n\
+  returns: a vector of length <par>n</par>"
+
+makeVector, makeByteVector, buildVector, buildByteVector, vectorRef, byteVectorRef, subByteVector, subVector :: [LispVal] -> ThrowsError LispVal
+makeVector [n@(SimpleVal (Number _))] = makeVector [n, fromSimple $ Number $ NumI 0]
 makeVector [SimpleVal (Number (NumI n)), a] = do
     let l = replicate (fromInteger n) a
     return $ Vector $ listArray (0, length l - 1) l
@@ -86,6 +96,17 @@ buildByteVector l = case verify l of
             Left err -> Left err
         verify (x : _) = Left x
 
+makeBVDoc :: String
+makeBVDoc = "create a byte vector of length <par>n</par>, initialized to\n\
+<par>elem</par>. If <par>elem</par> is not provided, it will default to\n\
+0.\n\
+\n\
+  params:\n\
+    - n: the length of the byte vector to create\n\
+    - elem: the value to initialize the fields to\n\
+  complexity: O(n)\n\
+  returns: a byte vector of length <par>n</par>"
+
 makeByteVector [n@(SimpleVal (Number _))] = makeByteVector [n, fromSimple $ Number $ NumI 0]
 makeByteVector [SimpleVal (Number (NumI n)), SimpleVal (Number (NumI x))] =
     return $ ByteVector $ BS.replicate (fromInteger n) (fromInteger x :: Word8)
@@ -98,12 +119,30 @@ makeByteVector [SimpleVal (Number (NumS n)), SimpleVal (Number (NumS x))] =
 makeByteVector [badType] = throwError $ TypeMismatch "integer" badType
 makeByteVector badArgList = throwError $ NumArgs 1 badArgList
 
+lengthDoc :: String -> String
+lengthDoc name = "get the length of a " ++ name ++ ".\n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+  complexity: O(1)\n\
+  returns: the length (integer)"
+
 vectorLength, byteVectorLength, vectorToList, listToVector :: LispVal -> ThrowsError LispVal
 vectorLength (Vector v) = return $ fromSimple $ Number $ NumI $ toInteger $ length (elems v)
 vectorLength badType = throwError $ TypeMismatch "vector" badType
 
 byteVectorLength (ByteVector v) = return $ fromSimple $ Number $ NumI $ toInteger $ BS.length v
 byteVectorLength badType = throwError $ TypeMismatch "bytevector" badType
+
+refDoc :: String -> String
+refDoc name = "get the "++ name ++ " element at index <par>i</par>.\n\
+\n\
+  params:\n\
+    - input: the " ++ name ++ " to search\n\
+    - i: the index of the element to get\n\
+  complexity: O(n)\n\
+  returns: the element at <par>i</par>"
+
 
 vectorRef [Vector v, SimpleVal (Number (NumI n))] = return $ v ! fromInteger n
 vectorRef [Vector v, SimpleVal (Number (NumS n))] = return $ v ! n
@@ -121,6 +160,19 @@ byteVectorRef badArgList = throwError $ NumArgs 2 badArgList
 
 subArray :: (Int, Int) -> Array Int LispVal -> Array Int LispVal
 subArray (from, to) v = listArray (0,to-from) $ map (v!) [from..to]
+
+subvectorDoc :: String
+subvectorDoc = "get a subvector of <par>vec</par> between indices\n\
+<par>start</par> and <par>end</par>. Will error if <par>end</par> is more\n\
+than the length of <par>vec</par>.\n\
+\n\
+  params:\n\
+    - vec: the string to get a substring from\n\
+    - start: the start index\n\
+    - end: the end index\n\
+  complexity: O(1)\n\
+  returns: the subvector between <par>start</par> and <par>end</par>"
+
 
 subVector [Vector v, SimpleVal (Number (NumI n))] = return $ Vector $ subArray (0, fromInteger n) v
 subVector [Vector v, SimpleVal (Number (NumS n))] = return $ Vector $ subArray (0, n) v
@@ -180,55 +232,14 @@ buildString (SimpleVal (String h) : rest) = do
 buildString [badType] = throwError $ TypeMismatch "character" badType
 buildString badArgList = throwError $ NumArgs 1 badArgList
 
-makeString :: [LispVal] -> ThrowsError LispVal
-makeString [SimpleVal (Number n)] = return $ fromSimple $ _makeString n ' ' ""
-    where _makeString count ch s =
-            if count == 0
-                then String s
-                else _makeString (count - 1) ch (s ++ [ch])
-makeString badArgList = throwError $ NumArgs 1 badArgList
-
-stringLength :: LispVal -> ThrowsError LispVal
-stringLength (SimpleVal (String s)) = return $ fromSimple $ Number $ foldr (const (+1)) 0 s
-stringLength badType = throwError $ TypeMismatch "string" badType
-
-stringRef [SimpleVal (String v), SimpleVal (Number (NumI n))] =
-        if n >= 0
-           then return $ fromSimple $ Character $ v !! fromInteger n
-           else return $ fromSimple $ Character $ v !! (length v - fromInteger n)
-stringRef [SimpleVal (String v), SimpleVal (Number (NumS n))] =
-        if n >= 0
-           then return $ fromSimple $ Character $ v !! n
-           else return $ fromSimple $ Character $ v !! (length v - n)
-stringRef [badType] = throwError $ TypeMismatch "string integer" badType
-stringRef badArgList = throwError $ NumArgs 2 badArgList
-
-stringFind [SimpleVal (String v), SimpleVal (Character x)] =
-        case findIndex (\m -> x == m) v of
-           Just n -> return $ SimpleVal $ Number $ NumI $ toInteger n
-           _      -> return $ SimpleVal $ Number $ NumI $ -1
-stringFind [SimpleVal (String match), SimpleVal (String sub)] =
-        return $ SimpleVal $ Number $ NumI $ substr sub match
-  -- TODO: Advance to next match of first element instead?
-  where substr pat str = findStrHelp pat str 0
-        findStrHelp _ [] _ = -1
-        findStrHelp pat s@(_:xs) n
-          | pat == take (length pat) s = n
-          | otherwise = findStrHelp pat xs (n+1)
-stringFind [badType, SimpleVal (Character _)] = throwError $ TypeMismatch "string" badType
-stringFind [SimpleVal (String _), badType] = throwError $ TypeMismatch "character" badType
-stringFind badArgList = throwError $ NumArgs 2 badArgList
-
-substring :: [LispVal] -> ThrowsError LispVal
-substring [SimpleVal (String s), SimpleVal (Number (NumI start)), SimpleVal (Number (NumI end))] = do
-    let len = fromInteger $ end - start
-    let begin = fromInteger start
-    return $ fromSimple $ String $ (take len . drop begin) s
-substring [SimpleVal (String s), SimpleVal (Number (NumS start)), SimpleVal (Number (NumS end))] = do
-    let len = end - start
-    return $ fromSimple $ String $ (take len . drop start) s
-substring [badType] = throwError $ TypeMismatch "string integer integer" badType
-substring badArgList = throwError $ NumArgs 3 badArgList
+extendDoc :: String -> String
+extendDoc name = "extend " ++ name ++ " <par>inp</par>. \n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+    - args: the elements to append (varargs)\n\
+  complexity: O(n)\n\
+  returns: list"
 
 stringExtend :: [LispVal] -> ThrowsError LispVal
 stringExtend v@(SimpleVal (String _) : _) = extend' v
@@ -248,6 +259,16 @@ stringExtend v@(SimpleVal (String _) : _) = extend' v
 stringExtend [badType] = throwError $ NumArgs 2 [badType]
 stringExtend (badType : _) = throwError $ TypeMismatch "string" badType
 stringExtend badArgList = throwError $ BadSpecialForms "Unable to process" badArgList
+
+appendDoc :: String -> String
+appendDoc name = "append to " ++ name ++ " <par>inp</par>. \n\
+Merges flatly if any of the elements to append is also a " ++ name ++ ".\n\
+\n\
+  params:\n\
+    - inp: the input " ++ name ++ "\n\
+    - args: the elements to append (varargs)\n\
+  complexity: O(n+m1+..+mn) where m1 to mn is the length of all of the lists to append\n\
+  returns: list"
 
 listAppend :: [LispVal] -> ThrowsError LispVal
 listAppend (vec@(List _) : t) = append' [vec] t
@@ -413,12 +434,14 @@ pprint (SimpleVal (SimpleList x)) = "simple(" ++ unwords (map (pprint . fromSimp
 pprint (Vector x) = "{" ++ unwords (map pprint (elems x)) ++ "}"
 pprint (ByteVector x) = "u8{" ++ show x ++ "}"
 pprint (SimpleVal (String x)) = "\"" ++ x ++ "\""
+pprint (SimpleVal (Regex x)) = "/" ++ show x ++ "/"
 pprint (SimpleVal (Number x)) = show x
 pprint (HashMap _) = "<hashmap>"
 pprint (PrimitiveFunc s _) = "<primitive: " ++ s ++ ">"
 pprint (IOFunc s _) = "<io primitive: " ++ s ++ ">"
 pprint (EvalFunc s _) = "<eval primitive: " ++ s ++ ">"
 pprint (Environ _) = "<environment>"
+pprint (Error _) = "<error>"
 pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
   where printFunc (LispFun p v b _ d) = let x = unwords p
                                             y = unwords (map pprint b)
@@ -428,6 +451,7 @@ pprint (Func s f) = "(define (" ++ s ++ " " ++ printFunc f ++ ")"
 pprint (Port _) = "<port>"
 pprint (Cont _) = "<continuation>"
 pprint (Pointer _ _) = "<pointer>"
+pprint (Opaque _) = "<opaque>"
 pprint (ListComprehension a b c d) =
   let x = "[" ++ pprint a ++ " | " ++ pprint b ++ " <- " ++ pprint c
   in case d of

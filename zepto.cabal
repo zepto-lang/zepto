@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.9.4
+Version:             0.9.6
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:
   zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
@@ -62,6 +62,7 @@ Library
   Extensions:      ExistentialQuantification
   Hs-Source-Dirs:  src
   Exposed-Modules: Zepto.Types
+                   Zepto.Types.Export
 
 Executable           zepto
     Build-Depends:   array,
@@ -80,14 +81,19 @@ Executable           zepto
                      mtl >= 2.2.1,
                      network,
                      parsec,
+                     pcre-heavy,
+                     pcre-light,
                      process,
                      transformers >= 0.4.2,
                      strict,
                      utf8-string
-    Extensions:      ExistentialQuantification 
+    Extensions:      ExistentialQuantification
                      CPP
     ghc-options:     -Wall
-                     -Werror
                      -O2
+                     ---threaded
+                     ---fprof-auto
+                     ---prof
+                     --"-with-rtsopts=-N -p -s -h -i0.1"
     Main-is:         Main.hs
     Hs-Source-Dirs:  src/

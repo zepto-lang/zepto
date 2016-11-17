@@ -108,6 +108,6 @@
   (if (file-exists? zepto-rc)
     (load zepto-rc)))
 
-(let ((zepto-rc (++ (get-home-dir) "/.zeptorc")))
+(let ((zepto-rc (++ (os:get-home-dir) "/.zeptorc")))
   (if (file-exists? zepto-rc)
     (load zepto-rc)))

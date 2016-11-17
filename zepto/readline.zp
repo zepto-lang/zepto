@@ -12,10 +12,7 @@
   (completions [])
 
   (first-separator (lambda (str)
-    (let ((m (filter ($ (not (eq? % -1)))
-               (map (lambda (x) (index-of str x))
-                [#\[ #\] #\{ #\} #\) #\( #\' #\space #\newline #\tab]))))
-      (if (truthy? m) (add1 (list:min m)) -1))))
+    (add1 (get-from (regex:matches-indices r/\s|\[|\]|\{|\}|\)|\(|\'/ str) [0 0] -1))))
 
   (zhighlight (lambda (str)
     (let ((col (lambda (x) (color x #{:to-str #t})))
@@ -83,8 +80,9 @@
       (++ (string (integer->char 27)) "[" (number->string n) "D")))
 
   (remove-from-input (lambda (count)
-    (let ((b (string:replicate count #\backspace)))
-      (display (++ b (string:replicate count #\space) b) :flush))))
+    (let* ((p (curry string:replicate count))
+           (b (p #\backspace)))
+      (display (++ b (p #\space) b) :flush))))
 
   (replace-input (lambda (old new)
     (begin

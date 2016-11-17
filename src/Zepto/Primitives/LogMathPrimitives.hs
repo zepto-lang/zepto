@@ -8,6 +8,7 @@ import Data.Word (Word32)
 
 import qualified Data.Map as DM (toList)
 import qualified Data.Ratio as Ratio (numerator, denominator)
+import qualified Text.Regex.PCRE.Light.Base as R
 
 import Zepto.Types
 
@@ -52,6 +53,10 @@ eqv [HashMap arg1, HashMap arg2] = eqv [List $ mkList (DM.toList arg1), List $ m
     where mkList [] = []
           mkList ((a, b) : cs) = [fromSimple a, b] ++ mkList cs
 eqv [Environ x, Environ y] = return $ fromSimple $ Bool $ x == y
+-- TODO: that's both dumb and inefficient
+eqv [Error x, Error y] = return $ fromSimple $ Bool $ show x == show y
+eqv [SimpleVal (Regex (R.Regex _ x)), SimpleVal (Regex (R.Regex _ y))] =
+  return $ fromSimple $ Bool $ x == y
 eqv [_, _] = return $ fromSimple $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
@@ -202,22 +207,6 @@ unaryDoc complexity returns = "\n\
   complexity: " ++ complexity ++ "\n\
   returns: " ++ returns
 
-unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
-unaryOp f [v] = f v
-unaryOp _ l = throwError $ NumArgs 1 l
-
-unaryIOOp :: (LispVal -> IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
-unaryIOOp f [v] = f v
-unaryIOOp _ l = throwError $ NumArgs 1 l
-
-noArg :: ThrowsError LispVal -> [LispVal] -> ThrowsError LispVal
-noArg f [] = f
-noArg _ l = throwError $ NumArgs 0 l
-
-noIOArg :: IOThrowsError LispVal -> [LispVal] -> IOThrowsError LispVal
-noIOArg f [] = f
-noIOArg _ l = throwError $ NumArgs 0 l
-
 unpackNum :: LispVal -> ThrowsError LispNum
 unpackNum (SimpleVal (Number n)) = return n
 unpackNum notNum = throwError $ TypeMismatch "number" notNum
@@ -251,7 +240,19 @@ numRound op [SimpleVal (Number (NumR n))] = return $ fromSimple $ Number $ NumI 
 numRound _ [x] = throwError $ TypeMismatch "number" x
 numRound _ badArgList = throwError $ NumArgs 1 badArgList
 
+makeSmallDoc :: String
+makeSmallDoc = "create a small integer from an integer <par>n</par>. If no\n\
+number <par>n</par> is provided, 0 will be returned.\n\
+\n\
+Warning: The number can overflow!\n\
+\n\
+  params:\n\
+    - n: the number to convert\n\
+  complexity: O(1)\n\
+  returns: small integer"
+
 makeSmall :: [LispVal] -> ThrowsError LispVal
+makeSmall [] = return $ fromSimple $ Number $ NumS $ fromInteger 0
 makeSmall [SimpleVal (Number (NumI n))] = return $ fromSimple $ Number $ NumS $ fromInteger n
 makeSmall [badType] = throwError $ TypeMismatch "integer" badType
 makeSmall badArgList = throwError $ NumArgs 1 badArgList

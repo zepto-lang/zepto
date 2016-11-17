@@ -45,10 +45,10 @@ loadNative [SimpleVal (String file)] = do
   where def (name, fun, doc) = List [fromSimple $ String name,
                                      fromSimple $ String doc,
                                      IOFunc name fun]
-        moduleName = last $ split '/' file
-        split p s =  case dropWhile (== p) s of
+        moduleName = last $ splitSlash file
+        splitSlash s =  case dropWhile (== '/') s of
                       "" -> []
-                      s' -> w : split p s''
-                            where (w, s'') = break (== p) s'
+                      s' -> w : splitSlash s''
+                            where (w, s'') = break (== '/') s'
 loadNative [x] = throwError $ TypeMismatch "string" x
 loadNative x = throwError $ NumArgs 1 x

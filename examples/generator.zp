@@ -11,7 +11,8 @@
 (defimpl traversable-collec gen:gen?
          ((car   (lambda (gen) ((gen:get-f gen))))
           (cdr   (lambda (gen) (let ((_ ((gen:get-f gen)))) gen)))
-          (null? (lambda (gen) (eq? ((gen:get-f gen)) :stop-generation)))))
+          (null? (lambda (gen) (eq? ((gen:get-f gen)) :stop-generation)))
+          (empty (lambda (gen) (generator (lambda (ret stop . args) (stop)))))))
 
 ; A helper to create generators that work out-of-the-box
 ; A function passed into it will receive ret and stop as first arguments.

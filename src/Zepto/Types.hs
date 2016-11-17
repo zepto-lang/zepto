@@ -8,6 +8,9 @@ module Zepto.Types (LispNum(..),
                     ThrowsError,
                     Env(..),
                     IOThrowsError,
+                    ToZepto,
+                    toZepto,
+                    dynToLispVal,
                     showVal,
                     showError,
                     showArgs,
@@ -23,20 +26,30 @@ module Zepto.Types (LispNum(..),
                     runIOThrows,
                     runIOThrowsLispVal,
                     throwHistorial,
-                    buildCallHistory
+                    buildCallHistory,
+                    toOpaque,
+                    fromOpaque,
+                    unaryOp,
+                    unaryIOOp,
+                    noArg,
+                    noIOArg,
+                    liftLisp,
+                    lispErr
                     ) where
-import Data.Array
 import Data.ByteString (ByteString, unpack)
 import Data.Complex
+import Data.Dynamic
 import Data.Fixed
+import Data.IORef
 import Data.List (foldl')
 import Data.Ratio
-import Data.IORef
 import Control.Monad
 import Control.Monad.Except
 import System.IO
 import Text.ParserCombinators.Parsec.Error
-import qualified Data.Map as DM
+import qualified Data.Map as M
+import qualified Data.Array as A
+import qualified Text.Regex.PCRE.Light.Base as R
 
 -- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
@@ -291,6 +304,7 @@ data LispNum = NumI Integer
 data Simple = Atom String
             | Number LispNum
             | String String
+            | Regex R.Regex
             | Character Char
             | Bool Bool
             | Nil String
@@ -302,9 +316,9 @@ instance Show LispVal where show = showVal
 data LispVal = SimpleVal Simple
              | List [LispVal]
              | DottedList [LispVal] LispVal
-             | Vector (Array Int LispVal)
+             | Vector (A.Array Int LispVal)
              | ByteVector ByteString
-             | HashMap (DM.Map Simple LispVal)
+             | HashMap (M.Map Simple LispVal)
              | PrimitiveFunc  String ([LispVal] -> ThrowsError LispVal)
              | IOFunc String ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
@@ -313,6 +327,8 @@ data LispVal = SimpleVal Simple
              | Pointer { pointerVar :: String, pointerEnv :: Env }
              | Environ Env
              | Cont Continuation
+             | Opaque Dynamic
+             | Error LispError
              | ListComprehension LispVal LispVal LispVal (Maybe LispVal)
              | HashComprehension (LispVal, LispVal) (LispVal, LispVal) LispVal (Maybe LispVal)
 
@@ -351,8 +367,8 @@ instance Eq Env where
 -- | an Environment type where all variables are stored
 data Env = Environment {
         parentEnv :: Maybe Env
-      , bindings :: IORef (DM.Map String (IORef LispVal))
-      , pointers :: IORef (DM.Map String (IORef [LispVal]))
+      , bindings :: IORef (M.Map String (IORef LispVal))
+      , pointers :: IORef (M.Map String (IORef [LispVal]))
 }
 
 -- | a ThrowsError type containing either an error or a value
@@ -375,6 +391,7 @@ showNum (NumS contents) = show contents ++ "s"
 -- | a show function for all LispVals
 showVal :: LispVal -> String
 showVal (SimpleVal (String contents)) = contents
+showVal (SimpleVal (Regex (R.Regex _ s))) = show s
 showVal (SimpleVal (Atom name)) = name
 showVal (SimpleVal (Bool True)) = "#t"
 showVal (SimpleVal (Bool False)) = "#f"
@@ -382,14 +399,16 @@ showVal (SimpleVal (Character c)) = show c
 showVal (SimpleVal (Number n)) = showNum n
 showVal (SimpleVal (SimpleList contents)) = "simple(" ++ unwordsList (map SimpleVal contents) ++")"
 showVal (List contents) = "(" ++ unwordsList contents ++")"
-showVal (Vector contents) = "#(" ++ unwordsList (elems contents) ++ ")"
+showVal (Vector contents) = "#(" ++ unwordsList (A.elems contents) ++ ")"
 showVal (ByteVector contents) = "b{" ++ unwords (map show (unpack contents)) ++ "}"
-showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (DM.keys contents))
-                                                     (DM.elems contents)) ++ "}"
+showVal (HashMap contents) = "#{" ++ unwordsMap (zip (map SimpleVal (M.keys contents))
+                                                     (M.elems contents)) ++ "}"
 showVal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
 showVal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showVal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
 showVal (Port _) = "<IO port>"
+showVal (Opaque _) = "<opaque>"
+showVal (Error e) = "<error: " ++ show e ++ ">"
 showVal (Func name LispFun {params = args, vararg = varargs, body = _,
                              closure = _, docstring = doc}) =
     doc ++ "\n  source: " ++
@@ -480,6 +499,8 @@ showInternal (DottedList _ _) = "<dotted-list>"
 showInternal (Port _) = "<port>"
 showInternal (Pointer _ _) = "<pointer>"
 showInternal (SimpleVal (String _)) = "<string>"
+showInternal (Opaque _) = "<opaque>"
+showInternal (Error _) = "<error>"
 showInternal x@(SimpleVal _) = show x
 
 buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
@@ -515,6 +536,7 @@ typeString (SimpleVal (Number (NumC _))) = "complex"
 typeString (SimpleVal (Bool _)) = "boolean"
 typeString (SimpleVal (Character _)) = "character"
 typeString (SimpleVal (String _)) = "string"
+typeString (SimpleVal (Regex _)) = "regex"
 typeString (SimpleVal (Atom (':' : _))) = "atom"
 typeString (SimpleVal (Atom _)) = "symbol"
 typeString (SimpleVal (Nil _)) = "nil"
@@ -534,6 +556,8 @@ typeString (Cont _) = "continuation"
 typeString ListComprehension{} = "list comprehension"
 typeString HashComprehension{} = "hash comprehension"
 typeString (ByteVector _) = "bytevector"
+typeString (Opaque _) = "opaque"
+typeString (Error _) = "error"
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . fmap showVal
@@ -555,8 +579,8 @@ extractValue (Left x) = error("This should not be happening. " ++
 -- | returns a new empty environment
 nullEnv :: IO Env
 nullEnv = do
-    nullb <- newIORef $ DM.fromList []
-    nullp <- newIORef $ DM.fromList []
+    nullb <- newIORef $ M.fromList []
+    nullp <- newIORef $ M.fromList []
     return $ Environment Nothing nullb nullp
 
 nullCont :: Env -> LispVal
@@ -573,8 +597,61 @@ runIOThrows action = liftM extractValue (runExceptT (trapErrorShow action))
 
 -- | traps errors
 trapError :: IOThrowsError LispVal -> IOThrowsError LispVal
-trapError action = catchError action (\x -> return $ fromSimple $ String $ show x)
+trapError action = catchError action (\x -> return $ Error x)
 
 -- | lift an IOThrowsError to an IO monad
 runIOThrowsLispVal :: IOThrowsError LispVal -> IO LispVal
 runIOThrowsLispVal action = liftM extractValue (runExceptT (trapError action))
+
+dynToLispVal :: Dynamic -> LispVal
+dynToLispVal = flip fromDyn (fromSimple $ Nil "")
+
+toOpaque :: Typeable a => a -> LispVal
+toOpaque = Opaque . toDyn
+
+fromOpaque :: Typeable a => LispVal -> Maybe a
+fromOpaque (Opaque d) = fromDynamic d
+fromOpaque _ = Nothing
+
+unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal
+unaryOp f [v] = f v
+unaryOp _ l = throwError $ NumArgs 1 l
+
+unaryIOOp :: (LispVal -> IOThrowsError LispVal) -> [LispVal] -> IOThrowsError LispVal
+unaryIOOp f [v] = f v
+unaryIOOp _ l = throwError $ NumArgs 1 l
+
+noArg :: ThrowsError LispVal -> [LispVal] -> ThrowsError LispVal
+noArg f [] = f
+noArg _ l = throwError $ NumArgs 0 l
+
+noIOArg :: IOThrowsError LispVal -> [LispVal] -> IOThrowsError LispVal
+noIOArg f [] = f
+noIOArg _ l = throwError $ NumArgs 0 l
+
+lispErr :: LispError -> IOThrowsError LispVal
+lispErr = throwError
+
+liftLisp :: IO a -> IOThrowsError a
+liftLisp = liftIO
+
+class ToZepto a where
+  toZepto :: a -> LispVal
+
+instance ToZepto Integer where
+  toZepto = fromSimple . Number . NumI
+instance ToZepto Int where
+  toZepto = fromSimple . Number . NumS
+instance ToZepto Double where
+  toZepto = fromSimple . Number . NumF
+instance ToZepto a => ToZepto (Maybe a) where
+  toZepto Nothing = fromSimple $ Nil ""
+  toZepto (Just val) = toZepto val
+instance ToZepto Bool where
+  toZepto = fromSimple . Bool
+instance ToZepto Char where
+  toZepto = fromSimple . Character
+instance ToZepto ByteString where
+  toZepto = ByteVector
+instance ToZepto a => ToZepto [a] where
+  toZepto = List . map toZepto

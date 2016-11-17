@@ -6,11 +6,19 @@ import Data.ByteString.Lazy (toStrict, fromStrict)
 import Data.Char (ord, chr)
 import Data.Complex (realPart, imagPart)
 import Data.IORef (readIORef)
-import Data.Map (foldrWithKey, empty, insert)
+import Data.Map (empty, foldrWithKey, insert)
 import qualified Data.ByteString.Lazy as BSL (concat)
 
 import Zepto.Types
 import Zepto.Variables (allBindings)
+
+env2HashMapDoc :: String
+env2HashMapDoc = "converts an environment to a hashmap.\n\
+\n\
+  params:\n\
+    - env: the environment to convert\n\
+  complexity: O(n)\n\
+  returns: a hashmap mapping the function names as strings to the functions"
 
 env2HashMap :: LispVal -> IOThrowsError LispVal
 env2HashMap (Environ x) = do
@@ -22,6 +30,14 @@ env2HashMap (Environ x) = do
             nacc <- liftIO acc
             return $ insert (String $ drop 2 k) nv nacc
 env2HashMap x = throwError $ TypeMismatch "env" x
+
+conversionDoc :: String -> String -> String
+conversionDoc from to = "convert a " ++ from ++ " to a " ++ to ++ ".\n\
+\n\
+  params:\n\
+    - input: the input " ++ from ++ " to convert\n\
+  complexity: O(n)\n\
+  returns: " ++ to
 
 symbol2String :: LispVal -> ThrowsError LispVal
 symbol2String (SimpleVal (Atom a)) = return $ fromSimple $ String a

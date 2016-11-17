@@ -11,20 +11,22 @@ import Control.Monad.Except
 import System.Directory
 import System.IO
 import System.IO.Error (tryIOError)
-import qualified Control.Exception as CE
 import qualified Data.Map
+import qualified Control.Exception as CE
 import qualified Data.ByteString as BS (hPut, cons, splitAt, append, tail, index)
 
 import Paths_zepto
 import Zepto.Primitives.CharStrPrimitives
 import Zepto.Primitives.ConversionPrimitives
 import Zepto.Primitives.EnvironmentPrimitives
+import Zepto.Primitives.ErrorPrimitives
 import Zepto.Primitives.FunctionPrimitives
 import Zepto.Primitives.HashPrimitives
 import Zepto.Primitives.IOPrimitives
 import Zepto.Primitives.ListPrimitives
 import Zepto.Primitives.LoadPrimitives
 import Zepto.Primitives.LogMathPrimitives
+import Zepto.Primitives.RegexPrimitives
 import Zepto.Primitives.SocketPrimitives
 import Zepto.Primitives.TypeCheckPrimitives
 import Zepto.Primitives.VersionPrimitives
@@ -98,148 +100,162 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("eqv?", eqv, eqvDoc)
              , ("equal?", equal, eqvDoc)
 
-             , ("pair?", unaryOp isDottedList, "check whether arg is a pair")
-             , ("procedure?", unaryOp isProcedure, "check whether arg is a procedure")
-             , ("number?", unaryOp isNumber, "check whether arg is a number")
-             , ("integer?", unaryOp isInteger, "check whether arg is an integer")
-             , ("float?", unaryOp isFloat, "check whether arg is a float")
-             , ("small-int?", unaryOp isSmall, "check whether arg is a small int")
-             , ("rational?", unaryOp isRational, "check whether arg is a rational")
-             , ("real?", unaryOp isReal, "check whether arg is a real number")
-             , ("list?", unaryOp isList, "check whether arg is list")
-             , ("list:null?", unaryOp isNull, "check whether list is null")
-             , ("nil?", unaryOp isNil, "check whether arg is nil")
-             , ("symbol?", unaryOp isSymbol, "check whether arg is symbol")
-             , ("atom?", unaryOp isAtom, "check whether arg is atom")
-             , ("vector?", unaryOp isVector, "check whether arg is vector")
-             , ("byte-vector?", unaryOp isByteVector, "check whether arg is bytevector")
-             , ("string?", unaryOp isString, "check whether arg is string")
-             , ("port?", unaryOp isPort, "check whether arg is port")
-             , ("char?", unaryOp isChar, "check whether arg is char")
-             , ("boolean?", unaryOp isBoolean, "check whether arg is boolean")
-             , ("simple?", unaryOp isSimple, "check whether arg is of simple type")
-             , ("simple-list?", unaryOp isSimpleList, "check whether arg is a simple list")
-             , ("hash-map?", unaryOp isHash, "check whether arg is a hash-map")
-             , ("primitive?", unaryOp isPrim, "check whether arg is a primitive")
-             , ("function?", unaryOp isFun, "check whether arg is a function")
-             , ("env?", unaryOp isEnv, "check whether arg is an environment")
-             , ("typeof", unaryOp checkType, "return type string")
-             , ("nil", noArg buildNil, "return nil")
-             , ("inf", noArg buildInf, "return inf")
-             , ("vector", buildVector, "build a new vector")
-             , ("byte-vector", buildByteVector, "build a new bytevector")
-             , ("string", buildString, "build a new string")
-             , ("char:lower-case", unaryOp charDowncase, "converts a char to lower case")
-             , ("char:upper-case", unaryOp charUpcase, "converts a char to upper case")
-             , ("string:lower-case", unaryOp stringDowncase, "converts a string to lower case")
-             , ("string:upper-case", unaryOp stringUpcase, "converts a string to upper case")
-             , ("vector:length", unaryOp vectorLength, "get length of vector")
-             , ("byte-vector:length", unaryOp byteVectorLength, "get length of byte vector")
-             , ("vector:subvector", subVector, "get subvector from element to element")
-             , ("byte-vector:subvector", subByteVector, "get subvector from element to element")
-             , ("string:length", unaryOp stringLength, "get length of string")
-             , ("string:substitute", stringSub, "substitute pattern within string by string")
-             , ("make-string", makeString, "make a new string")
-             , ("make-simple-list", unaryOp list2Simple, "make a new simple list")
-             , ("from-simple-list", unaryOp simple2List, "make a list from a simple list")
-             , ("make-vector", makeVector, "create a vector")
-             , ("make-small", makeSmall, "create a small integer")
-             , ("make-hash", makeHash, "create a hashmap")
-             , ("make-byte-vector", makeByteVector, "create a byte vector")
-             , ("char->integer", unaryOp charToInteger, "makes integer from char")
-             , ("integer->char", unaryOp integer2Char, "makes char from integer")
-             , ("vector->list", unaryOp vectorToList, "makes list from vector")
-             , ("list->vector", unaryOp listToVector, "makes vector from list")
-             , ("symbol->string", unaryOp symbol2String, "makes string from symbol")
-             , ("number->string", number2String, "makes string from number")
-             , ("number->bytes", unaryOp number2Bytes, "makes list of bytes from number")
-             , ("bytes->float", unaryOp bytes2Float, "makes float from byte-vector")
-             , ("string->symbol", unaryOp string2Symbol, "makes symbol from string")
-             , ("string->number", stringToNumber, "makes number from string")
-             , ("string->list", unaryOp stringToList, "makes list from string")
-             , ("list->string", unaryOp listToString, "makes string from list")
-             , ("byte-vector->string", unaryOp byteVectorToString, "makes string from byte-vector")
-             , ("string->byte-vector", unaryOp stringToByteVector, "makes byte-vector from string")
-             , ("string:parse", unaryOp stringParse, "parse string")
-             , ("substring", substring, "makes substring from string")
-             , ("vector:ref", vectorRef, "get element from vector")
-             , ("byte-vector:ref", byteVectorRef, "get element from byte vector")
-             , ("string:ref", stringRef, "get element from string")
-             , ("string:find", stringFind, "find first occurrence in string")
-             , ("string:append", stringExtend, "append to string")
-             , ("byte-vector:append", byteVectorAppend, "append to bytevector")
-             , ("list:append", listAppend, "append to list")
-             , ("vector:append", vectorAppend, "append to vector")
-             , ("+=", allAppend, "append to collection")
-             , ("string:extend", stringExtend, "extend string")
-             , ("list:extend", listExtend, "extend list")
-             , ("vector:extend", vectorExtend, "extend vector")
-             , ("byte-vector:extend", byteVectorAppend, "extend bytevector")
-             , ("++", allExtend, "extend collection")
-             , ("hash:keys", hashKeys, "get keys from hashmap")
-             , ("hash:values", hashVals, "get vals from hashmap")
-             , ("hash:contains?", inHash, "find out whether hashtable contains key")
-             , ("hash:remove", hashRemove, "remove a key from a dictionary")
-             , ("zepto:version", noArg getVersion, "gets the version as a list")
-             , ("zepto:ghc", noArg getGhc, "gets the GHC version as an integer")
-             , ("function:name", unaryOp functionName, "get the name of a function")
-             , ("function:args", unaryOp functionArgs, "get the arguments of a function (does not work for primitives)")
-             , ("function:body", unaryOp functionBody, "get the body of a function (does not work for primitives)")
-             , ("function:docstring", unaryOp functionDocs, "get the docstring of a function (does not work for primitives)")
+             , ("error?", unaryOp isError, typecheckDoc "an error")
+             , ("pair?", unaryOp isDottedList, typecheckDoc "a pair")
+             , ("procedure?", unaryOp isProcedure, typecheckDoc "a procedure")
+             , ("number?", unaryOp isNumber, typecheckDoc "a number")
+             , ("integer?", unaryOp isInteger, typecheckDoc "an integer")
+             , ("float?", unaryOp isFloat, typecheckDoc "a float")
+             , ("small-int?", unaryOp isSmall, typecheckDoc "a small int")
+             , ("rational?", unaryOp isRational, typecheckDoc "a rational")
+             , ("real?", unaryOp isReal, typecheckDoc "a real number")
+             , ("list?", unaryOp isList, typecheckDoc "list")
+             , ("list:null?", unaryOp isNull, isNullDoc)
+             , ("nil?", unaryOp isNil, typecheckDoc "nil")
+             , ("symbol?", unaryOp isSymbol, typecheckDoc "symbol")
+             , ("atom?", unaryOp isAtom, typecheckDoc "atom")
+             , ("vector?", unaryOp isVector, typecheckDoc "vector")
+             , ("byte-vector?", unaryOp isByteVector, typecheckDoc "bytevector")
+             , ("string?", unaryOp isString, typecheckDoc "string")
+             , ("port?", unaryOp isPort, typecheckDoc "port")
+             , ("char?", unaryOp isChar, typecheckDoc "char")
+             , ("boolean?", unaryOp isBoolean, typecheckDoc "boolean")
+             , ("simple?", unaryOp isSimple, typecheckDoc "simple type")
+             , ("simple-list?", unaryOp isSimpleList, typecheckDoc "simple list")
+             , ("hash-map?", unaryOp isHash, typecheckDoc "hash-map")
+             , ("primitive?", unaryOp isPrim, typecheckDoc "primitive")
+             , ("function?", unaryOp isFun, typecheckDoc "function")
+             , ("env?", unaryOp isEnv, typecheckDoc "env")
+             , ("regex?", unaryOp isRegex, typecheckDoc "regex")
+             , ("opaque?", unaryOp isOpaque, typecheckDoc "opaque")
+             , ("typeof", unaryOp checkType, typeofDoc)
+             , ("nil", noArg buildNil, buildDoc "nil")
+             , ("inf", noArg buildInf, buildDoc "inf")
+             , ("vector", buildVector, buildDoc "vector")
+             , ("byte-vector", buildByteVector, buildDoc "bytevector")
+             , ("string", buildString, buildDoc "string")
+             , ("char:lower-case", unaryOp charDowncase, strCharConvDoc "character" "lower" "1")
+             , ("char:upper-case", unaryOp charUpcase, strCharConvDoc "character" "upper" "1")
+             , ("string:lower-case", unaryOp stringDowncase, strCharConvDoc "string" "lower" "n")
+             , ("string:upper-case", unaryOp stringUpcase, strCharConvDoc "string" "upper" "n")
+             , ("vector:length", unaryOp vectorLength, lengthDoc "vector")
+             , ("byte-vector:length", unaryOp byteVectorLength, lengthDoc "byte vector")
+             , ("vector:subvector", subVector, subvectorDoc)
+             , ("byte-vector:subvector", subByteVector, subvectorDoc)
+             , ("string:length", unaryOp stringLength, lengthDoc "string")
+             , ("string:substitute", stringSub, stringSubDoc)
+             , ("make-string", makeString, makeStringDoc)
+             , ("make-regex", unaryOp makeRegex, makeRegexDoc)
+             , ("make-simple-list", unaryOp list2Simple, conversionDoc "list" "simple list")
+             , ("from-simple-list", unaryOp simple2List, conversionDoc "simple list" "list")
+             , ("make-vector", makeVector, makeVectorDoc)
+             , ("make-small", makeSmall, makeSmallDoc)
+             , ("make-hash", makeHash, makeHashDoc)
+             , ("make-byte-vector", makeByteVector, makeBVDoc)
+             , ("make-error", unaryOp makeError, makeErrorDoc)
+             , ("char->integer", unaryOp charToInteger, conversionDoc "char" "integer")
+             , ("integer->char", unaryOp integer2Char, conversionDoc "integer" "char")
+             , ("vector->list", unaryOp vectorToList, conversionDoc "vector" "list")
+             , ("list->vector", unaryOp listToVector, conversionDoc "list" "vector")
+             , ("symbol->string", unaryOp symbol2String, conversionDoc "string" "symbol")
+             , ("number->string", number2String, conversionDoc "number" "string")
+             , ("number->bytes", unaryOp number2Bytes, conversionDoc "number" "bytes")
+             , ("bytes->float", unaryOp bytes2Float, conversionDoc "bytes" "float")
+             , ("string->symbol", unaryOp string2Symbol, conversionDoc "string" "symbol")
+             , ("string->number", stringToNumber, conversionDoc "string" "number")
+             , ("string->list", unaryOp stringToList, conversionDoc "string" "list")
+             , ("list->string", unaryOp listToString, conversionDoc "list" "string")
+             , ("byte-vector->string", unaryOp byteVectorToString, conversionDoc "byte vector" "string")
+             , ("string->byte-vector", unaryOp stringToByteVector, conversionDoc "string" "byte vector")
+             , ("string:parse", unaryOp stringParse, stringParseDoc)
+             , ("substring", substring, substringDoc)
+             , ("vector:ref", vectorRef, refDoc "vector")
+             , ("byte-vector:ref", byteVectorRef, refDoc "byte vector")
+             , ("string:ref", stringRef, refDoc "string")
+             , ("string:find", stringFind, stringFindDoc)
+             , ("string:append", stringExtend, appendDoc "string")
+             , ("byte-vector:append", byteVectorAppend, appendDoc "byte vector")
+             , ("list:append", listAppend, appendDoc "list")
+             , ("vector:append", vectorAppend, appendDoc "vector")
+             , ("+=", allAppend, appendDoc "collection")
+             , ("string:extend", stringExtend, extendDoc "string")
+             , ("list:extend", listExtend, extendDoc "list")
+             , ("vector:extend", vectorExtend, extendDoc "vector")
+             , ("byte-vector:extend", byteVectorAppend, extendDoc "byte vector")
+             , ("++", allExtend, extendDoc "collection")
+             , ("regex:pattern", unaryOp regexPattern, regexPatternDoc)
+             , ("regex:matches?", regexMatches, regexMatchesDoc)
+             , ("regex:scan", regexScan, regexScanDoc)
+             , ("regex:scan-ranges", regexScanO, regexScanODoc)
+             , ("regex:sub", regexSub, regexSubDoc)
+             , ("regex:gsub", regexGSub, regexGSubDoc)
+             , ("regex:split", regexSplit, regexSplitDoc)
+             , ("hash:keys", hashKeys, hashKVDoc "keys")
+             , ("hash:values", hashVals, hashKVDoc "values")
+             , ("hash:contains?", inHash, inHashDoc)
+             , ("hash:remove", hashRemove, hashRemoveDoc)
+             , ("zepto:version", noArg getVersion, versionDoc)
+             , ("zepto:ghc", noArg getGhc, ghcDoc)
+             , ("function:name", unaryOp functionName, functionNameDoc)
+             , ("function:args", unaryOp functionArgs, functionArgsDoc)
+             , ("function:body", unaryOp functionBody, functionBodyDoc)
+             , ("function:docstring", unaryOp functionDocs, functionDocsDoc)
+             , ("error:text", unaryOp errorText, errorTextDoc)
+             , ("error:throw", unaryOp throwZError, throwZErrorDoc)
              ]
 
 -- | a list of all io-bound primitives
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-ioPrimitives = [ ("open-input-file", makePort ReadMode, "open a file for reading")
-               , ("open-output-file", makePort WriteMode, "open a file for writing")
-               , ("close-input-file", closePort, "close a file opened for reading")
-               , ("close-output-file", closePort, "close a file opened for writing")
-               , ("input-port?", unaryIOOp isInputPort, "check whether arg is input port")
-               , ("output-port?", unaryIOOp isOutputPort, "check whether arg is output port")
-               , ("get-home-dir", noIOArg getHomeDir, "get the home directory")
-               , ("get-current-dir", noIOArg getCurrentDir, "get the current directory")
-               , ("zepto:home", noIOArg getZeptoDir, "get the installation directory")
-               , ("zepto:change-dir", unaryIOOp changeDir, "changes the current directory to the value specified")
-               , ("read", readProc, "read from file")
-               , ("write", writeProc printInternal, "write to file")
-               , ("read-char", readCharProc hGetChar, "peek char from file")
-               , ("peek-char", readCharProc hLookAhead, "read char from file")
-               , ("write-char", writeCharProc, "write char to file")
-               , ("display", writeProc print', "print to stdout")
-               , ("read-contents", readContents, "read contents of file")
-               , ("read-contents-binary", readBinaryContents, "read contents of file into bytevector")
-               , ("parse", readAll, "read and parse file")
-               , ("exit", exitProc, "exit program")
-               , ("system", systemProc, "call a system command")
-               , ("os:setenv", setEnvProc, "set an environment variable")
-               , ("os:getenv", unaryIOOp getEnvProc, "get an environment variable")
-               , ("unix-timestamp", noIOArg timeProc, "get the unix timestamp as a list where the first element is seconds and the second nanoseconds")
-               , ("make-null-env", makeNullEnv, "make empty environment")
-               , ("make-base-env", makeBaseEnv, "make standard environment")
-               , ("env->hashmap", unaryIOOp env2HashMap, "makes hash-map from local binding of an env")
+ioPrimitives = [ ("open-input-file", makePort ReadMode, openDoc "reading")
+               , ("open-output-file", makePort WriteMode, openDoc "writing")
+               , ("close-input-file", closePort, closeFDoc "reading")
+               , ("close-output-file", closePort, closeFDoc "writing")
+               , ("input-port?", unaryIOOp isInputPort, typecheckDoc "input port")
+               , ("output-port?", unaryIOOp isOutputPort, typecheckDoc "output port")
+               , ("os:get-home-dir", noIOArg getHomeDir, getHomeDirDoc)
+               , ("os:get-current-dir", noIOArg getCurrentDir, getCurrentDirDoc)
+               , ("zepto:home", noIOArg getZeptoDir, zeptoDirDoc)
+               , ("os:change-dir", unaryIOOp changeDir, changeDirDoc)
+               , ("read", readProc, readDoc)
+               , ("write", writeProc printInternal, writeDoc)
+               , ("read-char", readCharProc hGetChar, peekCharDoc)
+               , ("peek-char", readCharProc hLookAhead, readCharDoc)
+               , ("write-char", writeCharProc, writeCharDoc)
+               , ("display", writeProc print', displayDoc)
+               , ("read-contents", readContents, readContentsDoc)
+               , ("read-contents-binary", readBinaryContents, readBinContentsDoc)
+               , ("parse", readAll, readAllDoc)
+               , ("exit", exitProc, exitDoc)
+               , ("system", systemProc, systemDoc)
+               , ("os:setenv", setEnvProc, setEnvDoc)
+               , ("os:getenv", unaryIOOp getEnvProc, getEnvDoc)
+               , ("unix-timestamp", noIOArg timeProc, timeDoc)
+               , ("make-null-env", makeNullEnv, makeNullEnvDoc)
+               , ("make-base-env", makeBaseEnv, makeBaseEnvDoc)
+               , ("env->hashmap", unaryIOOp env2HashMap, env2HashMapDoc)
 
-               , ("net:socket", socket, "opens a socket")
-               , ("net:get-addr-info", getAddrInfo, "create an address info object")
-               , ("net:connect", connect, "connect a socket to an address")
-               , ("net:recv", recv, "receive data from a connected socket")
-               , ("net:send", send, "send data to a connected socket")
-               , ("net:bind-socket", bindSocket, "bind a socket to a specific address")
-               , ("net:listen", listen, "listen on a bound socket")
-               , ("net:accept", accept, "accept connection to a bound socket")
-               , ("net:close-socket", close, "closes a socket; all future operations on thsi socket will fail")
-               , ("crypto:randint", randIntProc, "get a random integer value")
+               , ("net:socket", socket, socketDoc)
+               , ("net:get-addr-info", getAddrInfo, getAddrInfoDoc)
+               , ("net:connect", connect, connectDoc)
+               , ("net:recv", recv, recvDoc)
+               , ("net:send", send, sendDoc)
+               , ("net:bind-socket", bindSocket, bindSocketDoc)
+               , ("net:listen", listen, listenDoc)
+               , ("net:accept", accept, acceptDoc)
+               , ("net:close-socket", close, closeDoc)
+               , ("crypto:randint", randIntProc, randIntDoc)
                , ("load-native", loadNative, loadNativeDoc)
                ]
 
 evalPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal, String)]
-evalPrimitives = [ ("eval", evalFun, "evaluate list")
-                 , ("macro-expand", macroEvalFun, "treat list as code and expand the macros")
-                 , ("apply", evalApply, "apply function to values")
-                 , ("call-with-current-continuation", evalCallCC, "call with current continuation")
-                 , ("call/cc", evalCallCC, "call with current continuation")
-                 , ("catch-vm-error", catchVMError, "catches any vm error")
-                 , ("env:in?", inEnv, "checks whether a name is defined in an environment")
-                 --, ("call-with-values", evalCallWValues, "call with values"),
+evalPrimitives = [ ("eval", evalFun, evalDoc)
+                 , ("macro-expand", macroEvalFun, macroEvalDoc)
+                 , ("apply", evalApply, applyDoc)
+                 , ("call-with-current-continuation", evalCallCC, callCCDoc)
+                 , ("call/cc", evalCallCC, callCCDoc)
+                 , ("catch-error", catchZError, catchErrorDoc)
+                 , ("catch-vm-error", catchVMError, catchVMErrorDoc)
+                 , ("env:in?", inEnv, inEnvDoc)
                  ]
 
 printInternal :: Handle -> LispVal -> IO ()
@@ -282,9 +298,12 @@ contEval _ (Cont (Continuation cEnv cBody cCont Nothing Nothing _)) val =
         (lval : lvals) -> eval cEnv (Cont (Continuation cEnv lvals cCont Nothing Nothing [])) lval
 contEval _ _ _ = throwError $ InternalError "This should never happen"
 
-stringParse :: LispVal -> ThrowsError LispVal
-stringParse (SimpleVal (String x)) = readExpr x
-stringParse x = throwError $ TypeMismatch "string" x
+
+makeBaseEnvDoc :: String
+makeBaseEnvDoc = "makes a bae environment as created at zepto startup.\n\
+\n\
+  complexity: O(1)\n\
+  returns: a base environment"
 
 makeBaseEnv :: [LispVal] -> IOThrowsError LispVal
 makeBaseEnv [] = do
@@ -297,11 +316,56 @@ makeBaseEnv [] = do
                   where makeBind constructor (var, func, _) = ((vnamespace, var), constructor var func)
 makeBaseEnv args = throwError $ NumArgs 0 args
 
+stringParseDoc :: String
+stringParseDoc = "parse a string <par>str</par>.\n\
+\n\
+  params:\n\
+    - str: the string to parse\n\
+  complexity: O(n)\n\
+  returns: a zepto data structure"
+
+stringParse :: LispVal -> ThrowsError LispVal
+stringParse (SimpleVal (String x)) = readExpr x
+stringParse x = throwError $ TypeMismatch "string" x
+
+macroEvalDoc :: String
+macroEvalDoc = "expand all the macros in a given S-Expression.\n\
+  Optionally takes an environment which should be used as a context for\n\
+  the expansion.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (macro-expand [let ((x 1)) x]) ; => ((lambda (x) x) 1)\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - stmt: the list in which the macros should be expanded\n\
+    - env: the environment to use (optional)\n\
+  complexity: O(n)\n\
+  returns: the expanded version of <zepto>stmt</zepto> as a list"
+
+
 macroEvalFun :: [LispVal] -> IOThrowsError LispVal
 macroEvalFun [Cont (Continuation env _ _ _ _ _), val] = macroEval env val
 macroEvalFun [Cont _, val, Environ env] = macroEval env val
 macroEvalFun (_ : args) = throwError $ NumArgs 1 args
 macroEvalFun _ = throwError $ NumArgs 1 []
+
+evalDoc :: String
+evalDoc = "evaluate a list as an S-Expression.\n\
+  Optionally takes an environment which should be used as a context for\n\
+  the evaluation.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (eval `(,+ 1 2)) ; => 3\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - stmt: the list to interpret as a statement\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of the input expression\n\
+  returns: the result of the output of <zepto>stmt</zepto>"
 
 evalFun :: [LispVal] -> IOThrowsError LispVal
 evalFun [c@(Cont (Continuation env _ _ _ _ _)), val] = eval env c val
@@ -309,12 +373,35 @@ evalFun [c@(Cont _), val, Environ env] = eval env c val
 evalFun (_ : args) = throwError $ NumArgs 1 args
 evalFun _ = throwError $ NumArgs 1 []
 
+applyDoc :: String
+applyDoc = "take a function <par>f</par> and a list of arguments\n\
+  <par>args</par> and call the function with those.\n\
+\n\
+  Example:\n\
+  <zepto>\n\
+    (apply + [1 2 3]) ; => 6\n\
+  </zepto>\n\
+\n\
+  params:\n\
+    - f: the function to call\n\
+    - args: the arguments for <par>f</par>\n\
+  complexity: that of the function <par>f</par> called with the arguments <par>args</par>\n\
+  returns: the result of <par>f</par> called with the arguments <par>args</par>"
+
 evalApply :: [LispVal] -> IOThrowsError LispVal
 evalApply [conti@(Cont _), fun, List args] = apply conti fun args
 evalApply (conti@(Cont _) : fun : args) = apply conti fun args
 evalApply [_, _, arg] = throwError $ TypeMismatch "list" arg
 evalApply (_ : args) = throwError $ NumArgs 2 args
 evalApply _ = throwError $ NumArgs 2 []
+
+callCCDoc :: String
+callCCDoc = "call the function <par>f</par> with the current continuation.\n\
+\n\
+  params:\n\
+    - f: the function to call\n\
+  complexity: that of <par>f</par>\n\
+  returns: the result of <par>f</par>"
 
 evalCallCC :: [LispVal] -> IOThrowsError LispVal
 evalCallCC [conti@(Cont _), fun] =
@@ -334,12 +421,46 @@ evalCallCC [conti@(Cont _), fun] =
 evalCallCC (_ : args) = throwError $ NumArgs 1 args
 evalCallCC x = throwError $ NumArgs 1 x
 
+catchErrorDoc :: String
+catchErrorDoc = "catches any zepto-defined error in the given quoted\n\
+  expression <par>expr</par>. Optionally takes an environment in which\n\
+  to call <par>expr</par>.\n\
+\n\
+  params:\n\
+    - expr: the expression to call\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of <par>expr</par>\n\
+  returns: the result of <par>expr</par> or the error that was returned"
+
+catchZError :: [LispVal] -> IOThrowsError LispVal
+catchZError [c, x, Environ env] = do
+    let res = trapError $ eval env c x
+    resX <- liftIO $ runExceptT res
+    case resX of
+      (Left err) -> return $ Error err
+      (Right val) -> return $ val
+catchZError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchZError [c, x, Environ env]
+catchZError [x, _] = throwError $ TypeMismatch "continuation" x
+catchZError x = throwError $ NumArgs 1 (tail x)
+
+catchVMErrorDoc :: String
+catchVMErrorDoc = "catches any zepto-defined error in the given quoted\n\
+  expression <par>expr</par>. Similar to <fun>catch-error</fun>, but\n\
+  also catches VM-internal errors. Optionally takes an environment in which\n\
+  to call <par>expr</par>.\n\
+\n\
+  params:\n\
+    - expr: the expression to call\n\
+    - env: the environment to use (optional)\n\
+  complexity: that of <par>expr</par>\n\
+  returns: the result of <par>expr</par> or the error that was returned"
+
+
 catchVMError :: [LispVal] -> IOThrowsError LispVal
-catchVMError [c, x, Environ env] = do
-          str <- liftIO $ CE.catch (runIOThrowsLispVal $ eval env c x) handler
-          return $ str
+catchVMError [c, x, Environ env] =
+          liftIO $ CE.catch (runIOThrowsLispVal $ eval env c x) handler
     where handler :: CE.SomeException -> IO LispVal
-          handler msg@(CE.SomeException _) = return $ fromSimple $ String $ show (msg::CE.SomeException)
+          handler msg = return $ fromSimple $ String $ CE.displayException msg
 catchVMError [c@(Cont (Continuation env _ _ _ _ _)), x] = catchVMError [c, x, Environ env]
 catchVMError [x, _] = throwError $ TypeMismatch "continuation" x
 catchVMError x = throwError $ NumArgs 1 (tail x)
@@ -407,6 +528,7 @@ stringifyFunction _ = ""
 eval :: Env -> LispVal -> LispVal -> IOThrowsError LispVal
 eval env conti val@(SimpleVal (Nil _)) = contEval env conti val
 eval env conti val@(SimpleVal (String _)) = contEval env conti val
+eval env conti val@(SimpleVal (Regex _)) = contEval env conti val
 eval env conti val@(SimpleVal (Number _)) = contEval env conti val
 eval env conti val@(SimpleVal (Bool _)) = contEval env conti val
 eval env conti val@(SimpleVal (Character _)) = contEval env conti val
@@ -415,6 +537,7 @@ eval env conti val@(Func _ _) = contEval env conti val
 eval env conti val@(IOFunc _ _) = contEval env conti val
 eval env conti val@(EvalFunc _ _) = contEval env conti val
 eval env conti val@(PrimitiveFunc _ _) = contEval env conti val
+eval env conti val@(Opaque _) = contEval env conti val
 eval env conti val@(ByteVector _) = contEval env conti val
 eval env conti val@(HashMap _) = contEval env conti val
 eval env conti val@(Environ _) = contEval env conti val
@@ -534,58 +657,6 @@ eval _ _ (List [SimpleVal (Atom "set!"), x, _]) = throwError $ BadSpecialForm
                             ++ "its new value")
                             x
 eval _ _ (List (SimpleVal (Atom "set!") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [SimpleVal (Atom "set-cdr!")]) = throwError $ NumArgs 2 []
-eval env conti (List [SimpleVal (Atom "set-cdr!"), var@(SimpleVal (Atom name)), form]) = do
-            resolved_var <- eval env (nullCont env) var
-            resolved_form <- eval env (nullCont env) form
-            x <- set_cdr resolved_var resolved_form
-            contEval env conti =<< setVar env name x
-    where set_cdr (List old) (List new_cdr) = return $ List $ head old : new_cdr
-          set_cdr _ _ = return $ fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "set-cdr!"), sth, form]) = do
-            resolved <- eval env (nullCont env) sth
-            if matches resolved
-              then do
-                let var = fst $ unpack resolved
-                let name = snd $ unpack resolved
-                resolved_var <- eval env (nullCont env) var
-                resolved_form <- eval env (nullCont env) form
-                x <- set_cdr resolved_var resolved_form
-                contEval env conti =<< setVar env name x
-              else throwError $ TypeMismatch "symbol" resolved
-    where set_cdr (List old) (List new_cdr) = return $ List $ head old : new_cdr
-          set_cdr _ _ = return $ fromSimple $ Nil "This should never happen"
-          matches (SimpleVal (Atom _)) = True
-          matches _ = False
-          unpack var@(SimpleVal (Atom name)) = (var, name)
-          unpack _ = (fromSimple $ Nil "", "")
-eval _ _ (List (SimpleVal (Atom "set-cdr!") : x)) = throwError $ NumArgs 2 x
-eval _ _ (List [SimpleVal (Atom "set-car!")]) = throwError $ NumArgs 2 []
-eval env conti (List [SimpleVal (Atom "set-car!"), var@(SimpleVal (Atom name)), form]) = do
-            resolved_var <- eval env (nullCont env) var
-            resolved_form <- eval env (nullCont env) form
-            x <- set_car resolved_var resolved_form
-            contEval env conti =<< setVar env name x
-    where set_car (List old) new_car = return $ List $ new_car : tail old
-          set_car _ _ = return $ fromSimple $ Nil "This should never happen"
-eval env conti (List [SimpleVal (Atom "set-car!"), sth, form]) = do
-            resolved <- eval env (nullCont env) sth
-            if matches resolved
-              then do
-                let var = fst $ unpack resolved
-                let name = snd $ unpack resolved
-                resolved_var <- eval env (nullCont env) var
-                resolved_form <- eval env (nullCont env) form
-                x <- set_car resolved_var resolved_form
-                contEval env conti =<< setVar env name x
-              else throwError $ TypeMismatch "symbol" resolved
-    where set_car (List old) new_car = return $ List $ new_car : tail old
-          set_car _ _ = return $ fromSimple $ Nil "This should never happen"
-          matches (SimpleVal (Atom _)) = True
-          matches _ = False
-          unpack var@(SimpleVal (Atom name)) = (var, name)
-          unpack _ = (fromSimple $ Nil "", "")
-eval _ _ (List (SimpleVal (Atom "set-car!") : x)) = throwError $ NumArgs 2 x
 eval _ _ (List [SimpleVal (Atom "define")]) = throwError $ NumArgs 2 []
 eval _ _ (List [SimpleVal (Atom "define"), a@(SimpleVal (Atom (':' : _))), _]) =
             throwError $ TypeMismatch "symbol" a
@@ -863,6 +934,14 @@ eval env conti (List (function : args)) = do
           _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
+readAllDoc :: String
+readAllDoc = "read and parse a file. It returns the parsed file as an S-Expression.\n\
+\n\
+  params:\n\
+    - filename: the name of the file to parse\n\
+  complexity: O(n)\n\
+  returns: a list of expressions"
+
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [SimpleVal (String filename)] = liftM List $ load filename
 readAll badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
@@ -874,6 +953,16 @@ load filename = do
         then liftIO (readFile filename) >>= liftThrows . readExprList
         else throwError $ Default $ "File does not exist: " ++ filename
 
+readDoc :: String
+readDoc = "read a line from a file and evaluate the expression, unless\n\
+<zepto>:no-eval</zepto> is passed.\n\
+If no argument is provided, a line will be read from the standard input.\n\
+\n\
+  params:\n\
+    - args: variable arguments: accepts a port to read from, <zepto>:stdin</zepto> if the line should be read from the standard input or a port\n\
+  complexity: O(1)\n\
+  returns: the line that was read"
+
 readProc :: [LispVal] -> IOThrowsError LispVal
 readProc [] = readProc [Port stdin]
 readProc [SimpleVal (Atom ":stdin")] = readProc [Port stdin]
@@ -882,6 +971,23 @@ readProc [SimpleVal (Atom ":stdin"), x@(SimpleVal (Atom ":no-eval"))] = readProc
 readProc [Port port, SimpleVal (Atom ":no-eval")] = liftM (fromSimple . String) (liftIO (hGetLine port))
 readProc [Port port] = liftIO (hGetLine port) >>= liftThrows . readExpr
 readProc badArgs = throwError $ BadSpecialForm "Cannot evaluate " $ head badArgs
+
+readCharDoc :: String
+readCharDoc = "read a character from a file <par>f</par> or the standard input.\n\
+\n\
+  params:\n\
+    - f: the file to read a character from; defaults to the standard input (optional)\n\
+  complexity: O(1)\n\
+  returns: the read character"
+
+peekCharDoc :: String
+peekCharDoc = "read a character from a file <par>f</par> or the standard input.\n\
+Does not consume the character, i.e. multiple calls to this function will return the same character.\n\
+\n\
+  params:\n\
+    - f: the file to read a character from; defaults to the standard input (optional)\n\
+  complexity: O(1)\n\
+  returns: the read character"
 
 readCharProc :: (Handle -> IO Char) -> [LispVal] -> IOThrowsError LispVal
 readCharProc fun [] = readCharProc fun [Port stdin]
@@ -917,7 +1023,7 @@ apply' conti@(Cont (Continuation _ _ _ _ _ cs)) (Func _ (LispFun fparams varargs
             then throwError $ NumArgs (num fparams) args
             else liftIO (extendEnv fclosure $ zip (fmap ((,) vnamespace) fparams) args)
                   >>= bindVarArgs varargs
-                  >>= evalBody fbody
+                  >>= evalBody [(List ((fromSimple $ Atom "begin") : fbody))]
     where
         remainingArgs = drop (length fparams) args
         num = toInteger . length

@@ -5,6 +5,35 @@ import System.IO (hIsReadable, hIsWritable)
 
 import Zepto.Types
 
+-- TODO: does this really belong here?
+buildDoc :: String -> String
+buildDoc t = "build a new " ++ t ++ ".\n\
+\n\
+  complexity: O(1)\n\
+  returns: a new " ++ t
+
+-- TODO: does this really belong here?
+typeofDoc :: String
+typeofDoc = "return the type of <par>arg</par> as a string.\n\
+This implementation might be made a protocol in the future.\n\
+\n\
+  params:\n\
+    - arg: the object to stringify\n\
+  complexity: O(1)\n\
+  returns: the type of <par>arg</par> as a string"
+
+typecheckDoc :: String -> String
+typecheckDoc t = "check whether <par>arg</par> is a " ++ t ++ ".\n\
+\n\
+  params:\n\
+    - arg: the object to check\n\
+  complexity: O(1)\n\
+  returns: a boolean"
+
+isError :: LispVal -> ThrowsError LispVal
+isError (Error _) = return $ fromSimple $ Bool True
+isError _ = return $ fromSimple $ Bool False
+
 isNumber :: LispVal -> ThrowsError LispVal
 isNumber (SimpleVal (Number _)) = return $ fromSimple $ Bool True
 isNumber _ = return $ fromSimple $ Bool False
@@ -77,6 +106,14 @@ isByteVector _ = return $ fromSimple $ Bool False
 isSimpleList (SimpleVal (SimpleList _)) = return $ fromSimple $ Bool True
 isSimpleList _ = return $ fromSimple $ Bool False
 
+isNullDoc :: String
+isNullDoc = "checks whether list is empty.\n\
+\n\
+  params:\n\
+    - lst: the list to check\n\
+  complexity: O(1)\n\
+  returns: boolean"
+
 isNull :: LispVal -> ThrowsError LispVal
 isNull (List []) = return $ fromSimple $ Bool True
 isNull (SimpleVal (Nil _)) = return $ fromSimple $ Bool True
@@ -94,6 +131,14 @@ isSymbol _ = return $ fromSimple $ Bool False
 isAtom :: LispVal -> ThrowsError LispVal
 isAtom (SimpleVal (Atom (':' : _))) = return $ fromSimple $ Bool True
 isAtom _ = return $ fromSimple $ Bool False
+
+isRegex :: LispVal -> ThrowsError LispVal
+isRegex (SimpleVal (Regex _)) = return $ fromSimple $ Bool True
+isRegex _ = return $ fromSimple $ Bool False
+
+isOpaque :: LispVal -> ThrowsError LispVal
+isOpaque (Opaque _) = return $ fromSimple $ Bool True
+isOpaque _ = return $ fromSimple $ Bool False
 
 isString :: LispVal -> ThrowsError LispVal
 isString (SimpleVal (String _)) = return $ fromSimple $ Bool True
