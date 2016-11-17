@@ -2,6 +2,9 @@ override CARGS+=-j2
 #Installs
 all: install
 
+force: CARGS+=--force-reinstalls
+force: install
+
 install:
 	cabal install $(CARGS)
 	if [ ! -f ~/.zeptorc ]; then touch ~/.zeptorc; fi
