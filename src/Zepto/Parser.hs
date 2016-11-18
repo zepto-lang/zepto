@@ -34,11 +34,16 @@ commaSpace = do x <- optionMaybe $ spaces
 
 parseRegex :: Parser LispVal
 parseRegex = do _ <- string "r/"
-                x <- many (noneOf "/")
+                x <- many (try regEscaped <|> noneOf "/")
                 _ <- char '/'
                 case compileM (C.pack x) [] of
                   Left str -> fail str
                   Right reg -> return $ fromSimple $ Regex reg
+
+regEscaped :: forall u . GenParser Char u Char
+regEscaped =  do
+    _ <- string "\\/"
+    return '/'
 
 parseString :: Parser LispVal
 parseString = do _ <- char '"'
