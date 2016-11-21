@@ -52,9 +52,9 @@
       ((small-int? form) (build-value :simple :int form))
       ((complex? form) (build-value :simple :complex form))
       ((string? form) (build-value :collection :string form))
-      ((char? form) (build-value :simple :string form))
-      ((vector? form) (build-value :collection :vector (vector->list form)))
-      ((byte-vector? form) (build-value :collection :byte-vector (byte-vector->list form)))
+      ((char? form) (build-value :simple :char form))
+      ((vector? form) (build-value :collection :vector (map ast (vector->list form))))
+      ((byte-vector? form) (build-value :collection :byte-vector (map ast (byte-vector->list form))))
       ((hash-map? form) (build-value :collection :hash-map
                                      (hash:kv-map (lambda (kv) (map ast kv)) form)))
       ((symbol? form) (build-value :simple :symbol form))
