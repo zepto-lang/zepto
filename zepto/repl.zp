@@ -14,7 +14,7 @@
 (define *histfile* (++ (os:get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
 (define *header* (++ "zepto Version " zepto:version-str ", compiled with GHC version " zepto:ghc-str "
-Copyright (C) 2016 Veit Heller (GPL)
+Copyright (C) 2015-2016 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
 Hail Eris, all rites reversed.

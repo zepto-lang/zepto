@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.9.6
+Version:             0.9.7
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:
   zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
@@ -22,10 +22,7 @@ Bug-Reports:         http://github.com/zepto-lang/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
 Tested-with:         GHC == 8.0.1,
-                     GHC == 7.10.1,
-                     GHC == 7.8.4,
-                     GHC == 7.6.3,
-                     GHC == 7.4.2
+                     GHC == 8.0.0
 
 Extra-Source-Files:  README.md
                      LICENSE
