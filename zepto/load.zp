@@ -52,9 +52,10 @@
            (lang (get-from (string:split firstline #\space) 1 "")))
       (if (string:starts-with firstline "#lang")
         (cond
-          ((string:empty? lang) (begin (error "Malformed #lang directive:" firstline) #f))
-          ((in? (*load-params* :parsers) lang) ((get-from *load-params* (list :parsers lang))
-                                                  (read-contents file)))
+          ((string:empty? lang)
+            (begin (error "Malformed #lang directive:" firstline) #f))
+          ((in? (*load-params* :parsers) lang)
+            ((get-from *load-params* `(:parsers ,lang)) (read-contents file)))
           (else (begin (error "No parser found for language:" lang) #f)))
         (parse file))))
   (let ((file (zepto:find-on-path file)))

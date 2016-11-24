@@ -116,6 +116,7 @@ isNullDoc = "checks whether list is empty.\n\
 
 isNull :: LispVal -> ThrowsError LispVal
 isNull (List []) = return $ fromSimple $ Bool True
+isNull val@(DottedList [] _) = return $ fromSimple $ Bool True
 isNull (SimpleVal (Nil _)) = return $ fromSimple $ Bool True
 isNull _ = return $ fromSimple $ Bool False
 
