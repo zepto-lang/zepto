@@ -471,7 +471,7 @@ catchVMError x = throwError $ NumArgs 1 (tail x)
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
         let expanded = expand filename
-        fileAsLib <- liftIO $ getDataFileName $ "zepto-stdlib/" ++ filename
+        fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
         let fileAsLibExpanded = expand fileAsLib
         exists <- fex filename
         existsExpanded <- fex expanded

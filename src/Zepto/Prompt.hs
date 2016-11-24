@@ -26,23 +26,23 @@ evalAndPrint env expr = evalString env expr >>= putStrLn . (++) "=> "
 
 stdlib :: Env -> IO String
 stdlib env = do
-    _ <- loadFun env "zepto-stdlib/foldl.zp"
-    x <- mapM (loadFile env) ["zepto-stdlib/let.zp",
-                              "zepto-stdlib/extra.zp",
-                              "zepto-stdlib/logical.zp",
-                              "zepto-stdlib/util.zp",
-                              "zepto-stdlib/math.zp",
-                              "zepto-stdlib/zplist.zp",
-                              "zepto-stdlib/zpstring.zp",
-                              "zepto-stdlib/definitions.zp",
-                              "zepto-stdlib/io.zp",
-                              "zepto-stdlib/pairs.zp",
-                              "zepto-stdlib/zphash.zp",
-                              "zepto-stdlib/zpgenerics.zp",
-                              "zepto-stdlib/zpvector.zp",
-                              "zepto-stdlib/zpcollections.zp",
+    _ <- loadFun env "stdlib/foldl.zp"
+    x <- mapM (loadFile env) ["stdlib/let.zp",
+                              "stdlib/extra.zp",
+                              "stdlib/logical.zp",
+                              "stdlib/util.zp",
+                              "stdlib/math.zp",
+                              "stdlib/zplist.zp",
+                              "stdlib/zpstring.zp",
+                              "stdlib/definitions.zp",
+                              "stdlib/io.zp",
+                              "stdlib/pairs.zp",
+                              "stdlib/zphash.zp",
+                              "stdlib/zpgenerics.zp",
+                              "stdlib/zpvector.zp",
+                              "stdlib/zpcollections.zp",
                               "zepto/load.zp",
-                              "zepto-stdlib/module.zp"]
+                              "stdlib/module.zp"]
     return $ last x
 
 loadFun :: Env -> String -> IO String

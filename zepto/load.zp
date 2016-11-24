@@ -1,4 +1,4 @@
-(define *load-params* (make-hash :stdlib "zepto-stdlib/"
+(define *load-params* (make-hash :stdlib "stdlib/"
                                  :paths (list (++ (zepto:home) "zepto/"))
                                  :parsers #{}))
 (define *global-env* (current-env))

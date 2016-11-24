@@ -26,22 +26,22 @@ Tested-with:         GHC == 8.0.1,
 
 Extra-Source-Files:  README.md
                      LICENSE
-Data-Files:          zepto-stdlib/*.zp
-                     zepto-stdlib/srfi/*.zp
-                     zepto-stdlib/argparse/*.zp
-                     zepto-stdlib/data/*.zp
-                     zepto-stdlib/data/*.impl.zp
-                     zepto-stdlib/datetime/*.zp
-                     zepto-stdlib/bench/*.zp
-                     zepto-stdlib/json/*.zp
-                     zepto-stdlib/minitest/*.zp
-                     zepto-stdlib/module/*.zp
-                     zepto-stdlib/monads/*.zp
-                     zepto-stdlib/querystring/*.zp
-                     zepto-stdlib/parsecomb/*.zp
-                     zepto-stdlib/rsa/*.zp
-                     zepto-stdlib/slugify/*.zp
-                     zepto-stdlib/statistics/*.zp
+Data-Files:          stdlib/*.zp
+                     stdlib/srfi/*.zp
+                     stdlib/argparse/*.zp
+                     stdlib/data/*.zp
+                     stdlib/data/*.impl.zp
+                     stdlib/datetime/*.zp
+                     stdlib/bench/*.zp
+                     stdlib/json/*.zp
+                     stdlib/minitest/*.zp
+                     stdlib/module/*.zp
+                     stdlib/monads/*.zp
+                     stdlib/querystring/*.zp
+                     stdlib/parsecomb/*.zp
+                     stdlib/rsa/*.zp
+                     stdlib/slugify/*.zp
+                     stdlib/statistics/*.zp
                      zepto/*.zp
                      zepto/compiler/*.zp
                      zepto/erl/*.zp
