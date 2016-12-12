@@ -21,6 +21,7 @@ car :: LispVal -> ThrowsError LispVal
 car (List (x : _)) = return x
 car (SimpleVal (SimpleList (x : _))) = return $ fromSimple x
 car val@(DottedList (x : _) _) = return x
+car val@(DottedList _ x) = return x
 car badArg = throwError $ TypeMismatch "list" badArg
 
 cdrDoc :: String
@@ -55,6 +56,7 @@ cons [x, List xs] = return $ List $ x : xs
 cons [SimpleVal x, SimpleVal (SimpleList (_ : xs))] = return $ fromSimple $ SimpleList (x : xs)
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
 cons [x] = return $ DottedList [] x
+cons [] = return $ List []
 cons badArgList = throwError $ NumArgs 2 badArgList
 
 makeVectorDoc :: String
