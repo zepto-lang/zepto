@@ -129,7 +129,6 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("regex?", unaryOp isRegex, typecheckDoc "regex")
              , ("opaque?", unaryOp isOpaque, typecheckDoc "opaque")
              , ("typeof", unaryOp checkType, typeofDoc)
-             , ("nil", noArg buildNil, buildDoc "nil")
              , ("inf", noArg buildInf, buildDoc "inf")
              , ("vector", buildVector, buildDoc "vector")
              , ("byte-vector", buildByteVector, buildDoc "bytevector")
@@ -578,6 +577,7 @@ eval _ _ (List [HashMap x, SimpleVal i]) =
 eval env conti (List [HashMap x, form]) = do
         i <- eval env conti form
         eval env conti (List [HashMap x, i])
+eval _ _ (List [SimpleVal (Nil _)]) = return $ fromSimple $ Nil ""
 eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) (SimpleVal (Atom iter)) cond) = do
         hash <- contEval env conti =<< getVar env iter
         case hash of
@@ -934,6 +934,7 @@ eval env conti (List (function : args)) = do
           HashMap _ -> eval env conti (List (func : args))
           Vector _  -> eval env conti (List (func : args))
           ByteVector _  -> eval env conti (List (func : args))
+          SimpleVal (Nil _) -> eval env conti (List (func : args))
           _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 

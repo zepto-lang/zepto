@@ -68,7 +68,9 @@ parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol <|> oneOf "."
                rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
-               if atom == "." || (length atom > 1 && first == '/' && last rest == '/')
+               if atom == "." ||
+                  (length atom > 1 && first == '/' && last rest == '/') ||
+                  atom == "nil"
                    then pzero
                    else return $ fromSimple $ Atom atom
 
@@ -333,6 +335,12 @@ parseHashMap = do vals <- many parseExprPair
                              _ <- optionMaybe $ commaSpace
                              return [k, v]
 
+
+parseNil :: Parser LispVal
+parseNil = do _ <- string "nil"
+              return $ fromSimple $ Nil ""
+
+
 parseExpr :: Parser LispVal
 parseExpr = parseComments
         <|> try parseRegex
@@ -380,6 +388,7 @@ parseExpr = parseComments
                _ <- char ']'
                return x
         <|> try parseAtom
+        <|> try parseNil
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of
