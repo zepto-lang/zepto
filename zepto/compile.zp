@@ -1,6 +1,6 @@
-(load "zepto/compiler/ast")
-(load "zepto/compiler/nanopass")
-(load "zepto/erl/core")
+(load "compiler/ast")
+(load "compiler/nanopass")
+(load "erl/core")
 (load "argparse/argparse")
 (import-all "argparse")
 
@@ -8,13 +8,22 @@
 (define *descr-string* "this is an experimental pluggable compiler for zepto")
 (define *options* [#{"name" "backend"
                      "default" "erl"
+                     "type" :string
                      "usage" "the backend that should be used"}])
 
 (define (compile backend program)
-  ((*backends* backend) ((import "nanopass:optimize")
-                          (map (lambda (x) ((import "ast:ast") x)) (parse program)))
-                        (head (string:split (list:last (string:split program "/")) ".zp"))))
+  ((*backends* backend)
+    ((import "nanopass:optimize") (map (import "ast:ast") (parse program)))
+    (head (string:split (list:last (string:split program "/")) ".zp"))))
 
-(let ((name (head zepto:args))
-      (args (argparse:handle-args *descr-string* *options*)))
-  (compile (string->symbol (++ ":" (args "backend"))) name))
+(define (zepto:run-compiler)
+  (let ((name (car zepto:args))
+        (args (argparse:handle-args *descr-string* *options* (cdr zepto:args))))
+    (if (truthy? args)
+      (compile (string->symbol (++ ":" (args "backend"))) name)
+      (write "Compilation aborted."))))
+
+(define (zepto:implements-codegen backend fun . defs)
+  (hash:set! *backends* backend
+             (lambda (x _) (++ (get-from defs 0 "")
+                               (string:join (map fun x) "\n")))))
