@@ -16,7 +16,11 @@
 
   (list->ast (lambda (form)
     (case (car form)
-      ((quote) (build-value :collection :list (map ast (cadr form))))
+      ((quote)
+        (let ((form (cadr form)))
+          (if (list? form)
+            (build-value :collection :list (map ast form))
+            (build-value :simple :symbol form))))
       ((define)
         (if (list? (cadr form))
           (build-function form)
@@ -60,4 +64,5 @@
       ((symbol? form) (build-value :simple :symbol form))
       ((atom? form) (build-value :simple :atom form))
       ((nil? form) (build-value :simple :nil form))
+      ((regex? form) (build-value :simple :regex form))
       (else (error "ast:ast" (typeof form) "is a deprecated special form"))))))
