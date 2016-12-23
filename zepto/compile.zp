@@ -8,24 +8,40 @@
                                               :macro-expand #f)))
 (define *descr-string* "this is an experimental pluggable compiler for zepto")
 (define *options* [#{"name" "backend"
-                     "default" "erl"
+                     "default" :erl
+                     "type" :atom
+                     "usage" "the backend that should be used"}
+                   #{"name" "output"
+                     "default" nil
                      "type" :string
-                     "usage" "the backend that should be used"}])
+                     "usage" "the output file (defaults to stdout)"}])
 
-(define (compile backend program)
+(define (compile backend program file)
   (let* ((expand?  (get-from *backends* (list backend :macro-expand)))
          (parsed   ((if expand? macro-expand id) (parse program)))
-         (compiler (get-from *backends* (list backend :fun))))
-  (compiler
-    ((import "nanopass:optimize") (map (import "ast:ast") parsed))
-    (head (string:split (list:last (string:split program "/")) ".zp")))))
+         (compiler (get-from *backends* (list backend :fun)))
+         (treated  ((import "nanopass:optimize")
+                      (map (import "ast:ast") parsed)))
+         (mod-name (|> (string:split program "/")
+                       list:last
+                       ($ (string:split % ".zp"))
+                       car))
+         (out      (compiler treated mod-name)))
+    (if (truthy? file)
+      (with-output-file file (curry write out))
+      (write out :stdout))))
 
-(define (zepto:run-compiler)
-  (let ((name (car zepto:args))
-        (args (argparse:handle-args *descr-string* *options* (cdr zepto:args))))
-    (if (truthy? args)
-      (compile (string->symbol (++ ":" (args "backend"))) name)
-      (write "Compilation aborted."))))
+(define (parse-args args)
+  (let ((args (argparse:handle-args *descr-string* *options* args)))
+    (if (nil? args)
+      (exit 1))
+    args))
+
+(define (zepto:run-compiler . backend)
+  (let* ((name (car zepto:args))
+         (args (parse-args (cdr zepto:args)))
+         (backend (if (null? backend) (args "backend") (get-from backend 0))))
+    (compile backend name (get-from args "output"))))
 
 (define (zepto:implements-codegen backend fun . conf)
   (let* ((conf (get-from conf 0 #{:definitions "" :macro-expand #f}))
