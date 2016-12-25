@@ -62,9 +62,13 @@ loadFile env f = do
 -- | run a single statement
 runSingleStatement :: String -> IO ()
 runSingleStatement statement = do
-        env <- primitiveBindings
+        env <- primitiveBindings >>= flip extendEnv[((vnamespace, "zepto:args"),
+                                                    List [])]
+                                 >>= flip extendEnv[((vnamespace, "zepto:name"),
+                                                    fromSimple $ String $ "zepto")]
         _   <- stdlib env
-        evalString env statement >>= putStrLn
+        evalString env statement
+        return ()
 
 -- | run a file
 runFile :: [String] -> IO ()
