@@ -8,7 +8,8 @@
   (rest-arg #{:category :simple :type :rest :value :none})
 
   (build-function (lambda (form)
-    (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+    (let* ((docstring? (and (> (length form) 3) (string? (caddr form))))
+           (docstring (if docstring? (caddr form) "No documentation")))
       (make-hash :type :define-fn
                  :category :callable
                  :name (ast (caadr form))
@@ -17,7 +18,11 @@
                                 (++ (list:but-last args) rest-arg (list:last args))
                                 args))
                  :doc docstring
-                 :body (ast (list:last form))))))
+                 :body (make-hash :type :seq
+                                  :category :instruction
+                                  :arguments (map ast (if docstring?
+                                                        (cdddr form)
+                                                        (cddr form))))))))
 
   (list->ast (lambda (form)
     (case (car form)
