@@ -171,7 +171,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
             (color :yellow #{:to-str #t})
             "  " (string:replicate (sub1 col) " ") "^\n"
             (color :reset #{:to-str #t})
-            (string:join (cdr split) #\newline)))
+            (string:join (cdddr split) #\newline)))
       (loop (cdr split)))))
 
 (define (repl . env)
