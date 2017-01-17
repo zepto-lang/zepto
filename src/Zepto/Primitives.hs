@@ -1011,7 +1011,20 @@ readCharProc _ args = if length args == 1
 
 apply :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (Cont (Continuation a b c d e cs)) fn args =
-  apply' (Cont (Continuation a b c d e $! buildCallHistory (fn, showArgs args) cs)) fn args
+  apply' (Cont (Continuation a b c d e $! buildCallHistory (getFName fn, showArgs args) cs)) fn args
+    where getFName (PrimitiveFunc n _) = n
+          getFName (IOFunc n _) = n
+          getFName (Func n LispFun {docstring = s}) =
+            if n == "lambda" then n ++ treatDoc s
+                            else n
+          getFName (EvalFunc n _) = n
+          getFName _ = "<faulty traceback element>"
+          treatDoc d = if d == "No documentation available"
+                        then " (No docs)"
+                        else " (" ++ replaceNewlines (take 80 d) ++ ")"
+          replaceNewlines = map replaceNewline
+          replaceNewline '\n' = ' '
+          replaceNewline x = x
 apply _ func args = throwError $ BadSpecialForm "Unable to evaluate form" $ List (func : args)
 
 apply' :: LispVal -> LispVal -> [LispVal] -> IOThrowsError LispVal
