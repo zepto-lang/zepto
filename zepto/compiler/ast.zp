@@ -5,30 +5,45 @@
   (build-value (lambda (category type form)
     (make-hash :category category :type type :value form)))
 
+  (rest-arg #{:category :simple :type :rest :value :none})
+
   (build-function (lambda (form)
-    (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+    (let* ((docstring? (and (> (length form) 3) (string? (caddr form))))
+           (docstring (if docstring? (caddr form) "No documentation")))
       (make-hash :type :define-fn
                  :category :callable
                  :name (ast (caadr form))
-                 :arguments (map ast (cdadr form))
+                 :arguments (let ((args (map ast (cdadr form))))
+                              (if (pair? (cdadr form))
+                                (++ (list:but-last args) rest-arg (list:last args))
+                                args))
                  :doc docstring
-                 :body (ast (list:last form))))))
+                 :body (make-hash :type :seq
+                                  :category :instruction
+                                  :arguments (map ast (if docstring?
+                                                        (cdddr form)
+                                                        (cddr form))))))))
 
   (list->ast (lambda (form)
     (case (car form)
-      ((quote) (build-value :collection :list (map ast (cadr form))))
+      ((quote)
+        (let ((form (cadr form)))
+          (if (list? form)
+            (build-value :collection :list (map ast form))
+            (build-value :simple :symbol form))))
       ((define)
-        (if (list? (cadr form))
+        (if (or (list? (cadr form)) (pair? (cadr form)))
           (build-function form)
           (make-hash :type :define-val
                      :category :callable
                      :name (cadr form)
                      :binding (ast (caddr form)))))
       ((lambda)
-        (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+        (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation"))
+              (args (if (list? (cadr form)) (map ast (cadr form)) (ast (cadr form)))))
           (make-hash :type :lambda
                      :category :callable
-                     :arguments (map ast (cadr form))
+                     :arguments args
                      :doc docstring
                      :body (ast (list:last form)))))
       (('module) (make-module form))
@@ -52,12 +67,13 @@
       ((small-int? form) (build-value :simple :int form))
       ((complex? form) (build-value :simple :complex form))
       ((string? form) (build-value :collection :string form))
-      ((char? form) (build-value :simple :string form))
-      ((vector? form) (build-value :collection :vector (vector->list form)))
-      ((byte-vector? form) (build-value :collection :byte-vector (byte-vector->list form)))
+      ((char? form) (build-value :simple :char form))
+      ((vector? form) (build-value :collection :vector (map ast (vector->list form))))
+      ((byte-vector? form) (build-value :collection :byte-vector (map ast (byte-vector->list form))))
       ((hash-map? form) (build-value :collection :hash-map
                                      (hash:kv-map (lambda (kv) (map ast kv)) form)))
       ((symbol? form) (build-value :simple :symbol form))
       ((atom? form) (build-value :simple :atom form))
       ((nil? form) (build-value :simple :nil form))
+      ((regex? form) (build-value :simple :regex form))
       (else (error "ast:ast" (typeof form) "is a deprecated special form"))))))

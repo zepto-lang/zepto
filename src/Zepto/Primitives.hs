@@ -110,6 +110,9 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("rational?", unaryOp isRational, typecheckDoc "a rational")
              , ("real?", unaryOp isReal, typecheckDoc "a real number")
              , ("list?", unaryOp isList, typecheckDoc "list")
+             , ("comprehension?", unaryOp isComp, typecheckDoc "comprehension")
+             , ("list-comprehension?", unaryOp isListComp, typecheckDoc "list comprehension")
+             , ("hash-comprehension?", unaryOp isHashComp, typecheckDoc "hash comprehension")
              , ("list:null?", unaryOp isNull, isNullDoc)
              , ("nil?", unaryOp isNil, typecheckDoc "nil")
              , ("symbol?", unaryOp isSymbol, typecheckDoc "symbol")
@@ -129,7 +132,6 @@ primitives = [ ("+", numericPlusop (+), plusDoc)
              , ("regex?", unaryOp isRegex, typecheckDoc "regex")
              , ("opaque?", unaryOp isOpaque, typecheckDoc "opaque")
              , ("typeof", unaryOp checkType, typeofDoc)
-             , ("nil", noArg buildNil, buildDoc "nil")
              , ("inf", noArg buildInf, buildDoc "inf")
              , ("vector", buildVector, buildDoc "vector")
              , ("byte-vector", buildByteVector, buildDoc "bytevector")
@@ -212,6 +214,9 @@ ioPrimitives = [ ("open-input-file", makePort ReadMode, openDoc "reading")
                , ("close-output-file", closePort, closeFDoc "writing")
                , ("input-port?", unaryIOOp isInputPort, typecheckDoc "input port")
                , ("output-port?", unaryIOOp isOutputPort, typecheckDoc "output port")
+               , ("os:make-dir", unaryIOOp makeDir, makeDirDoc)
+               , ("os:make-dir?", maybeMakeDir, maybeMakeDirDoc)
+               , ("os:ls", unaryIOOp ls, lsDoc)
                , ("os:get-home-dir", noIOArg getHomeDir, getHomeDirDoc)
                , ("os:get-current-dir", noIOArg getCurrentDir, getCurrentDirDoc)
                , ("zepto:home", noIOArg getZeptoDir, zeptoDirDoc)
@@ -468,7 +473,7 @@ catchVMError x = throwError $ NumArgs 1 (tail x)
 findFile' :: String -> ExceptT LispError IO String
 findFile' filename = do
         let expanded = expand filename
-        fileAsLib <- liftIO $ getDataFileName $ "zepto-stdlib/" ++ filename
+        fileAsLib <- liftIO $ getDataFileName $ "stdlib/" ++ filename
         let fileAsLibExpanded = expand fileAsLib
         exists <- fex filename
         existsExpanded <- fex expanded
@@ -575,6 +580,7 @@ eval _ _ (List [HashMap x, SimpleVal i]) =
 eval env conti (List [HashMap x, form]) = do
         i <- eval env conti form
         eval env conti (List [HashMap x, i])
+eval _ _ (List [SimpleVal (Nil _)]) = return $ fromSimple $ Nil ""
 eval env conti (HashComprehension (keyexpr, valexpr) (SimpleVal (Atom key), SimpleVal (Atom val)) (SimpleVal (Atom iter)) cond) = do
         hash <- contEval env conti =<< getVar env iter
         case hash of
@@ -931,6 +937,7 @@ eval env conti (List (function : args)) = do
           HashMap _ -> eval env conti (List (func : args))
           Vector _  -> eval env conti (List (func : args))
           ByteVector _  -> eval env conti (List (func : args))
+          SimpleVal (Nil _) -> eval env conti (List (func : args))
           _         -> apply conti func argVals
 eval _ _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 

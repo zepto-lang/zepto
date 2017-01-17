@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 module Zepto.Types (LispNum(..),
                     Simple(..),
                     LispVal(..),
@@ -47,9 +48,11 @@ import Control.Monad
 import Control.Monad.Except
 import System.IO
 import Text.ParserCombinators.Parsec.Error
+import Text.ParserCombinators.Parsec.Pos (sourceLine, sourceColumn, sourceName)
 import qualified Data.Map as M
 import qualified Data.Array as A
 import qualified Text.Regex.PCRE.Light.Base as R
+import qualified Text.Regex.PCRE.Heavy as H
 
 -- | an unpacker for any LispVal
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
@@ -462,7 +465,17 @@ showError (TypeMismatch expected found) =
         in if x /= "function"
               then y ++ " (value: " ++ showTrunc found ++ ")"
               else y
-showError (ParseErr parseErr) = "Parse error at " ++ show parseErr
+showError (ParseErr err) =
+        let pos  = errorPos err
+            line = sourceLine pos
+            col  = sourceColumn pos
+            src  = sourceName pos
+        in "Parse error at line " ++ show line ++ ", column " ++ show col
+          ++ ":\n" ++ (H.split [H.re|\n|] src) !! (line - 1) ++ "\n"
+          ++ replicate (col - 1) ' ' ++ "^\n" ++
+          showErrorMessages "or" "unknown parse error"
+                            "expecting" "unexpected" "end of input"
+                           (errorMessages err)
 showError (InternalError err) = "Internal error: " ++ err
 showError (Default err) = err
 showError (Historial cs err) = showCallHistory cs ++ "\n" ++ show err

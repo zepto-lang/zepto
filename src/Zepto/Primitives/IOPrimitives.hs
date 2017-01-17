@@ -3,7 +3,8 @@ import Control.Monad (liftM)
 import Control.Monad.Except (liftIO, throwError)
 import Crypto.Number.Generate (generateBetween)
 import System.Directory (doesFileExist, getHomeDirectory, getCurrentDirectory,
-                         setCurrentDirectory)
+                         setCurrentDirectory, createDirectory,
+                         getDirectoryContents, createDirectoryIfMissing)
 import System.Environment (getEnv, setEnv)
 import System.Exit
 import System.IO
@@ -336,3 +337,55 @@ setEnvProc [SimpleVal (String var), SimpleVal (String val)] = do
 setEnvProc [SimpleVal (String _), x] = throwError $ TypeMismatch "string" x
 setEnvProc [x, _] = throwError $ TypeMismatch "string" x
 setEnvProc x = throwError $ NumArgs 2 x
+
+makeDirDoc :: String
+makeDirDoc = "create a directory of the name <par>path</par>.\n\
+\n\
+  params:\n\
+    - path: the directory to create (can be absolute or relative)\n\
+  complexity: O(1)\n\
+  returns: nil"
+
+makeDir :: LispVal -> IOThrowsError LispVal
+makeDir (SimpleVal (String path)) = do
+    _ <- liftIO $ createDirectory path
+    return $ fromSimple $ Nil ""
+makeDir x = throwError $ TypeMismatch "string" x
+
+maybeMakeDirDoc :: String
+maybeMakeDirDoc = "behaves exactly like <fun>os:make-dir</fun>, but does not\n\
+error if the directory already exists.\n\
+\n\
+  params:\n\
+    - path: the directory to create (can be absolute or relative)\n\
+    - rec: if this is set to true, <fun>os:make-dir?</fun> will also create parents if necessary\n\
+  complexity: O(n)\n\
+  returns: nil"
+
+maybeMakeDir :: [LispVal] -> IOThrowsError LispVal
+maybeMakeDir [(SimpleVal (String path))] = do
+    _ <- liftIO $ createDirectoryIfMissing False path
+    return $ fromSimple $ Nil ""
+maybeMakeDir [(SimpleVal (String path)), (SimpleVal (Bool rec))] = do
+    _ <- liftIO $ createDirectoryIfMissing rec path
+    return $ fromSimple $ Nil ""
+maybeMakeDir [(SimpleVal (String path)), x] =
+    throwError $ TypeMismatch "boolean" x
+maybeMakeDir [x, _] =
+    throwError $ TypeMismatch "string" x
+maybeMakeDir [x] = throwError $ TypeMismatch "string" x
+maybeMakeDir x = throwError $ NumArgs 2 x
+
+lsDoc :: String
+lsDoc = "return the contents of the directory at path <par>path</par>.\n\
+\n\
+  params:\n\
+    - path: the directory to inspect\n\
+  complexity: O(1)\n\
+  returns: a list of directory contents"
+
+ls :: LispVal -> IOThrowsError LispVal
+ls (SimpleVal (String path)) = do
+  lst <- liftIO $ getDirectoryContents path
+  return $ List $ map (fromSimple . String) lst
+ls x = throwError $ TypeMismatch "string" x

@@ -116,6 +116,7 @@ isNullDoc = "checks whether list is empty.\n\
 
 isNull :: LispVal -> ThrowsError LispVal
 isNull (List []) = return $ fromSimple $ Bool True
+isNull val@(DottedList [] _) = return $ fromSimple $ Bool True
 isNull (SimpleVal (Nil _)) = return $ fromSimple $ Bool True
 isNull _ = return $ fromSimple $ Bool False
 
@@ -174,3 +175,16 @@ checkType x = return $ fromSimple $ String $ typeString x
 isHash :: LispVal -> ThrowsError LispVal
 isHash (HashMap _) = return $ fromSimple $ Bool True
 isHash _ = return $ fromSimple $ Bool False
+
+isListComp :: LispVal -> ThrowsError LispVal
+isListComp (ListComprehension _ _ _ _) = return $ fromSimple $ Bool True
+isListComp _ = return $ fromSimple $ Bool False
+
+isHashComp :: LispVal -> ThrowsError LispVal
+isHashComp (HashComprehension _ _ _ _) = return $ fromSimple $ Bool True
+isHashComp _ = return $ fromSimple $ Bool False
+
+isComp :: LispVal -> ThrowsError LispVal
+isComp (ListComprehension _ _ _ _) = return $ fromSimple $ Bool True
+isComp (HashComprehension _ _ _ _) = return $ fromSimple $ Bool True
+isComp _ = return $ fromSimple $ Bool False
