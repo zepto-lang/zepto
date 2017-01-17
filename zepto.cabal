@@ -1,5 +1,5 @@
 Name:                zepto
-Version:             0.9.7
+Version:             0.9.6
 Synopsis:            R5RS and beyond Interpreter and REPL.
 Description:
   zepto is a relaxed implementation of the R<sup>5</sup>RS standard.
@@ -22,26 +22,29 @@ Bug-Reports:         http://github.com/zepto-lang/zepto/issues
 Build-Type:          Simple
 Category:            Compilers/Interpreters, Language
 Tested-with:         GHC == 8.0.1,
-                     GHC == 8.0.0
+                     GHC == 7.10.1,
+                     GHC == 7.8.4,
+                     GHC == 7.6.3,
+                     GHC == 7.4.2
 
 Extra-Source-Files:  README.md
                      LICENSE
-Data-Files:          stdlib/*.zp
-                     stdlib/srfi/*.zp
-                     stdlib/argparse/*.zp
-                     stdlib/data/*.zp
-                     stdlib/data/*.impl.zp
-                     stdlib/datetime/*.zp
-                     stdlib/bench/*.zp
-                     stdlib/json/*.zp
-                     stdlib/minitest/*.zp
-                     stdlib/module/*.zp
-                     stdlib/monads/*.zp
-                     stdlib/querystring/*.zp
-                     stdlib/parsecomb/*.zp
-                     stdlib/rsa/*.zp
-                     stdlib/slugify/*.zp
-                     stdlib/statistics/*.zp
+Data-Files:          zepto-stdlib/*.zp
+                     zepto-stdlib/srfi/*.zp
+                     zepto-stdlib/argparse/*.zp
+                     zepto-stdlib/data/*.zp
+                     zepto-stdlib/data/*.impl.zp
+                     zepto-stdlib/datetime/*.zp
+                     zepto-stdlib/bench/*.zp
+                     zepto-stdlib/json/*.zp
+                     zepto-stdlib/minitest/*.zp
+                     zepto-stdlib/module/*.zp
+                     zepto-stdlib/monads/*.zp
+                     zepto-stdlib/querystring/*.zp
+                     zepto-stdlib/parsecomb/*.zp
+                     zepto-stdlib/rsa/*.zp
+                     zepto-stdlib/slugify/*.zp
+                     zepto-stdlib/statistics/*.zp
                      zepto/*.zp
                      zepto/compiler/*.zp
                      zepto/erl/*.zp

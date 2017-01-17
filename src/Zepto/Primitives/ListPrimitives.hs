@@ -20,8 +20,8 @@ carDoc = "take the first element of the list <par>l</par>.\n\
 car :: LispVal -> ThrowsError LispVal
 car (List (x : _)) = return x
 car (SimpleVal (SimpleList (x : _))) = return $ fromSimple x
-car val@(DottedList (x : _) _) = return x
-car badArg = throwError $ TypeMismatch "list" badArg
+car (DottedList (x : _) _) = return x
+car badArg = throwError $ TypeMismatch "pair" badArg
 
 cdrDoc :: String
 cdrDoc = "take the tail of the list <par>l</par>.\n\
@@ -34,9 +34,9 @@ cdrDoc = "take the tail of the list <par>l</par>.\n\
 cdr :: LispVal -> ThrowsError LispVal
 cdr (List (_ : xs)) = return $ List xs
 cdr (SimpleVal (SimpleList (_ : xs))) = return $ fromSimple $ SimpleList xs
-cdr (DottedList [_] x) = return $ List [x]
+cdr (DottedList [_] x) = return x
 cdr (DottedList (_ : xs) x) = return $ DottedList xs x
-cdr badArg = throwError $ TypeMismatch "list" badArg
+cdr badArg = throwError $ TypeMismatch "pair" badArg
 
 consDoc :: String
 consDoc = "construct a list or append a head to a list.\n\

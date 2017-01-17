@@ -1,35 +1,20 @@
-(load "compiler/ast")
-(load "compiler/nanopass")
-(load "erl/core")
+(load "zepto/compiler/ast")
+(load "zepto/compiler/nanopass")
+(load "zepto/erl/core")
 (load "argparse/argparse")
 (import-all "argparse")
 
-(define *backends* (make-hash :erl (make-hash :fun (import "core:ast->core")
-                                              :macro-expand #f)))
+(define *backends* (make-hash :erl (import "core:ast->core")))
 (define *descr-string* "this is an experimental pluggable compiler for zepto")
 (define *options* [#{"name" "backend"
                      "default" "erl"
-                     "type" :string
                      "usage" "the backend that should be used"}])
 
 (define (compile backend program)
-  (let* ((expand?  (get-from *backends* (list backend :macro-expand)))
-         (parsed   ((if expand? macro-expand id) (parse program)))
-         (compiler (get-from *backends* (list backend :fun))))
-  (compiler
-    ((import "nanopass:optimize") (map (import "ast:ast") parsed))
-    (head (string:split (list:last (string:split program "/")) ".zp")))))
+  ((*backends* backend) ((import "nanopass:optimize")
+                          (map (lambda (x) ((import "ast:ast") x)) (parse program)))
+                        (head (string:split (list:last (string:split program "/")) ".zp"))))
 
-(define (zepto:run-compiler)
-  (let ((name (car zepto:args))
-        (args (argparse:handle-args *descr-string* *options* (cdr zepto:args))))
-    (if (truthy? args)
-      (compile (string->symbol (++ ":" (args "backend"))) name)
-      (write "Compilation aborted."))))
-
-(define (zepto:implements-codegen backend fun . conf)
-  (let* ((conf (get-from conf 0 #{:definitions "" :macro-expand #f}))
-         (f (lambda (x _) (++ (conf :definitions)
-                              (string:join (map fun x) "\n")))))
-    (hash:set! *backends* backend (make-hash :fun f
-                                             :macro-expand (conf :macro-expand)))))
+(let ((name (head zepto:args))
+      (args (argparse:handle-args *descr-string* *options*)))
+  (compile (string->symbol (++ ":" (args "backend"))) name))

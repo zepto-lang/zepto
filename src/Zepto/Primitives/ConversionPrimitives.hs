@@ -66,6 +66,9 @@ integer2Char (SimpleVal (Number (NumI x))) = return $ fromSimple $ Character $ c
 integer2Char (SimpleVal (Number (NumS x))) = return $ fromSimple $ Character $ chr x
 integer2Char notInt = throwError $ TypeMismatch "integer" notInt
 
+buildNil :: ThrowsError LispVal
+buildNil = return $ fromSimple $ Nil ""
+
 buildInf :: ThrowsError LispVal
 buildInf = return $ fromSimple $ Number $ NumF $ 1 / 0
 
