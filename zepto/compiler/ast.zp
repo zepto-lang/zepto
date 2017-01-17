@@ -5,14 +5,24 @@
   (build-value (lambda (category type form)
     (make-hash :category category :type type :value form)))
 
+  (rest-arg #{:category :simple :type :rest :value :none})
+
   (build-function (lambda (form)
-    (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+    (let* ((docstring? (and (> (length form) 3) (string? (caddr form))))
+           (docstring (if docstring? (caddr form) "No documentation")))
       (make-hash :type :define-fn
                  :category :callable
                  :name (ast (caadr form))
-                 :arguments (map ast (cdadr form))
+                 :arguments (let ((args (map ast (cdadr form))))
+                              (if (pair? (cdadr form))
+                                (++ (list:but-last args) rest-arg (list:last args))
+                                args))
                  :doc docstring
-                 :body (ast (list:last form))))))
+                 :body (make-hash :type :seq
+                                  :category :instruction
+                                  :arguments (map ast (if docstring?
+                                                        (cdddr form)
+                                                        (cddr form))))))))
 
   (list->ast (lambda (form)
     (case (car form)
@@ -22,17 +32,18 @@
             (build-value :collection :list (map ast form))
             (build-value :simple :symbol form))))
       ((define)
-        (if (list? (cadr form))
+        (if (or (list? (cadr form)) (pair? (cadr form)))
           (build-function form)
           (make-hash :type :define-val
                      :category :callable
                      :name (cadr form)
                      :binding (ast (caddr form)))))
       ((lambda)
-        (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation")))
+        (let ((docstring (if (eq? (length form) 4) (caddr form) "No documentation"))
+              (args (if (list? (cadr form)) (map ast (cadr form)) (ast (cadr form)))))
           (make-hash :type :lambda
                      :category :callable
-                     :arguments (map ast (cadr form))
+                     :arguments args
                      :doc docstring
                      :body (ast (list:last form)))))
       (('module) (make-module form))
