@@ -34,11 +34,16 @@ commaSpace = do x <- optionMaybe $ spaces
 
 parseRegex :: Parser LispVal
 parseRegex = do _ <- string "r/"
-                x <- many (noneOf "/")
+                x <- many (try regEscaped <|> noneOf "/")
                 _ <- char '/'
                 case compileM (C.pack x) [] of
                   Left str -> fail str
                   Right reg -> return $ fromSimple $ Regex reg
+
+regEscaped :: forall u . GenParser Char u Char
+regEscaped =  do
+    _ <- string "\\/"
+    return '/'
 
 parseString :: Parser LispVal
 parseString = do _ <- char '"'
@@ -63,7 +68,9 @@ parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol <|> oneOf "."
                rest <- many (letter <|> digit <|> symbol <|> oneOf ".")
                let atom = first : rest
-               if atom == "." || (length atom > 1 && first == '/' && last rest == '/')
+               if atom == "." ||
+                  (length atom > 1 && first == '/' && last rest == '/') ||
+                  atom == "nil"
                    then pzero
                    else return $ fromSimple $ Atom atom
 
@@ -177,7 +184,7 @@ parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
 
 parseQList :: Parser LispVal
-parseQList = do l <- liftM List $ sepBy parseExpr commaSpace
+parseQList = do l <- liftM List $ sepEndBy parseExpr commaSpace
                 return $ List [fromSimple $ Atom "quote", l]
 
 parseDottedList :: Parser LispVal
@@ -207,11 +214,11 @@ parseSpliced = do _ <- try (string ",@")
                   return $ List [fromSimple $ Atom "unquote-splicing", x]
 
 parseVect :: Parser LispVal
-parseVect = do vals <- sepBy parseExpr commaSpace
+parseVect = do vals <- sepEndBy parseExpr commaSpace
                return $ Vector (listArray (0, length vals -1) vals)
 
 parseByteVect :: Parser LispVal
-parseByteVect = do vals <- sepBy parseNumber commaSpace
+parseByteVect = do vals <- sepEndBy parseNumber commaSpace
                    return $ ByteVector $ pack $ map toB vals
     where toB :: LispVal -> Word8
           toB (SimpleVal (Number (NumI x))) = fromInteger x :: Word8
@@ -328,6 +335,12 @@ parseHashMap = do vals <- many parseExprPair
                              _ <- optionMaybe $ commaSpace
                              return [k, v]
 
+
+parseNil :: Parser LispVal
+parseNil = do _ <- string "nil"
+              return $ fromSimple $ Nil ""
+
+
 parseExpr :: Parser LispVal
 parseExpr = parseComments
         <|> try parseRegex
@@ -375,6 +388,7 @@ parseExpr = parseComments
                _ <- char ']'
                return x
         <|> try parseAtom
+        <|> try parseNil
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser input input of

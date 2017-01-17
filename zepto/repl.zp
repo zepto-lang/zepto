@@ -14,7 +14,7 @@
 (define *histfile* (++ (os:get-home-dir) "/.zepto_history"))
 (define *env* *global-env*)
 (define *header* (++ "zepto Version " zepto:version-str ", compiled with GHC version " zepto:ghc-str "
-Copyright (C) 2016 Veit Heller (GPL)
+Copyright (C) 2015-2016 Veit Heller (GPL)
 This is free software; see the accompanying LICENSE for copying conditions.
 There is NO warranty whatsoever.
 Hail Eris, all rites reversed.
@@ -88,6 +88,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
     (begin
       (close-output-file (*record* :file))
       (set! *record* #{:record? #f :file #f})
+      (write-plain "Stopped recording.")
       (repl))
     (begin
       (error-plain "recording not active")
@@ -117,9 +118,9 @@ Type ':quit' or press Ctrl-C to exit interpreter,
       (begin
         (load "bench/bench")
         (let ((res (catch-vm-error `(,(import "bench:time") ,parsed))))
-          (if (number? res)
-            (write (sec-fmt ((import "bench:time") parsed)))
-            (write (++ "Caught error:\n\n" res))))
+          (if (error? res)
+            (write (++ "Caught error:\n\n" (error:text res)))
+            (write (sec-fmt res))))
         (repl)))))
 
 (define (get-type . args)
@@ -170,7 +171,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
             (color :yellow #{:to-str #t})
             "  " (string:replicate (sub1 col) " ") "^\n"
             (color :reset #{:to-str #t})
-            (string:join (cdr split) #\newline)))
+            (string:join (cdddr split) #\newline)))
       (loop (cdr split)))))
 
 (define (repl . env)

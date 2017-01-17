@@ -2,7 +2,7 @@ module Zepto.Primitives.VersionPrimitives where
 import Zepto.Types
 
 version :: [Integer]
-version = [0, 9, 6]
+version = [0, 9, 7]
 
 ghcDoc :: String
 ghcDoc = "get the GHC version as integer.\n\
