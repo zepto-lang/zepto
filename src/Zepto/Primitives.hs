@@ -1015,11 +1015,13 @@ apply (Cont (Continuation a b c d e cs)) fn args =
     where getFName (PrimitiveFunc n _) = n
           getFName (IOFunc n _) = n
           getFName (Func n LispFun {docstring = s}) =
-            if n == "lambda" then n ++ " (" ++ treatDoc s ++ ")"
+            if n == "lambda" then n ++ treatDoc s
                             else n
           getFName (EvalFunc n _) = n
           getFName _ = "<faulty traceback element>"
-          treatDoc = replaceNewlines . (take 80)
+          treatDoc d = if d == "No documentation available"
+                        then " (No docs)"
+                        else " (" ++ replaceNewlines (take 80 d) ++ ")"
           replaceNewlines = map replaceNewline
           replaceNewline '\n' = ' '
           replaceNewline x = x
