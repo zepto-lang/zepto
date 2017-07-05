@@ -41,7 +41,7 @@ A few of the features were already listed above, but here is a full list of the 
 - list and hashmap comprehensions
 - regex literals
 - macros
-- lazyness
+- laziness
 - continuations
 - a modern, awesome package manager (get it [here](https://github.com/zeps-system/zeps))
 - prototype-based generic programming
