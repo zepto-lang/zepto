@@ -45,7 +45,7 @@ A few of the features were already listed above, but here is a full list of the 
 - continuations
 - a modern, awesome package manager (get it [here](https://github.com/zeps-system/zeps))
 - prototype-based generic programming
-- a *huge* standard library, with libraries, for testing, monads, parsing, CLI arguments, dates and time, and much more
+- a *huge* standard library, with libraries for testing, monads, parsing, CLI arguments, dates and time, and much more
 - an intuitive Haskell foreign function interface, supported by the package manager
 - #lang definitions that are somewhat similar to Racket
 
