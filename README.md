@@ -32,7 +32,7 @@ It is pretty small, so the name might or might not be appropriate.
 
 ## Maintainers
 
-* Veit Heller (<veit@veitheller.de>, <veit.heller@htw-berlin.de>)
+* Veit Heller (<veit@veitheller.de>)
 
 ## Features
 
