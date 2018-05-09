@@ -53,21 +53,30 @@ There is more, but those are my favorites by far.
 
 ## Installation
 
-You will need cabal (the Haskell package manager) for using zepto.
-
 After cloning via git (using the `--recursive` flag to make sure you get all the
 submodules), building is done via invoking `cabal install` after pulling the latest
 version of all linked submodules.
 Or `make`, because a plain old Makefile is included, too. After building you can
 run `make test` to check your installation.
 
-A typical installation workflow would look something like this:
+A typical installation workflow through Cabal would look something like this:
 
 ```bash
 git clone --recursive git://github.com/zepto-lang/zepto.git
 cd zepto
 cabal update
 make
+make test
+# And then see whether none of the tests yield #f
+```
+
+Alternatively, you can use Stack (this makes it simpler if you don’t have GHC
+installed):
+
+```bash
+git clone --recursive git://github.com/zepto-lang/zepto.git
+cd zepto
+stack install
 make test
 # And then see whether none of the tests yield #f
 ```

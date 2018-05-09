@@ -20,7 +20,7 @@
     (y kdr))
 
 (assert-equal (lambda () (pare? (kons 1 2))) #t)
-(assert-equal (lambda () (pare? (cons 1 2))) #f)
+(assert-equal (lambda () (pare? (cons 1 [2]))) #f)
 (assert-equal (lambda () (kar (kons 1 2))) 1)
 (assert-equal (lambda () (kdr (kons 1 2))) 2)
 (assert-equal (lambda () (let ((k (kons 1 2)))
