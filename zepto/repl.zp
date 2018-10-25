@@ -196,6 +196,7 @@ Type ':quit' or press Ctrl-C to exit interpreter,
                                    (color *input-highlight* #{:to-str #t}))
                                *syntax-highlight*))
     (color :reset)
+    (if (eq? (nil) input) (do-exit))
     (if (falsy? input)
       (repl))
     (set! *statement-count* (add1 *statement-count*))

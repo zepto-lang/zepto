@@ -262,6 +262,7 @@
           ((eq? #\x1B char) (_readline (treat-special state)))
           ((eq? 1 (char->integer char)) (_readline (move-to-beginning state)))
           ((eq? 2 (char->integer char)) (_readline (cursor-left state)))
+          ((eq? 4 (char->integer char)) (begin (write "") (nil)))
           ((eq? 5 (char->integer char)) (_readline (move-to-end state)))
           ((eq? 6 (char->integer char)) (_readline (cursor-right state)))
           ((eq? 9 (char->integer char)) (_readline (complete state)))
