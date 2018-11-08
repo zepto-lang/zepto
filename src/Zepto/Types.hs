@@ -469,13 +469,18 @@ showError (Historial cs err) = showCallHistory cs ++ "\n" ++ show err
 
 showCallHistory :: [(LispVal, String)] -> String
 showCallHistory cs =
-        "Backtrace (most recent call last): " ++ concatenate cs
+        "Traceback (most recent call last):\n" ++ concatenate cs
     where concatenate [] = ""
-          concatenate (x:xs) = "\n\t" ++ showInternal (fst x) ++ "\n\t\tcalled with: " ++
-                               snd x ++ concatenate xs
+          concatenate (x:xs) = showInternal (fst x) ++
+                               (if length (snd x) > 0
+                                  then "\n\tcalled with: " ++ snd x
+                                  else "") ++
+                               "\n" ++ concatenate xs
 
 showArgs :: [LispVal] -> String
-showArgs args = unwords (map showInternal args)
+showArgs args = unwords (map showInternal' args)
+  where showInternal' (Func name _) = "<func: " ++ name ++ ">"
+        showInternal' x = showInternal x
 
 showInternal :: LispVal -> String
 showInternal (PrimitiveFunc name _) = "<primitive: " ++ name ++ ">"
@@ -483,10 +488,10 @@ showInternal (IOFunc name _) = "<IO primitive: " ++ name ++ ">"
 showInternal (EvalFunc name _) = "<eval primitive: " ++ name ++ ">"
 showInternal (Func name LispFun {params = args, vararg = varargs, body = _,
                              closure = _, docstring = doc}) =
-    "(" ++ name ++ " \"" ++ doc ++ "\" (" ++ unwords (fmap show args) ++
+    "(" ++ name ++ (if length args > 0 then " " else "") ++ unwords args ++
         (case varargs of
             Nothing -> ""
-            Just arg -> " . " ++ arg) ++ ") ...)"
+            Just arg -> " . " ++ arg) ++ ")\n  " ++ take 100 doc
 showInternal (Cont _) = "<continuation>"
 showInternal (HashMap _) = "<hash-map>"
 showInternal HashComprehension{} = "<hash-comprehension>"
@@ -506,8 +511,8 @@ showInternal x@(SimpleVal _) = show x
 buildCallHistory :: (LispVal, String) -> [(LispVal, String)] -> [(LispVal, String)]
 buildCallHistory f h
   | null h = [f]
-  | show f == show (last h) = h --dirty dirty hack
-  | otherwise = f : lastN 10 h
+  | show f == show (head h) = h --dirty dirty hack
+  | otherwise = f : lastN 15 h
 
 fromSimple :: Simple -> LispVal
 fromSimple = SimpleVal
@@ -517,7 +522,7 @@ toSimple (SimpleVal x) = x
 toSimple _ = Nil ""
 
 lastN :: Int -> [a] -> [a]
-lastN n xs = foldl' (const . drop 1) xs (drop n xs)
+lastN n xs = drop (length xs - n) xs
 
 throwHistorial :: [(LispVal, String)] -> LispError -> IOThrowsError LispVal
 throwHistorial cs (Historial ics e) = throwError $ Historial (mergeCs cs ics) e
